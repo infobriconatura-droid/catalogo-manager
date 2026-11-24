@@ -1,0 +1,1847 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📦 Catalogo Manager v3.0 - Team Edition</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg: #0f0f1a;
+            --bg-card: #1a1a2e;
+            --bg-surface: #252540;
+            --accent: #6366f1;
+            --green: #10b981;
+            --red: #ef4444;
+            --yellow: #f59e0b;
+            --orange: #f97316;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--bg-card), var(--bg-surface));
+            padding: 0.6rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header h1 { font-size: 1.1rem; }
+        
+        .stats {
+            display: flex;
+            gap: 0.5rem;
+            margin-left: auto;
+        }
+        
+        .stat {
+            text-align: center;
+            padding: 0.3rem 0.6rem;
+            background: var(--bg);
+            border-radius: 5px;
+            min-width: 60px;
+        }
+        
+        .stat-value { font-size: 1rem; font-weight: bold; }
+        .stat-value.green { color: var(--green); }
+        .stat-value.orange { color: var(--orange); }
+        .stat-label { font-size: 0.6rem; color: var(--text-muted); }
+        
+        .btn {
+            background: var(--bg-surface);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 0.4rem 0.7rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .btn:hover { background: var(--accent); border-color: var(--accent); }
+        .btn-primary { background: var(--accent); border-color: var(--accent); }
+        .btn-success { background: var(--green); border-color: var(--green); }
+        .btn-danger { background: var(--red); border-color: var(--red); }
+        .btn-warning { background: var(--orange); border-color: var(--orange); }
+        .btn-small { padding: 0.2rem 0.4rem; font-size: 0.7rem; }
+        
+        .main {
+            display: grid;
+            grid-template-columns: 280px 1fr 480px;
+            height: calc(100vh - 50px);
+        }
+        
+        .panel {
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .panel:last-child { border-right: none; }
+        
+        .panel-header {
+            padding: 0.5rem 0.75rem;
+            background: var(--bg-surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .panel-header h2 { font-size: 0.85rem; }
+        .panel-content { flex: 1; overflow-y: auto; padding: 0.5rem; }
+        
+        .search-box {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .search-box input {
+            flex: 1;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.5rem;
+            border-radius: 5px;
+            font-size: 0.8rem;
+        }
+        
+        .search-box input:focus { outline: none; border-color: var(--accent); }
+        
+        .filter-row {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .filter-row label {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+        
+        .product-list { list-style: none; }
+        
+        .product-item {
+            padding: 0.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 0.3rem;
+            background: var(--bg);
+            border: 1px solid transparent;
+            transition: all 0.2s;
+            position: relative;
+        }
+        
+        .product-item:hover { border-color: var(--accent); }
+        .product-item.selected { background: var(--bg-surface); border-color: var(--accent); }
+        
+        .product-item .task-badge {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: var(--orange);
+            color: white;
+            padding: 0.1rem 0.3rem;
+            border-radius: 3px;
+            font-size: 0.65rem;
+            font-weight: bold;
+        }
+        
+        .product-item .complete-badge {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: var(--green);
+            color: white;
+            padding: 0.1rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        
+        .product-pos {
+            display: inline-block;
+            background: var(--accent-green);
+            color: white;
+            padding: 0.1rem 0.35rem;
+            border-radius: 3px;
+            font-size: 0.65rem;
+            font-weight: bold;
+            margin-right: 0.4rem;
+        }
+        
+        .product-code {
+            font-size: 0.7rem;
+            color: var(--accent);
+            font-weight: 600;
+            font-family: monospace;
+        }
+        
+        .product-title {
+            font-size: 0.8rem;
+            margin-top: 0.15rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .product-meta {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-surface);
+        }
+        
+        .tab {
+            padding: 0.5rem 0.75rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            font-size: 0.8rem;
+        }
+        
+        .tab:hover { background: var(--bg); }
+        .tab.active { border-color: var(--accent); background: var(--bg-card); }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .form-group { margin-bottom: 0.6rem; }
+        
+        .form-group label {
+            display: block;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-bottom: 0.15rem;
+            color: var(--accent);
+            text-transform: uppercase;
+        }
+        
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.4rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+        
+        .form-group textarea { min-height: 50px; resize: vertical; }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: var(--accent); }
+        
+        .form-row { display: flex; gap: 0.5rem; }
+        .form-row .form-group { flex: 1; }
+        
+        /* Template selector */
+        .template-selector {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .template-option {
+            flex: 1;
+            padding: 0.5rem;
+            background: var(--bg);
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        
+        .template-option:hover { border-color: var(--accent); }
+        .template-option.selected { border-color: var(--green); background: rgba(16, 185, 129, 0.1); }
+        .template-option .icon { font-size: 1.5rem; }
+        .template-option .name { font-size: 0.75rem; margin-top: 0.25rem; }
+        
+        /* Task checklist */
+        .task-section {
+            background: var(--bg);
+            border-radius: 6px;
+            padding: 0.75rem;
+            margin-top: 0.75rem;
+        }
+        
+        .task-section h3 {
+            font-size: 0.8rem;
+            margin-bottom: 0.5rem;
+            color: var(--orange);
+        }
+        
+        .task-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem;
+            background: var(--bg-surface);
+            border-radius: 4px;
+            margin-bottom: 0.3rem;
+        }
+        
+        .task-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+        
+        .task-item .campo {
+            font-weight: 600;
+            font-size: 0.75rem;
+            min-width: 100px;
+        }
+        
+        .task-item .nota {
+            flex: 1;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.25rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.75rem;
+        }
+        
+        .task-item .nota:focus { outline: none; border-color: var(--accent); }
+        
+        .task-item .btn-add-task {
+            padding: 0.2rem 0.4rem;
+            font-size: 0.7rem;
+        }
+        
+        .task-item.completato {
+            opacity: 0.5;
+            text-decoration: line-through;
+        }
+        
+        /* Preview panel */
+        .preview-container {
+            background: white;
+            border-radius: 6px;
+            overflow: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 300px;
+        }
+        
+        .preview-container img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+        
+        .preview-placeholder {
+            text-align: center;
+            color: #666;
+            padding: 2rem;
+        }
+        
+        /* Task summary panel */
+        .task-summary {
+            background: var(--bg);
+            border-radius: 6px;
+            padding: 0.5rem;
+            margin-top: 0.5rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .task-summary-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem;
+            background: var(--bg-surface);
+            border-radius: 4px;
+            margin-bottom: 0.3rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .task-summary-item:hover { background: var(--accent); }
+        
+        .task-summary-item .codice {
+            font-family: monospace;
+            font-size: 0.7rem;
+            color: var(--green);
+            font-weight: bold;
+        }
+        
+        .task-summary-item .campo {
+            background: var(--orange);
+            color: white;
+            padding: 0.1rem 0.3rem;
+            border-radius: 3px;
+            font-size: 0.65rem;
+        }
+        
+        .task-summary-item .nota {
+            flex: 1;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        /* Upload areas */
+        .upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 6px;
+            padding: 0.75rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .upload-area:hover { border-color: var(--accent); }
+        
+        .upload-preview {
+            max-width: 100px;
+            max-height: 60px;
+            margin: 0.25rem auto;
+            display: block;
+            border-radius: 4px;
+        }
+        
+        /* Table styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.75rem;
+        }
+        
+        th {
+            background: var(--green);
+            color: white;
+            padding: 0.4rem;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        td {
+            padding: 0.3rem;
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+        }
+        
+        tr:nth-child(even) { background: var(--bg); }
+        
+        td input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            text-align: center;
+            font-size: 0.75rem;
+        }
+        
+        td input:focus {
+            background: var(--bg-surface);
+            outline: 1px solid var(--accent);
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active { display: flex; }
+        
+        .modal-content {
+            background: var(--bg-card);
+            padding: 1.25rem;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-content h2 { margin-bottom: 0.75rem; font-size: 1rem; }
+        .modal-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; justify-content: flex-end; }
+        
+        /* Modal Preview Grande */
+        .preview-modal-content {
+            max-width: 90vw !important;
+            width: auto !important;
+            max-height: 95vh !important;
+            padding: 1rem !important;
+        }
+        
+        .preview-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .preview-modal-header h2 {
+            margin: 0;
+            font-size: 1.1rem;
+        }
+        
+        .preview-modal-body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: auto;
+            max-height: calc(95vh - 100px);
+            background: #f5f5f5;
+            border-radius: 6px;
+            padding: 1rem;
+        }
+        
+        .preview-modal-body img {
+            max-width: 100%;
+            max-height: calc(90vh - 120px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            border-radius: 4px;
+        }
+        
+        .drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: 6px;
+            padding: 1.25rem;
+            text-align: center;
+            cursor: pointer;
+        }
+        
+        .drop-zone:hover { border-color: var(--accent); }
+        .drop-zone .icon { font-size: 1.5rem; }
+        
+        .alert {
+            padding: 0.5rem;
+            border-radius: 5px;
+            margin-bottom: 0.5rem;
+            font-size: 0.8rem;
+        }
+        
+        .alert-success { background: rgba(16, 185, 129, 0.2); border: 1px solid var(--green); }
+        .alert-error { background: rgba(239, 68, 68, 0.2); border: 1px solid var(--red); }
+        .alert-warning { background: rgba(245, 158, 11, 0.2); border: 1px solid var(--yellow); }
+        .alert-info { background: rgba(99, 102, 241, 0.2); border: 1px solid var(--accent); }
+        
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        
+        .loading {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* Drag & Drop Varianti */
+        #variantiBody tr {
+            transition: background-color 0.2s;
+        }
+        #variantiBody tr:hover {
+            background-color: var(--bg-surface);
+        }
+        #variantiBody tr.dragging {
+            opacity: 0.5;
+            background-color: var(--accent);
+        }
+        .drag-handle {
+            font-size: 1.2rem;
+            user-select: none;
+        }
+        .drag-handle:hover {
+            color: var(--accent) !important;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>📦 Catalogo Manager v3</h1>
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value" id="statProdotti">0</div>
+                <div class="stat-label">Prodotti</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="statVarianti">0</div>
+                <div class="stat-label">Varianti</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value green" id="statPosizioni">0</div>
+                <div class="stat-label">Posizioni</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value orange" id="statTaskAperti">0</div>
+                <div class="stat-label">Task Aperti</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value green" id="statTaskCompletati">0</div>
+                <div class="stat-label">Completati</div>
+            </div>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('importModal')">📥 Importa</button>
+        <button class="btn btn-success" onclick="openModal('posizioniModal')">📊 Posizioni</button>
+        <button class="btn btn-warning" onclick="openModal('taskSummaryModal')">📋 Task</button>
+        <button class="btn" style="background: #8b5cf6;" onclick="saveAllBoxes()">💾 Salva Tutti</button>
+        <button class="btn btn-success" onclick="openModal('newProductModal')">➕ Nuovo</button>
+        <button class="btn btn-danger btn-small" onclick="confirmReset()">🗑️</button>
+    </header>
+    
+    <div class="main">
+        <!-- Lista Prodotti -->
+        <div class="panel">
+            <div class="panel-header">
+                <h2>📋 Prodotti</h2>
+                <span id="productCount" style="font-size: 0.75rem; color: var(--text-muted);">0</span>
+            </div>
+            <div class="panel-content">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="🔍 Cerca..." onkeyup="debounceSearch()">
+                </div>
+                <div class="filter-row">
+                    <label>
+                        <input type="checkbox" id="filterTask" onchange="loadProducts(1)">
+                        Solo con task aperti
+                    </label>
+                </div>
+                <ul class="product-list" id="productList"></ul>
+            </div>
+            <div id="pagination" style="padding: 0.4rem; border-top: 1px solid var(--border); text-align: center;"></div>
+        </div>
+        
+        <!-- Editor -->
+        <div class="panel">
+            <div class="tabs">
+                <div class="tab active" onclick="showTab('info')">📝 Info</div>
+                <div class="tab" onclick="showTab('varianti')">📊 Varianti</div>
+                <div class="tab" onclick="showTab('icone')">🎯 Icone</div>
+            </div>
+            <div class="panel-content">
+                <!-- Tab Info -->
+                <div id="tabInfo" class="tab-content active">
+                    <div id="editorContent">
+                        <div class="preview-placeholder">
+                            <p>👆 Seleziona un prodotto</p>
+                        </div>
+                    </div>
+                    <!-- Task sotto Info -->
+                    <div id="taskContent" style="margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+                    </div>
+                </div>
+                
+                <!-- Tab Varianti -->
+                <div id="tabVarianti" class="tab-content">
+                    <div id="variantiContent">
+                        <div class="preview-placeholder">
+                            <p>📊 Seleziona un prodotto</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tab Icone -->
+                <div id="tabIcone" class="tab-content">
+                    <div id="iconeContent">
+                        <div class="preview-placeholder">
+                            <p>🎯 Seleziona un prodotto</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Preview -->
+        <div class="panel">
+            <div class="panel-header">
+                <h2>👁️ Anteprima</h2>
+                <div style="display: flex; gap: 0.5rem;">
+                    <select id="templateSelect" onchange="reloadPreview()" style="padding: 0.2rem; font-size: 0.75rem; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 4px;">
+                        <option value="corporate">🏢 Corporate</option>
+                        <option value="fullhd">🖥️ Full HD</option>
+                    </select>
+                    <button class="btn btn-small" onclick="openPreviewModal()" id="btnZoom" disabled title="Ingrandisci">🔍</button>
+                    <button class="btn btn-small btn-success" onclick="downloadBox()" id="btnDownload" disabled>💾 Scarica</button>
+                </div>
+            </div>
+            <div class="panel-content">
+                <div class="preview-container" id="previewContainer" onclick="openPreviewModal()" style="cursor: pointer;" title="Clicca per ingrandire">
+                    <div class="preview-placeholder">
+                        <p>🖼️ Seleziona un prodotto</p>
+                    </div>
+                </div>
+                
+                <!-- Task Summary sotto preview -->
+                <div class="task-section" style="margin-top: 0.75rem;">
+                    <h3>📋 Task Recenti (clicca per andare)</h3>
+                    <div id="recentTasks" class="task-summary"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal Anteprima Grande -->
+    <div class="modal" id="previewModal">
+        <div class="modal-content preview-modal-content">
+            <div class="preview-modal-header">
+                <h2 id="previewModalTitle">👁️ Anteprima</h2>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <select id="previewModalTemplate" onchange="reloadPreviewModal()" style="padding: 0.3rem 0.5rem; font-size: 0.85rem; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 4px;">
+                        <option value="corporate">🏢 Corporate</option>
+                        <option value="fullhd">🖥️ Full HD</option>
+                    </select>
+                    <button class="btn btn-success" onclick="downloadBox()">💾 Scarica</button>
+                    <button class="btn" onclick="closeModal('previewModal')">✕</button>
+                </div>
+            </div>
+            <div class="preview-modal-body" id="previewModalBody">
+                <div class="preview-placeholder">
+                    <p>🖼️ Caricamento...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal Import -->
+    <div class="modal" id="importModal">
+        <div class="modal-content">
+            <h2>📥 Importa CSV</h2>
+            <div class="drop-zone" onclick="document.getElementById('fileInput').click()">
+                <div class="icon">📄</div>
+                <p>Trascina CSV o clicca</p>
+            </div>
+            <input type="file" id="fileInput" accept=".csv" multiple style="display: none" onchange="handleCSVFiles(this.files)">
+            <div id="importResults" style="margin-top: 0.75rem;"></div>
+            <div class="modal-actions">
+                <button class="btn" onclick="closeModal('importModal')">Chiudi</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal Posizioni -->
+    <div class="modal" id="posizioniModal">
+        <div class="modal-content">
+            <h2>📊 Gestione Posizioni</h2>
+            
+            <!-- Import Posizioni -->
+            <div style="border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 1rem;">
+                <h3 style="font-size: 0.9rem; margin-bottom: 0.5rem;">📥 Importa Posizioni</h3>
+                <div class="alert alert-info" style="margin-bottom: 0.75rem; font-size: 0.8rem;">
+                    Carica Excel/CSV con colonne <strong>CODICE</strong> e <strong>NUMERO</strong>
+                </div>
+                <div class="form-group">
+                    <label>Nome Categoria</label>
+                    <input type="text" id="categoriaInput" placeholder="Es: IRRIGAZIONE" value="">
+                </div>
+                <div class="drop-zone" onclick="document.getElementById('posizioniInput').click()">
+                    <div class="icon">📊</div>
+                    <p>Trascina Excel/CSV o clicca</p>
+                </div>
+                <input type="file" id="posizioniInput" accept=".xlsx,.xls,.csv" style="display: none" onchange="handlePosizioniFile(this.files[0])">
+                <div id="posizioniResults" style="margin-top: 0.5rem;"></div>
+            </div>
+            
+            <!-- Export Catalogo -->
+            <div>
+                <h3 style="font-size: 0.9rem; margin-bottom: 0.5rem;">📤 Esporta Catalogo</h3>
+                <div class="alert alert-info" style="margin-bottom: 0.75rem; font-size: 0.8rem;">
+                    Genera i box in <code>export_catalogo/CATEGORIA/</code><br>
+                    Nome file: <code>POSIZIONE_CODICE.jpg</code>
+                </div>
+                <div class="form-group">
+                    <label>Categoria da Esportare</label>
+                    <select id="exportCategoria" style="width: 100%; padding: 0.5rem; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 4px;">
+                        <option value="">-- Seleziona --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Template</label>
+                    <select id="exportTemplate" style="width: 100%; padding: 0.5rem; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 4px;">
+                        <option value="corporate">🏢 Corporate</option>
+                        <option value="fullhd">🖥️ Full HD</option>
+                    </select>
+                </div>
+                <button class="btn btn-success" onclick="executeExport()" style="width: 100%;">📤 Esporta Catalogo</button>
+                <div id="exportResults" style="margin-top: 0.5rem;"></div>
+            </div>
+            
+            <!-- Salva Tutti i Box -->
+            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+                <h3 style="font-size: 0.9rem; margin-bottom: 0.5rem;">💾 Salva Tutti i Box</h3>
+                <div class="alert alert-info" style="margin-bottom: 0.75rem; font-size: 0.8rem;">
+                    Salva tutti i box nella cartella <code>output_box/</code>
+                </div>
+                <div class="form-group">
+                    <label>Template</label>
+                    <select id="saveAllTemplate" style="width: 100%; padding: 0.5rem; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 4px;">
+                        <option value="corporate">🏢 Corporate</option>
+                        <option value="fullhd">🖥️ Full HD</option>
+                    </select>
+                </div>
+                <button class="btn btn-accent" onclick="saveAllBoxes()" style="width: 100%;">💾 Salva Tutti i Box</button>
+                <div id="saveAllResults" style="margin-top: 0.5rem;"></div>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn" onclick="closeModal('posizioniModal')">Chiudi</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal Task Summary -->
+    <div class="modal" id="taskSummaryModal">
+        <div class="modal-content" style="max-width: 700px;">
+            <h2>📋 Riepilogo Task Aperti</h2>
+            <div id="fullTaskSummary" style="max-height: 500px; overflow-y: auto;"></div>
+            <div class="modal-actions">
+                <button class="btn" onclick="closeModal('taskSummaryModal')">Chiudi</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal Aggiungi Variante -->
+    <div class="modal" id="addVarianteModal">
+        <div class="modal-content">
+            <h2>➕ Aggiungi Variante</h2>
+            <div class="form-group">
+                <label>Codice *</label>
+                <input type="text" id="newVarCodice">
+            </div>
+            <div class="form-group">
+                <label>Modello</label>
+                <input type="text" id="newVarModello">
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>U.M.</label><input type="text" id="newVarUm" value="PZ"></div>
+                <div class="form-group"><label>MV</label><input type="text" id="newVarMv" value="1"></div>
+                <div class="form-group"><label>CF</label><input type="text" id="newVarCf"></div>
+                <div class="form-group"><label>Listino</label><input type="text" id="newVarListino"></div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn" onclick="closeModal('addVarianteModal')">Annulla</button>
+                <button class="btn btn-success" onclick="saveNewVariante()">💾 Salva</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modale Nuovo Prodotto -->
+    <div class="modal" id="newProductModal">
+        <div class="modal-content">
+            <h2>➕ Nuovo Prodotto</h2>
+            <div class="form-row">
+                <div class="form-group" style="flex: 1;">
+                    <label>Codice Principale *</label>
+                    <input type="text" id="newProdCodice" placeholder="Es: 1234">
+                </div>
+                <div class="form-group" style="flex: 0 0 100px;">
+                    <label>📍 Posizione</label>
+                    <input type="number" id="newProdPosizione" placeholder="N°" min="1">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Titolo</label>
+                <input type="text" id="newProdTitolo" placeholder="Nome del prodotto">
+            </div>
+            <div class="form-group">
+                <label>Descrizione</label>
+                <textarea id="newProdDescrizione" placeholder="Descrizione opzionale"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn" onclick="closeModal('newProductModal')">Annulla</button>
+                <button class="btn btn-success" onclick="saveNewProduct()">💾 Crea Prodotto</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentProductId = null;
+        let currentProduct = null;
+        let currentPage = 1;
+        let searchTimeout = null;
+        
+        // Campi per task
+        const TASK_FIELDS = ['IMMAGINE', 'DESCRIZIONE', 'U.M.', 'MV', 'CF', 'LISTINO', 'LOGO_BRAND'];
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStats();
+            loadProducts();
+            loadRecentTasks();
+        });
+        
+        async function api(endpoint, options = {}) {
+            const response = await fetch(`/api${endpoint}`, {
+                headers: { 'Content-Type': 'application/json' },
+                ...options
+            });
+            return response.json();
+        }
+        
+        async function loadStats() {
+            const stats = await api('/stats');
+            document.getElementById('statProdotti').textContent = stats.prodotti;
+            document.getElementById('statVarianti').textContent = stats.varianti;
+            document.getElementById('statPosizioni').textContent = stats.posizioni;
+            document.getElementById('statTaskAperti').textContent = stats.task_aperti;
+            document.getElementById('statTaskCompletati').textContent = stats.task_completati;
+            
+            // Popola select categorie per export
+            const select = document.getElementById('exportCategoria');
+            if (select && stats.categorie) {
+                select.innerHTML = '<option value="">-- Seleziona --</option>';
+                stats.categorie.forEach(cat => {
+                    select.innerHTML += `<option value="${cat}">${cat}</option>`;
+                });
+            }
+        }
+        
+        async function loadProducts(page = 1) {
+            const search = document.getElementById('searchInput').value;
+            const soloTask = document.getElementById('filterTask').checked ? '1' : '';
+            
+            const data = await api(`/prodotti?page=${page}&per_page=50&search=${encodeURIComponent(search)}&solo_task=${soloTask}`);
+            
+            currentPage = page;
+            document.getElementById('productCount').textContent = data.total;
+            
+            const list = document.getElementById('productList');
+            
+            if (data.prodotti.length === 0) {
+                list.innerHTML = `<li style="text-align: center; padding: 1rem; color: var(--text-muted);">Nessun risultato</li>`;
+            } else {
+                list.innerHTML = data.prodotti.map(p => `
+                    <li class="product-item ${p.id === currentProductId ? 'selected' : ''}" onclick="selectProduct(${p.id})">
+                        ${p.controllato ? `<span class="complete-badge">✓</span>` : (p.task_aperti > 0 ? `<span class="task-badge">${p.task_aperti} task</span>` : '')}
+                        <div>
+                            ${p.posizione ? `<span class="product-pos">#${p.posizione}</span>` : ''}
+                            <span class="product-code">${p.codice_principale}</span>
+                        </div>
+                        <div class="product-title">${escapeHtml(p.titolo)}</div>
+                        <div class="product-meta">📊 ${p.num_varianti} var.</div>
+                    </li>
+                `).join('');
+            }
+            
+            renderPagination(data.page, data.pages);
+        }
+        
+        function renderPagination(current, total) {
+            const container = document.getElementById('pagination');
+            if (total <= 1) { container.innerHTML = ''; return; }
+            
+            let html = '';
+            if (current > 1) html += `<button class="btn btn-small" onclick="loadProducts(${current - 1})">◀</button>`;
+            html += `<span style="margin: 0 0.5rem; font-size: 0.75rem;">${current}/${total}</span>`;
+            if (current < total) html += `<button class="btn btn-small" onclick="loadProducts(${current + 1})">▶</button>`;
+            container.innerHTML = html;
+        }
+        
+        function debounceSearch() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => loadProducts(1), 300);
+        }
+        
+        async function selectProduct(id) {
+            currentProductId = id;
+            document.querySelectorAll('.product-item').forEach(el => el.classList.remove('selected'));
+            event.currentTarget?.classList.add('selected');
+            
+            currentProduct = await api(`/prodotto/${id}`);
+            
+            renderEditor();
+            renderVarianti();
+            renderIcone();
+            renderTaskTab();
+            reloadPreview();
+            
+            document.getElementById('btnDownload').disabled = false;
+            document.getElementById('btnZoom').disabled = false;
+        }
+        
+        function renderEditor() {
+            const p = currentProduct;
+            
+            document.getElementById('editorContent').innerHTML = `
+                <div class="form-row">
+                    <div class="form-group" style="flex: 0 0 100px;">
+                        <label>Codice</label>
+                        <input type="text" value="${p.codice_principale}" disabled style="opacity: 0.6;">
+                    </div>
+                    <div class="form-group" style="flex: 0 0 100px;">
+                        <label>📍 Posizione</label>
+                        <input type="number" id="editPosizione" value="${p.posizione || ''}" placeholder="N°" min="1">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Titolo</label>
+                    <input type="text" id="editTitolo" value="${escapeHtml(p.titolo)}">
+                </div>
+                
+                <div class="form-group">
+                    <label>Descrizione</label>
+                    <textarea id="editDescrizione">${escapeHtml(p.descrizione || '')}</textarea>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>📷 Immagine Prodotto</label>
+                        <div class="upload-area" onclick="document.getElementById('fotoInput').click()">
+                            ${p.immagine ? `<img src="/api/foto/${p.immagine}" class="upload-preview" onerror="this.style.display='none'">` : ''}
+                            <p style="font-size: 0.7rem; color: var(--text-muted);">${p.immagine || 'Clicca per caricare'}</p>
+                        </div>
+                        <input type="file" id="fotoInput" accept="image/*" style="display: none" onchange="uploadFoto(this.files[0])">
+                        <div style="display: flex; gap: 0.25rem; margin-top: 0.25rem;">
+                            <input type="text" id="editImmagine" value="${escapeHtml(p.immagine || '')}" placeholder="nome file" style="flex: 1;">
+                            ${p.immagine ? `<button class="btn btn-danger btn-small" onclick="deleteImage('immagine')" title="Cancella">🗑️</button>` : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>🏷️ Logo Brand</label>
+                        <div class="upload-area" onclick="document.getElementById('logoInput').click()">
+                            ${p.logo ? `<img src="/api/logo/${p.logo}" class="upload-preview" onerror="this.style.display='none'">` : ''}
+                            <p style="font-size: 0.7rem; color: var(--text-muted);">${p.logo || 'Clicca per caricare'}</p>
+                        </div>
+                        <input type="file" id="logoInput" accept="image/*" style="display: none" onchange="uploadLogo(this.files[0])">
+                        <div style="display: flex; gap: 0.25rem; margin-top: 0.25rem;">
+                            <input type="text" id="editLogo" value="${escapeHtml(p.logo || '')}" placeholder="nome file" style="flex: 1;">
+                            ${p.logo ? `<button class="btn btn-danger btn-small" onclick="deleteImage('logo')" title="Cancella">🗑️</button>` : ''}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Template Box</label>
+                    <div class="template-selector">
+                        <div class="template-option ${(p.template || 'scheda') === 'scheda' ? 'selected' : ''}" onclick="selectTemplate('scheda')">
+                            <div class="icon">📇</div>
+                            <div class="name">Scheda</div>
+                        </div>
+                        <div class="template-option ${p.template === 'tabella' ? 'selected' : ''}" onclick="selectTemplate('tabella')">
+                            <div class="icon">📊</div>
+                            <div class="name">Tabella</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <button class="btn btn-success" onclick="saveProduct()">💾 Salva</button>
+                    <button class="btn btn-danger btn-small" onclick="deleteProduct()">🗑️ Elimina</button>
+                    <div style="margin-left: auto;">
+                        <button class="btn ${p.controllato ? 'btn-checked' : ''}" onclick="toggleControllato()" style="background: ${p.controllato ? 'var(--green)' : 'var(--bg-surface)'};">
+                            ${p.controllato ? '✓ Controllato' : '☐ Controllato'}
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderVarianti() {
+            const varianti = currentProduct.varianti;
+            
+            let html = `
+                <button class="btn btn-success btn-small" style="margin-bottom: 0.5rem;" onclick="openModal('addVarianteModal')">➕ Aggiungi</button>
+                <div style="overflow-x: auto;">
+                    <table id="variantiTable">
+                        <thead><tr>
+                            <th style="width: 30px;"></th>
+                            <th>Codice</th>
+                            <th>Modello</th>
+                            <th>U.M.</th>
+                            <th>MV</th>
+                            <th>CF</th>
+                            <th>Netto</th>
+                            <th title="Escludi dalla stampa" style="width: 40px;">🖨️</th>
+                            <th></th>
+                        </tr></thead>
+                        <tbody id="variantiBody">
+            `;
+            
+            varianti.forEach((v, idx) => {
+                const isExcluded = v.escludi_stampa == 1;
+                html += `
+                    <tr data-codice="${v.codice}" data-ordine="${idx}" draggable="true" 
+                        ondragstart="dragStart(event)" ondragover="dragOver(event)" 
+                        ondrop="dropRow(event)" ondragend="dragEnd(event)"
+                        style="cursor: grab; ${isExcluded ? 'opacity: 0.5; background: #fff3cd;' : ''}">
+                        <td class="drag-handle" style="cursor: grab; color: var(--text-muted);">⋮⋮</td>
+                        <td><strong>${v.codice}</strong></td>
+                        <td><input value="${escapeHtml(v.modello || '')}" onchange="updateVariante('${v.codice}')"></td>
+                        <td><input value="${escapeHtml(v.um || '')}" onchange="updateVariante('${v.codice}')" style="width: 50px;"></td>
+                        <td><input value="${escapeHtml(v.mv || '')}" onchange="updateVariante('${v.codice}')" style="width: 50px;"></td>
+                        <td><input value="${escapeHtml(v.cf || '')}" onchange="updateVariante('${v.codice}')" style="width: 50px;"></td>
+                        <td><input value="${escapeHtml(v.listino || '')}" onchange="updateVariante('${v.codice}')" style="width: 80px;"></td>
+                        <td style="text-align: center;">
+                            <input type="checkbox" ${isExcluded ? 'checked' : ''} 
+                                   onchange="toggleEscludiStampa('${v.codice}')" 
+                                   title="${isExcluded ? 'Esclusa dalla stampa' : 'Inclusa nella stampa'}"
+                                   style="width: 18px; height: 18px; cursor: pointer;">
+                        </td>
+                        <td><button class="btn btn-danger btn-small" onclick="deleteVariante('${v.codice}')">🗑️</button></td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table></div>';
+            document.getElementById('variantiContent').innerHTML = html;
+        }
+        
+        // Drag & Drop per riordinare varianti
+        let draggedRow = null;
+        
+        function dragStart(e) {
+            draggedRow = e.target.closest('tr');
+            draggedRow.style.opacity = '0.5';
+            e.dataTransfer.effectAllowed = 'move';
+        }
+        
+        function dragOver(e) {
+            e.preventDefault();
+            const tr = e.target.closest('tr');
+            if (tr && tr !== draggedRow) {
+                tr.style.borderTop = '2px solid var(--accent)';
+            }
+        }
+        
+        function dragEnd(e) {
+            draggedRow.style.opacity = '1';
+            document.querySelectorAll('#variantiBody tr').forEach(tr => {
+                tr.style.borderTop = '';
+            });
+        }
+        
+        async function dropRow(e) {
+            e.preventDefault();
+            const targetRow = e.target.closest('tr');
+            if (!targetRow || targetRow === draggedRow) return;
+            
+            const tbody = document.getElementById('variantiBody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            const draggedIdx = rows.indexOf(draggedRow);
+            const targetIdx = rows.indexOf(targetRow);
+            
+            if (draggedIdx < targetIdx) {
+                targetRow.after(draggedRow);
+            } else {
+                targetRow.before(draggedRow);
+            }
+            
+            // Salva nuovo ordine
+            await saveVariantiOrder();
+        }
+        
+        async function saveVariantiOrder() {
+            const tbody = document.getElementById('variantiBody');
+            const rows = tbody.querySelectorAll('tr');
+            const ordine = [];
+            
+            rows.forEach((row, idx) => {
+                ordine.push({
+                    codice: row.dataset.codice,
+                    ordine: idx
+                });
+            });
+            
+            await api(`/prodotto/${currentProductId}/ordine_varianti`, {
+                method: 'POST',
+                body: JSON.stringify({ ordine: ordine })
+            });
+            
+            // Ricarica prodotto per aggiornare
+            currentProduct = await api(`/prodotto/${currentProductId}`);
+            reloadPreview();
+            notify('Ordine aggiornato', 'success');
+        }
+        
+        function renderTaskTab() {
+            const tasks = currentProduct.task || [];
+            
+            let html = `
+                <div class="alert alert-info">
+                    Assegna task per i campi da modificare. Il collaboratore vedrà la lista e potrà completarli.
+                </div>
+                
+                <h3 style="font-size: 0.85rem; margin: 0.75rem 0 0.5rem;">➕ Aggiungi Task</h3>
+            `;
+            
+            // Form per aggiungere task
+            TASK_FIELDS.forEach(campo => {
+                const existingTask = tasks.find(t => t.campo === campo && !t.completato);
+                
+                html += `
+                    <div class="task-item ${existingTask ? '' : 'new'}">
+                        <input type="checkbox" ${existingTask ? 'checked' : ''} 
+                               onchange="toggleTaskField('${campo}', this.checked)"
+                               ${existingTask ? 'disabled' : ''}>
+                        <span class="campo">${campo}</span>
+                        <input type="text" class="nota" id="nota_${campo}" 
+                               placeholder="Nota..." 
+                               value="${existingTask ? escapeHtml(existingTask.nota || '') : ''}">
+                        ${existingTask ? 
+                            `<button class="btn btn-success btn-small" onclick="completeTask(${existingTask.id})">✓</button>
+                             <button class="btn btn-danger btn-small" onclick="deleteTask(${existingTask.id})">✕</button>` :
+                            `<button class="btn btn-primary btn-small btn-add-task" onclick="addTask('${campo}')">+</button>`
+                        }
+                    </div>
+                `;
+            });
+            
+            // Task completati
+            const completati = tasks.filter(t => t.completato);
+            if (completati.length > 0) {
+                html += `<h3 style="font-size: 0.85rem; margin: 1rem 0 0.5rem; color: var(--green);">✅ Completati (${completati.length})</h3>`;
+                completati.forEach(t => {
+                    html += `
+                        <div class="task-item completato">
+                            <input type="checkbox" checked disabled>
+                            <span class="campo">${t.campo}</span>
+                            <span style="flex: 1; font-size: 0.75rem;">${escapeHtml(t.nota || '')}</span>
+                            <span style="font-size: 0.65rem; color: var(--text-muted);">${t.completato_da || ''}</span>
+                        </div>
+                    `;
+                });
+            }
+            
+            document.getElementById('taskContent').innerHTML = html;
+        }
+        
+        async function addTask(campo) {
+            const nota = document.getElementById(`nota_${campo}`).value;
+            
+            await api('/task', {
+                method: 'POST',
+                body: JSON.stringify({
+                    prodotto_id: currentProductId,
+                    campo: campo,
+                    nota: nota,
+                    assegnato_da: 'Utente'
+                })
+            });
+            
+            // Ricarica
+            currentProduct = await api(`/prodotto/${currentProductId}`);
+            renderTaskTab();
+            loadStats();
+            loadRecentTasks();
+            loadProducts(currentPage);
+            notify('Task aggiunto', 'success');
+        }
+        
+        async function completeTask(taskId) {
+            await api(`/task/${taskId}`, {
+                method: 'PUT',
+                body: JSON.stringify({
+                    completato: true,
+                    completato_da: 'Operatore'
+                })
+            });
+            
+            currentProduct = await api(`/prodotto/${currentProductId}`);
+            renderTaskTab();
+            loadStats();
+            loadRecentTasks();
+            loadProducts(currentPage);
+            notify('Task completato!', 'success');
+        }
+        
+        async function deleteTask(taskId) {
+            await api(`/task/${taskId}`, { method: 'DELETE' });
+            
+            currentProduct = await api(`/prodotto/${currentProductId}`);
+            renderTaskTab();
+            loadStats();
+            loadRecentTasks();
+            loadProducts(currentPage);
+        }
+        
+        async function loadRecentTasks() {
+            const tasks = await api('/task_summary');
+            
+            const container = document.getElementById('recentTasks');
+            
+            if (tasks.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: var(--text-muted); font-size: 0.75rem;">Nessun task aperto</p>';
+                return;
+            }
+            
+            container.innerHTML = tasks.slice(0, 10).map(t => `
+                <div class="task-summary-item" onclick="goToProduct(${t.prodotto_id})">
+                    <span class="codice">${t.codice_principale}</span>
+                    <span class="campo">${t.campo}</span>
+                    <span class="nota">${escapeHtml(t.nota || t.titolo?.substring(0, 30) || '')}</span>
+                </div>
+            `).join('');
+            
+            // Full summary per modal
+            document.getElementById('fullTaskSummary').innerHTML = tasks.map(t => `
+                <div class="task-summary-item" onclick="goToProduct(${t.prodotto_id}); closeModal('taskSummaryModal');">
+                    <span class="codice">${t.codice_principale}</span>
+                    <span class="campo">${t.campo}</span>
+                    <span class="nota">${escapeHtml(t.nota || '')}</span>
+                    <span style="font-size: 0.65rem; color: var(--text-muted);">${t.titolo?.substring(0, 25) || ''}</span>
+                </div>
+            `).join('');
+        }
+        
+        function goToProduct(productId) {
+            // Simula click sul prodotto
+            currentProductId = productId;
+            selectProduct(productId);
+            loadProducts(currentPage);
+        }
+        
+        function selectTemplate(template) {
+            document.querySelectorAll('.template-option').forEach(el => el.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+            document.getElementById('templateSelect').value = template;
+            reloadPreview();
+        }
+        
+        async function saveProduct() {
+            const template = document.querySelector('.template-option.selected')?.querySelector('.name')?.textContent?.toLowerCase() || 'tabella';
+            const posizione = document.getElementById('editPosizione')?.value;
+            
+            await api(`/prodotto/${currentProductId}`, {
+                method: 'PUT',
+                body: JSON.stringify({
+                    titolo: document.getElementById('editTitolo').value,
+                    descrizione: document.getElementById('editDescrizione').value,
+                    immagine: document.getElementById('editImmagine').value,
+                    logo: document.getElementById('editLogo').value,
+                    template: template,
+                    posizione: posizione ? parseInt(posizione) : null
+                })
+            });
+            
+            // Auto-salva box in output_box/
+            const previewTemplate = document.getElementById('templateSelect').value;
+            await api(`/box/${currentProductId}/save`, {
+                method: 'POST',
+                body: JSON.stringify({ template: previewTemplate })
+            });
+            
+            currentProduct = await api(`/prodotto/${currentProductId}`);
+            loadProducts(currentPage);
+            reloadPreview();
+            notify('Salvato + Box aggiornato!', 'success');
+        }
+        
+        async function deleteProduct() {
+            if (!confirm('Eliminare questo prodotto?')) return;
+            await api(`/prodotto/${currentProductId}`, { method: 'DELETE' });
+            currentProductId = null;
+            loadStats();
+            loadProducts(currentPage);
+            document.getElementById('editorContent').innerHTML = '<div class="preview-placeholder"><p>👆 Seleziona</p></div>';
+            document.getElementById('previewContainer').innerHTML = '<div class="preview-placeholder"><p>🖼️</p></div>';
+        }
+        
+        async function toggleControllato() {
+            const result = await api(`/prodotto/${currentProductId}/toggle_controllato`, { method: 'POST' });
+            if (result.success) {
+                currentProduct.controllato = result.controllato;
+                renderEditor();
+                loadProducts(currentPage);
+                notify(result.controllato ? '✓ Segnato come controllato' : 'Rimosso da controllato', 'success');
+            }
+        }
+        
+        async function updateVariante(codice) {
+            const row = document.querySelector(`tr[data-codice="${codice}"]`);
+            const inputs = row.querySelectorAll('input');
+            
+            await api(`/variante/${codice}`, {
+                method: 'PUT',
+                body: JSON.stringify({
+                    modello: inputs[0].value,
+                    um: inputs[1].value,
+                    mv: inputs[2].value,
+                    cf: inputs[3].value,
+                    listino: inputs[4].value
+                })
+            });
+            
+            reloadPreview();
+        }
+        
+        async function deleteVariante(codice) {
+            if (!confirm(`Eliminare ${codice}?`)) return;
+            await api(`/variante/${codice}`, { method: 'DELETE' });
+            currentProduct = await api(`/prodotto/${currentProductId}`);
+            renderVarianti();
+            loadStats();
+            reloadPreview();
+        }
+        
+        async function toggleEscludiStampa(codice) {
+            const result = await api(`/variante/${codice}/toggle_stampa`, { method: 'POST' });
+            if (result.success) {
+                // Aggiorna i dati locali
+                currentProduct = await api(`/prodotto/${currentProductId}`);
+                renderVarianti();
+                reloadPreview();
+                showNotification(result.escludi_stampa ? 
+                    `Variante ${codice} esclusa dalla stampa` : 
+                    `Variante ${codice} inclusa nella stampa`, 'success');
+            }
+        }
+        
+        async function saveNewProduct() {
+            const codice = document.getElementById('newProdCodice').value.trim();
+            if (!codice) { 
+                alert('Inserisci il codice principale'); 
+                return; 
+            }
+            
+            const result = await api('/prodotto', {
+                method: 'POST',
+                body: JSON.stringify({
+                    codice_principale: codice,
+                    titolo: document.getElementById('newProdTitolo').value.trim(),
+                    descrizione: document.getElementById('newProdDescrizione').value.trim(),
+                    posizione: document.getElementById('newProdPosizione').value || null
+                })
+            });
+            
+            if (result.error) { 
+                alert(result.error); 
+                return; 
+            }
+            
+            closeModal('newProductModal');
+            
+            // Reset campi
+            document.getElementById('newProdCodice').value = '';
+            document.getElementById('newProdTitolo').value = '';
+            document.getElementById('newProdDescrizione').value = '';
+            document.getElementById('newProdPosizione').value = '';
+            
+            // Ricarica e seleziona il nuovo prodotto
+            loadStats();
+            loadProducts(1);
+            
+            // Seleziona il nuovo prodotto
+            setTimeout(() => {
+                selectProduct(result.id);
+            }, 300);
+            
+            notify('Prodotto creato! Aggiungi le varianti.', 'success');
+        }
+        
+        async function saveNewVariante() {
+            const codice = document.getElementById('newVarCodice').value.trim();
+            if (!codice) { alert('Inserisci codice'); return; }
+            
+            const result = await api('/variante', {
+                method: 'POST',
+                body: JSON.stringify({
+                    codice,
+                    prodotto_id: currentProductId,
+                    modello: document.getElementById('newVarModello').value,
+                    um: document.getElementById('newVarUm').value,
+                    mv: document.getElementById('newVarMv').value,
+                    cf: document.getElementById('newVarCf').value,
+                    listino: document.getElementById('newVarListino').value
+                })
+            });
+            
+            if (result.error) { alert(result.error); return; }
+            
+            closeModal('addVarianteModal');
+            currentProduct = await api(`/prodotto/${currentProductId}`);
+            renderVarianti();
+            loadStats();
+            reloadPreview();
+            notify('Variante aggiunta', 'success');
+        }
+        
+        async function uploadFoto(file) {
+            if (!file) return;
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const response = await fetch(`/api/upload_foto/${currentProductId}`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                document.getElementById('editImmagine').value = result.filename;
+                currentProduct = await api(`/prodotto/${currentProductId}`);
+                renderEditor();
+                reloadPreview();
+                notify('Foto caricata!', 'success');
+            }
+        }
+        
+        async function uploadLogo(file) {
+            if (!file) return;
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const response = await fetch(`/api/upload_logo/${currentProductId}`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                document.getElementById('editLogo').value = result.filename;
+                currentProduct = await api(`/prodotto/${currentProductId}`);
+                renderEditor();
+                reloadPreview();
+                notify('Logo caricato!', 'success');
+            }
+        }
+        
+        async function deleteImage(tipo) {
+            if (!confirm(`Vuoi cancellare ${tipo}?`)) return;
+            
+            const response = await fetch(`/api/prodotto/${currentProductId}/delete_image/${tipo}`, {
+                method: 'DELETE'
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                currentProduct = await api(`/prodotto/${currentProductId}`);
+                renderEditor();
+                renderIcone();
+                reloadPreview();
+                notify(`${tipo} cancellato!`, 'success');
+            }
+        }
+        
+        async function uploadIcona(file, num) {
+            if (!file) return;
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const response = await fetch(`/api/prodotto/${currentProductId}/icona/${num}`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                currentProduct = await api(`/prodotto/${currentProductId}`);
+                renderIcone();
+                reloadPreview();
+                notify(`Icona ${num} caricata!`, 'success');
+            }
+        }
+        
+        function renderIcone() {
+            if (!currentProduct) {
+                document.getElementById('iconeContent').innerHTML = '<div class="preview-placeholder"><p>🎯 Seleziona un prodotto</p></div>';
+                return;
+            }
+            
+            const p = currentProduct;
+            
+            document.getElementById('iconeContent').innerHTML = `
+                <p style="color: var(--text-muted); margin-bottom: 1rem;">Le icone appaiono nel template Full HD (monoprodotto)</p>
+                
+                <div class="form-row" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <div class="form-group" style="flex: 1; min-width: 120px;">
+                        <label>🎯 Icona 1</label>
+                        <div class="upload-area" onclick="document.getElementById('icona1Input').click()" style="height: 120px;">
+                            ${p.icona1 ? `<img src="/api/icona/${p.icona1}" class="upload-preview" style="max-height: 80px;" onerror="this.style.display='none'">` : ''}
+                            <p style="font-size: 0.7rem; color: var(--text-muted);">${p.icona1 || 'Clicca'}</p>
+                        </div>
+                        <input type="file" id="icona1Input" accept="image/*" style="display: none" onchange="uploadIcona(this.files[0], 1)">
+                        ${p.icona1 ? `<button class="btn btn-danger btn-small" style="width: 100%; margin-top: 0.25rem;" onclick="deleteImage('icona1')">🗑️</button>` : ''}
+                    </div>
+                    
+                    <div class="form-group" style="flex: 1; min-width: 120px;">
+                        <label>🎯 Icona 2</label>
+                        <div class="upload-area" onclick="document.getElementById('icona2Input').click()" style="height: 120px;">
+                            ${p.icona2 ? `<img src="/api/icona/${p.icona2}" class="upload-preview" style="max-height: 80px;" onerror="this.style.display='none'">` : ''}
+                            <p style="font-size: 0.7rem; color: var(--text-muted);">${p.icona2 || 'Clicca'}</p>
+                        </div>
+                        <input type="file" id="icona2Input" accept="image/*" style="display: none" onchange="uploadIcona(this.files[0], 2)">
+                        ${p.icona2 ? `<button class="btn btn-danger btn-small" style="width: 100%; margin-top: 0.25rem;" onclick="deleteImage('icona2')">🗑️</button>` : ''}
+                    </div>
+                    
+                    <div class="form-group" style="flex: 1; min-width: 120px;">
+                        <label>🎯 Icona 3</label>
+                        <div class="upload-area" onclick="document.getElementById('icona3Input').click()" style="height: 120px;">
+                            ${p.icona3 ? `<img src="/api/icona/${p.icona3}" class="upload-preview" style="max-height: 80px;" onerror="this.style.display='none'">` : ''}
+                            <p style="font-size: 0.7rem; color: var(--text-muted);">${p.icona3 || 'Clicca'}</p>
+                        </div>
+                        <input type="file" id="icona3Input" accept="image/*" style="display: none" onchange="uploadIcona(this.files[0], 3)">
+                        ${p.icona3 ? `<button class="btn btn-danger btn-small" style="width: 100%; margin-top: 0.25rem;" onclick="deleteImage('icona3')">🗑️</button>` : ''}
+                    </div>
+                    
+                    <div class="form-group" style="flex: 1; min-width: 120px;">
+                        <label>🎯 Icona 4</label>
+                        <div class="upload-area" onclick="document.getElementById('icona4Input').click()" style="height: 120px;">
+                            ${p.icona4 ? `<img src="/api/icona/${p.icona4}" class="upload-preview" style="max-height: 80px;" onerror="this.style.display='none'">` : ''}
+                            <p style="font-size: 0.7rem; color: var(--text-muted);">${p.icona4 || 'Clicca'}</p>
+                        </div>
+                        <input type="file" id="icona4Input" accept="image/*" style="display: none" onchange="uploadIcona(this.files[0], 4)">
+                        ${p.icona4 ? `<button class="btn btn-danger btn-small" style="width: 100%; margin-top: 0.25rem;" onclick="deleteImage('icona4')">🗑️</button>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+        
+        async function reloadPreview() {
+            if (!currentProductId) return;
+            
+            const template = document.getElementById('templateSelect').value;
+            document.getElementById('previewContainer').innerHTML = '<div class="preview-placeholder"><div class="loading"></div></div>';
+            
+            const data = await api(`/box/${currentProductId}?template=${template}`);
+            if (data.image) {
+                document.getElementById('previewContainer').innerHTML = `<img src="${data.image}">`;
+            }
+        }
+        
+        function downloadBox() {
+            if (!currentProductId) return;
+            const template = document.getElementById('templateSelect').value;
+            window.open(`/api/box/${currentProductId}/download?template=${template}`, '_blank');
+        }
+        
+        async function handleCSVFiles(files) {
+            const results = document.getElementById('importResults');
+            results.innerHTML = '';
+            
+            for (const file of files) {
+                results.innerHTML += `<div class="alert alert-warning">⏳ ${file.name}...</div>`;
+                
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                const response = await fetch('/api/import', { method: 'POST', body: formData });
+                const result = await response.json();
+                
+                if (result.error) {
+                    results.innerHTML += `<div class="alert alert-error">❌ ${file.name}: ${result.error}</div>`;
+                } else {
+                    results.innerHTML += `<div class="alert alert-success">✅ ${file.name}: ${result.prodotti_importati} prod, ${result.varianti_importate} var</div>`;
+                }
+            }
+            
+            loadStats();
+            loadProducts(1);
+        }
+        
+        async function handlePosizioniFile(file) {
+            if (!file) return;
+            const categoria = document.getElementById('categoriaInput').value.trim() || 'default';
+            const results = document.getElementById('posizioniResults');
+            results.innerHTML = '<div class="alert alert-warning">⏳ Caricamento...</div>';
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('categoria', categoria);
+            
+            const response = await fetch('/api/import_posizioni', { method: 'POST', body: formData });
+            const result = await response.json();
+            
+            if (result.error) {
+                results.innerHTML = `<div class="alert alert-error">❌ ${result.error}</div>`;
+            } else {
+                results.innerHTML = `<div class="alert alert-success">✅ ${result.importati} posizioni caricate per "${result.categoria}"</div>`;
+                loadStats();
+                loadProducts(1);
+            }
+        }
+        
+        async function executeExport() {
+            const categoria = document.getElementById('exportCategoria').value;
+            const template = document.getElementById('exportTemplate').value;
+            
+            if (!categoria) {
+                alert('Seleziona una categoria');
+                return;
+            }
+            
+            const results = document.getElementById('exportResults');
+            results.innerHTML = '<div class="alert alert-warning">⏳ Esportazione in corso...</div>';
+            
+            const response = await api('/export_catalogo', {
+                method: 'POST',
+                body: JSON.stringify({ categoria, template })
+            });
+            
+            if (response.error) {
+                results.innerHTML = `<div class="alert alert-error">❌ ${response.error}</div>`;
+            } else {
+                results.innerHTML = `
+                    <div class="alert alert-success">
+                        ✅ Esportati ${response.exported} box<br>
+                        📁 Cartella: ${response.output_folder}
+                        ${response.errors.length ? `<br>⚠️ Errori: ${response.errors.length}` : ''}
+                    </div>
+                `;
+            }
+        }
+        
+        async function saveAllBoxes() {
+            const template = document.getElementById('saveAllTemplate').value;
+            
+            const results = document.getElementById('saveAllResults');
+            results.innerHTML = '<div class="alert alert-warning">⏳ Salvataggio in corso...</div>';
+            
+            const response = await api('/save_all_boxes', {
+                method: 'POST',
+                body: JSON.stringify({ template })
+            });
+            
+            if (response.error) {
+                results.innerHTML = `<div class="alert alert-error">❌ ${response.error}</div>`;
+            } else {
+                results.innerHTML = `
+                    <div class="alert alert-success">
+                        ✅ Salvati ${response.saved} box<br>
+                        📁 Cartella: ${response.output_folder}
+                        ${response.errors.length ? `<br>⚠️ Errori: ${response.errors.length}` : ''}
+                    </div>
+                `;
+            }
+        }
+        
+        async function saveAllBoxes() {
+            const template = document.getElementById('templateSelect').value;
+            
+            if (!confirm(`Salvare tutti i box con template "${template}" nella cartella output_box?`)) return;
+            
+            notify('Salvataggio in corso...', 'warning');
+            
+            try {
+                const result = await api('/save_all_boxes', {
+                    method: 'POST',
+                    body: JSON.stringify({ template: template })
+                });
+                
+                if (result.error) {
+                    notify(result.error, 'error');
+                } else {
+                    notify(`✅ Salvati ${result.saved} box in ${result.output_folder}`, 'success');
+                    if (result.errors && result.errors.length > 0) {
+                        console.log('Errori:', result.errors);
+                    }
+                }
+            } catch (e) {
+                notify('Errore durante il salvataggio', 'error');
+            }
+        }
+        
+        async function confirmReset() {
+            if (!confirm('⚠️ Eliminare TUTTI i dati?')) return;
+            if (!confirm('🚨 CONFERMA FINALE?')) return;
+            await api('/reset_db', { method: 'POST' });
+            loadStats();
+            loadProducts(1);
+            loadRecentTasks();
+            notify('Database resettato', 'warning');
+        }
+        
+        function showTab(name) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            document.getElementById('tab' + name.charAt(0).toUpperCase() + name.slice(1)).classList.add('active');
+        }
+        
+        function openModal(id) { document.getElementById(id).classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+        
+        function openPreviewModal() {
+            if (!currentProductId) return;
+            
+            // Sincronizza template selezionato
+            const template = document.getElementById('templateSelect').value;
+            document.getElementById('previewModalTemplate').value = template;
+            
+            // Aggiorna titolo
+            if (currentProduct) {
+                document.getElementById('previewModalTitle').textContent = '👁️ ' + currentProduct.titolo;
+            }
+            
+            // Carica immagine nel modal
+            reloadPreviewModal();
+            
+            // Apri modal
+            openModal('previewModal');
+        }
+        
+        async function reloadPreviewModal() {
+            if (!currentProductId) return;
+            
+            const template = document.getElementById('previewModalTemplate').value;
+            const body = document.getElementById('previewModalBody');
+            
+            body.innerHTML = '<div class="preview-placeholder"><p>⏳ Caricamento...</p></div>';
+            
+            try {
+                const data = await api(`/box/${currentProductId}?template=${template}`);
+                body.innerHTML = `<img src="${data.image}" alt="Preview" onclick="event.stopPropagation()">`;
+                
+                // Sincronizza anche il select principale
+                document.getElementById('templateSelect').value = template;
+            } catch (e) {
+                body.innerHTML = '<div class="preview-placeholder"><p>❌ Errore caricamento</p></div>';
+            }
+        }
+        
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+        
+        function notify(msg, type = 'success') {
+            const n = document.createElement('div');
+            n.className = `alert alert-${type}`;
+            n.style.cssText = 'position:fixed;top:60px;right:10px;z-index:1001;min-width:120px;';
+            n.textContent = msg;
+            document.body.appendChild(n);
+            setTimeout(() => n.remove(), 2000);
+        }
+    </script>
+</body>
+</html>
