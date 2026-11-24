@@ -2055,6 +2055,287 @@ def api_reset_db():
 
 
 # ============================================
+# PREVIEW CATALOGO & PDF GENERATION (v4.0)
+# ============================================
+
+@app.route('/api/catalog/pages')
+def api_catalog_pages():
+    """
+    Restituisce l'elenco delle pagine del catalogo con i prodotti impaginati.
+    Layout: 2 colonne per pagina A4
+    """
+    categoria = request.args.get('categoria', 'default')
+    items_per_page = int(request.args.get('items_per_page', 4))  # 2 colonne x 2 righe default
+
+    conn = get_db()
+    c = conn.cursor()
+
+    # Prendi prodotti ordinati per posizione
+    c.execute('''
+        SELECT p.*, pos.posizione, pos.categoria
+        FROM prodotti p
+        INNER JOIN posizioni pos ON p.codice_principale = pos.codice
+        WHERE pos.categoria = ?
+        ORDER BY pos.posizione
+    ''', (categoria,))
+
+    prodotti = [dict(row) for row in c.fetchall()]
+    conn.close()
+
+    # Dividi in pagine
+    pages = []
+    for i in range(0, len(prodotti), items_per_page):
+        page_products = prodotti[i:i + items_per_page]
+        pages.append({
+            'page_number': len(pages) + 1,
+            'products': page_products
+        })
+
+    return jsonify({
+        'total_products': len(prodotti),
+        'total_pages': len(pages),
+        'items_per_page': items_per_page,
+        'categoria': categoria,
+        'pages': pages
+    })
+
+
+@app.route('/api/catalog/page/<int:page_num>')
+def api_catalog_page_preview(page_num):
+    """
+    Genera un'immagine preview di una pagina del catalogo.
+    Layout A4 con 2 colonne.
+    """
+    categoria = request.args.get('categoria', 'default')
+    items_per_page = int(request.args.get('items_per_page', 4))
+    template = request.args.get('template', 'corporate')
+
+    conn = get_db()
+    c = conn.cursor()
+
+    # Prendi prodotti ordinati per posizione
+    c.execute('''
+        SELECT p.*, pos.posizione
+        FROM prodotti p
+        INNER JOIN posizioni pos ON p.codice_principale = pos.codice
+        WHERE pos.categoria = ?
+        ORDER BY pos.posizione
+    ''', (categoria,))
+
+    all_products = [dict(row) for row in c.fetchall()]
+
+    # Calcola offset
+    start_idx = (page_num - 1) * items_per_page
+    end_idx = start_idx + items_per_page
+    page_products = all_products[start_idx:end_idx]
+
+    if not page_products:
+        conn.close()
+        return jsonify({'error': 'Pagina non trovata'}), 404
+
+    # Genera i box per ogni prodotto
+    boxes = []
+    for prod in page_products:
+        c.execute('''
+            SELECT * FROM varianti
+            WHERE prodotto_id = ? AND (escludi_stampa = 0 OR escludi_stampa IS NULL)
+            ORDER BY ordine
+        ''', (prod['id'],))
+        varianti = [dict(row) for row in c.fetchall()]
+
+        if varianti:
+            box_img = box_generator.generate(prod, varianti, template)
+            boxes.append(box_img)
+
+    conn.close()
+
+    if not boxes:
+        return jsonify({'error': 'Nessun box generato'}), 404
+
+    # Crea pagina A4 (2480x3508 @ 300dpi)
+    PAGE_W = 2480
+    PAGE_H = 3508
+    MARGIN = 60
+    COL_GAP = 40
+    ROW_GAP = 30
+
+    # 2 colonne
+    col_w = (PAGE_W - 2 * MARGIN - COL_GAP) // 2
+
+    page_img = Image.new('RGB', (PAGE_W, PAGE_H), (255, 255, 255))
+
+    # Posiziona i box
+    for idx, box in enumerate(boxes):
+        col = idx % 2
+        row = idx // 2
+
+        # Ridimensiona box per adattarlo alla colonna
+        box_scaled = box_generator._contain(box, col_w, 1600)
+
+        x = MARGIN + col * (col_w + COL_GAP)
+        y = MARGIN + row * (box_scaled.size[1] + ROW_GAP)
+
+        if box_scaled.mode == 'RGBA':
+            page_img.paste(box_scaled, (x, y), box_scaled)
+        else:
+            page_img.paste(box_scaled, (x, y))
+
+    # Converti in base64
+    buffer = io.BytesIO()
+    page_img.save(buffer, format='JPEG', quality=85)
+    img_base64 = base64.b64encode(buffer.getvalue()).decode()
+
+    return jsonify({
+        'page_number': page_num,
+        'total_pages': (len(all_products) + items_per_page - 1) // items_per_page,
+        'products_on_page': len(page_products),
+        'image': f'data:image/jpeg;base64,{img_base64}'
+    })
+
+
+@app.route('/api/catalog/pdf', methods=['POST'])
+def api_generate_catalog_pdf():
+    """
+    Genera il PDF completo del catalogo.
+    """
+    data = request.json or {}
+    categoria = data.get('categoria', 'default')
+    items_per_page = data.get('items_per_page', 4)
+    template = data.get('template', 'corporate')
+
+    conn = get_db()
+    c = conn.cursor()
+
+    # Prendi prodotti ordinati per posizione
+    c.execute('''
+        SELECT p.*, pos.posizione
+        FROM prodotti p
+        INNER JOIN posizioni pos ON p.codice_principale = pos.codice
+        WHERE pos.categoria = ?
+        ORDER BY pos.posizione
+    ''', (categoria,))
+
+    all_products = [dict(row) for row in c.fetchall()]
+
+    if not all_products:
+        conn.close()
+        return jsonify({'error': 'Nessun prodotto trovato'}), 404
+
+    # Dimensioni pagina A4 @ 300dpi
+    PAGE_W = 2480
+    PAGE_H = 3508
+    MARGIN = 60
+    COL_GAP = 40
+    ROW_GAP = 30
+    col_w = (PAGE_W - 2 * MARGIN - COL_GAP) // 2
+
+    pages_images = []
+
+    # Genera tutte le pagine
+    for page_num in range((len(all_products) + items_per_page - 1) // items_per_page):
+        start_idx = page_num * items_per_page
+        end_idx = start_idx + items_per_page
+        page_products = all_products[start_idx:end_idx]
+
+        # Genera i box
+        boxes = []
+        for prod in page_products:
+            c.execute('''
+                SELECT * FROM varianti
+                WHERE prodotto_id = ? AND (escludi_stampa = 0 OR escludi_stampa IS NULL)
+                ORDER BY ordine
+            ''', (prod['id'],))
+            varianti = [dict(row) for row in c.fetchall()]
+
+            if varianti:
+                box_img = box_generator.generate(prod, varianti, template)
+                boxes.append(box_img)
+
+        if not boxes:
+            continue
+
+        # Crea pagina A4
+        page_img = Image.new('RGB', (PAGE_W, PAGE_H), (255, 255, 255))
+
+        # Posiziona i box
+        for idx, box in enumerate(boxes):
+            col = idx % 2
+            row = idx // 2
+
+            box_scaled = box_generator._contain(box, col_w, 1600)
+
+            x = MARGIN + col * (col_w + COL_GAP)
+            y = MARGIN + row * (box_scaled.size[1] + ROW_GAP)
+
+            if box_scaled.mode == 'RGBA':
+                page_img.paste(box_scaled, (x, y), box_scaled)
+            else:
+                page_img.paste(box_scaled, (x, y))
+
+        pages_images.append(page_img)
+
+    conn.close()
+
+    if not pages_images:
+        return jsonify({'error': 'Nessuna pagina generata'}), 404
+
+    # Salva come PDF
+    pdf_filename = f"catalogo_{categoria}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+    pdf_path = EXPORT_FOLDER / pdf_filename
+
+    # Salva prima immagine e aggiungi le altre
+    pages_images[0].save(
+        str(pdf_path),
+        'PDF',
+        resolution=300,
+        save_all=True,
+        append_images=pages_images[1:] if len(pages_images) > 1 else []
+    )
+
+    return jsonify({
+        'success': True,
+        'filename': pdf_filename,
+        'pages': len(pages_images),
+        'products': len(all_products),
+        'download_url': f'/api/catalog/pdf/download/{pdf_filename}'
+    })
+
+
+@app.route('/api/catalog/pdf/download/<filename>')
+def api_download_catalog_pdf(filename):
+    """Scarica il PDF generato"""
+    filepath = EXPORT_FOLDER / filename
+    if not filepath.exists():
+        return jsonify({'error': 'File non trovato'}), 404
+    return send_file(str(filepath), mimetype='application/pdf', as_attachment=True, download_name=filename)
+
+
+@app.route('/api/catalog/categories')
+def api_catalog_categories():
+    """Restituisce le categorie disponibili con il conteggio prodotti"""
+    conn = get_db()
+    c = conn.cursor()
+
+    c.execute('''
+        SELECT categoria, COUNT(*) as count, MIN(posizione) as min_pos, MAX(posizione) as max_pos
+        FROM posizioni
+        GROUP BY categoria
+        ORDER BY categoria
+    ''')
+
+    categories = [dict(row) for row in c.fetchall()]
+    conn.close()
+
+    return jsonify({'categories': categories})
+
+
+@app.route('/preview')
+def preview_page():
+    """Pagina HTML per la preview del catalogo"""
+    return render_template('preview.html')
+
+
+# ============================================
 # MAIN
 # ============================================
 
