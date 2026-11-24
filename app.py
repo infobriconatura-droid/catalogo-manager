@@ -2167,6 +2167,256 @@ def api_reset_db():
 # PREVIEW CATALOGO & PDF GENERATION (v4.0)
 # ============================================
 
+def calcola_altezza_box(num_varianti):
+    """
+    Calcola altezza box in pixel basata sul numero di varianti.
+    Layout corporate: header + righe varianti + descrizione + strip
+    """
+    TOP_SECTION = 100      # Titolo + logo
+    IMG_SECTION = 320 + 120  # Immagine + descrizione
+    HEADER_ROW = 50        # Header tabella
+    VAR_ROW = 50           # Riga per variante
+    STRIP = 14             # Striscia verde in basso
+
+    return TOP_SECTION + IMG_SECTION + HEADER_ROW + (num_varianti * VAR_ROW) + STRIP
+
+
+def impagina_dinamico(prodotti, conn, page_height=3400, col_width=1150, margin_top=60, row_gap=30):
+    """
+    Impagina i prodotti dinamicamente in base all'altezza reale dei box.
+    Layout: 2 colonne, riempimento dall'alto verso il basso.
+    Ritorna lista di pagine, ogni pagina è lista di prodotti con coordinate.
+    """
+    c = conn.cursor()
+
+    pages = []
+    current_page = []
+    col1_y = margin_top
+    col2_y = margin_top
+
+    for prod in prodotti:
+        # Conta varianti per questo prodotto
+        c.execute('''
+            SELECT COUNT(*) FROM varianti
+            WHERE prodotto_id = ? AND (escludi_stampa = 0 OR escludi_stampa IS NULL)
+        ''', (prod['id'],))
+        num_var = c.fetchone()[0] or 1
+
+        box_h = calcola_altezza_box(num_var)
+
+        # Ridimensiona per colonna (box originale 1080px -> ~1150px colonna)
+        scale = col_width / 1080
+        box_h_scaled = int(box_h * scale)
+
+        # Trova colonna con più spazio
+        if col1_y <= col2_y:
+            # Prova colonna 1
+            if col1_y + box_h_scaled > page_height:
+                # Colonna 1 piena, prova colonna 2
+                if col2_y + box_h_scaled > page_height:
+                    # Entrambe piene - nuova pagina
+                    if current_page:
+                        pages.append(current_page)
+                    current_page = []
+                    col1_y = margin_top
+                    col2_y = margin_top
+                    # Metti in colonna 1 della nuova pagina
+                    prod['_col'] = 0
+                    prod['_y'] = col1_y
+                    prod['_h'] = box_h_scaled
+                    prod['_num_var'] = num_var
+                    current_page.append(prod)
+                    col1_y += box_h_scaled + row_gap
+                else:
+                    # Metti in colonna 2
+                    prod['_col'] = 1
+                    prod['_y'] = col2_y
+                    prod['_h'] = box_h_scaled
+                    prod['_num_var'] = num_var
+                    current_page.append(prod)
+                    col2_y += box_h_scaled + row_gap
+            else:
+                # Entra in colonna 1
+                prod['_col'] = 0
+                prod['_y'] = col1_y
+                prod['_h'] = box_h_scaled
+                prod['_num_var'] = num_var
+                current_page.append(prod)
+                col1_y += box_h_scaled + row_gap
+        else:
+            # Prova colonna 2
+            if col2_y + box_h_scaled > page_height:
+                # Colonna 2 piena, nuova pagina
+                if current_page:
+                    pages.append(current_page)
+                current_page = []
+                col1_y = margin_top
+                col2_y = margin_top
+                prod['_col'] = 0
+                prod['_y'] = col1_y
+                prod['_h'] = box_h_scaled
+                prod['_num_var'] = num_var
+                current_page.append(prod)
+                col1_y += box_h_scaled + row_gap
+            else:
+                prod['_col'] = 1
+                prod['_y'] = col2_y
+                prod['_h'] = box_h_scaled
+                prod['_num_var'] = num_var
+                current_page.append(prod)
+                col2_y += box_h_scaled + row_gap
+
+    # Ultima pagina
+    if current_page:
+        pages.append(current_page)
+
+    return pages
+
+
+@app.route('/api/catalog/pages-dynamic')
+def api_catalog_pages_dynamic():
+    """
+    Restituisce l'elenco delle pagine con impaginazione DINAMICA.
+    Il numero di prodotti per pagina varia in base all'altezza dei box.
+    """
+    categoria = request.args.get('categoria', 'default')
+
+    conn = get_db()
+    c = conn.cursor()
+
+    # Prendi prodotti ordinati per posizione
+    c.execute('''
+        SELECT p.*, pos.posizione, pos.categoria
+        FROM prodotti p
+        INNER JOIN posizioni pos ON p.codice_principale = pos.codice
+        WHERE pos.categoria = ?
+        ORDER BY pos.posizione
+    ''', (categoria,))
+
+    prodotti = [dict(row) for row in c.fetchall()]
+
+    if not prodotti:
+        conn.close()
+        return jsonify({'error': 'Nessun prodotto trovato', 'categoria': categoria}), 404
+
+    # Impagina dinamicamente
+    pages = impagina_dinamico(prodotti, conn)
+
+    conn.close()
+
+    # Formatta output
+    result_pages = []
+    for i, page_prods in enumerate(pages):
+        result_pages.append({
+            'page_number': i + 1,
+            'num_products': len(page_prods),
+            'products': [{
+                'id': p['id'],
+                'codice_principale': p['codice_principale'],
+                'titolo': p['titolo'],
+                'posizione': p.get('posizione'),
+                'col': p.get('_col', 0),
+                'y': p.get('_y', 0),
+                'height': p.get('_h', 500),
+                'num_varianti': p.get('_num_var', 1)
+            } for p in page_prods]
+        })
+
+    return jsonify({
+        'total_products': len(prodotti),
+        'total_pages': len(pages),
+        'layout': 'dynamic',
+        'categoria': categoria,
+        'pages': result_pages
+    })
+
+
+@app.route('/api/catalog/page-dynamic/<int:page_num>')
+def api_catalog_page_dynamic(page_num):
+    """
+    Genera un'immagine preview con impaginazione DINAMICA.
+    I box sono posizionati in base alla loro altezza reale.
+    """
+    categoria = request.args.get('categoria', 'default')
+    template = request.args.get('template', 'corporate')
+
+    conn = get_db()
+    c = conn.cursor()
+
+    # Prendi prodotti ordinati per posizione
+    c.execute('''
+        SELECT p.*, pos.posizione
+        FROM prodotti p
+        INNER JOIN posizioni pos ON p.codice_principale = pos.codice
+        WHERE pos.categoria = ?
+        ORDER BY pos.posizione
+    ''', (categoria,))
+
+    all_products = [dict(row) for row in c.fetchall()]
+
+    if not all_products:
+        conn.close()
+        return jsonify({'error': 'Nessun prodotto trovato'}), 404
+
+    # Impagina dinamicamente
+    pages = impagina_dinamico(all_products, conn)
+
+    if page_num < 1 or page_num > len(pages):
+        conn.close()
+        return jsonify({'error': 'Pagina non trovata'}), 404
+
+    page_products = pages[page_num - 1]
+
+    # Dimensioni pagina A4 @300dpi
+    PAGE_W = 2480
+    PAGE_H = 3508
+    MARGIN = 60
+    COL_GAP = 40
+    col_w = (PAGE_W - 2 * MARGIN - COL_GAP) // 2
+
+    page_img = Image.new('RGB', (PAGE_W, PAGE_H), (255, 255, 255))
+
+    # Genera e posiziona ogni box
+    for prod in page_products:
+        c.execute('''
+            SELECT * FROM varianti
+            WHERE prodotto_id = ? AND (escludi_stampa = 0 OR escludi_stampa IS NULL)
+            ORDER BY ordine
+        ''', (prod['id'],))
+        varianti = [dict(row) for row in c.fetchall()]
+
+        if varianti:
+            box_img = box_generator.generate(prod, varianti, template)
+
+            # Ridimensiona per colonna
+            box_scaled = box_generator._contain(box_img, col_w, prod.get('_h', 1600))
+
+            # Posiziona
+            col = prod.get('_col', 0)
+            x = MARGIN + col * (col_w + COL_GAP)
+            y = prod.get('_y', MARGIN)
+
+            if box_scaled.mode == 'RGBA':
+                page_img.paste(box_scaled, (x, y), box_scaled)
+            else:
+                page_img.paste(box_scaled, (x, y))
+
+    conn.close()
+
+    # Converti in base64
+    buffer = io.BytesIO()
+    page_img.save(buffer, format='JPEG', quality=85)
+    img_base64 = base64.b64encode(buffer.getvalue()).decode()
+
+    return jsonify({
+        'page_number': page_num,
+        'total_pages': len(pages),
+        'products_on_page': len(page_products),
+        'layout': 'dynamic',
+        'image': f'data:image/jpeg;base64,{img_base64}'
+    })
+
+
 @app.route('/api/catalog/pages')
 def api_catalog_pages():
     """

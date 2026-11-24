@@ -388,7 +388,7 @@
                 <div>
                     <span id="infoProducts">-</span> prodotti |
                     <span id="infoPages">-</span> pagine |
-                    Layout: <strong>2 colonne</strong>
+                    Layout: <strong>Dinamico (2 col)</strong>
                 </div>
                 <div>
                     <span class="kbd">←</span><span class="kbd">→</span> Naviga |
@@ -411,7 +411,7 @@
         let pagesData = [];
         let productPositions = []; // Per click detection
 
-        const ITEMS_PER_PAGE = 4;
+        const DYNAMIC_LAYOUT = true;  // Usa impaginazione dinamica
         const ZOOM_STEP = 0.1;
         const MIN_ZOOM = 0.3;
         const MAX_ZOOM = 3;
@@ -450,8 +450,8 @@
             showLoading(true);
 
             try {
-                // Carica info pagine
-                const res = await fetch(`/api/catalog/pages?categoria=${encodeURIComponent(categoria)}&items_per_page=${ITEMS_PER_PAGE}`);
+                // Carica info pagine con layout DINAMICO
+                const res = await fetch(`/api/catalog/pages-dynamic?categoria=${encodeURIComponent(categoria)}`);
                 pagesData = await res.json();
 
                 totalPages = pagesData.total_pages;
@@ -507,7 +507,7 @@
 
         async function loadThumbnailImage(pageNum, thumbElement) {
             try {
-                const res = await fetch(`/api/catalog/page/${pageNum}?categoria=${encodeURIComponent(categoria)}&items_per_page=${ITEMS_PER_PAGE}`);
+                const res = await fetch(`/api/catalog/page-dynamic/${pageNum}?categoria=${encodeURIComponent(categoria)}`);
                 const data = await res.json();
 
                 if (data.image) {
