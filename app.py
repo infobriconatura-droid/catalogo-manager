@@ -2444,6 +2444,12 @@ def preview_page():
     return render_template('preview.html')
 
 
+@app.route('/viewer')
+def catalog_viewer_page():
+    """Nuovo Catalog Viewer interattivo con zoom e click sui prodotti"""
+    return render_template('catalog_viewer.html')
+
+
 # ============================================
 # API v4 - VERIFICA CATALOGO E STATO PRODOTTI
 # ============================================
