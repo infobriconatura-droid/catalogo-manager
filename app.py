@@ -2058,8 +2058,10 @@ def api_reset_db():
 # MAIN
 # ============================================
 
+# Inizializza il database (anche quando importato da WSGI)
+init_db()
+
 if __name__ == '__main__':
-    init_db()
     print("""
 ╔══════════════════════════════════════════════════════════╗
 ║         📦 CATALOGO MANAGER v3.0 - TEAM EDITION          ║
