@@ -1332,12 +1332,40 @@ def api_prodotti():
     page = int(request.args.get('page', 1))
     per_page = int(request.args.get('per_page', 50))
     solo_task = request.args.get('solo_task', '') == '1'
-    
+    categoria = request.args.get('categoria', '').strip()
+
     conn = get_db()
     c = conn.cursor()
-    
+
     offset = (page - 1) * per_page
-    
+
+    # Se categoria specificata, filtra per categoria
+    if categoria and categoria != 'Tutto':
+        c.execute('''
+            SELECT p.*, COUNT(v.codice) as num_varianti, pos.posizione,
+                   (SELECT COUNT(*) FROM task t WHERE t.prodotto_id = p.id AND t.completato = 0) as task_aperti
+            FROM prodotti p
+            LEFT JOIN varianti v ON p.id = v.prodotto_id
+            INNER JOIN posizioni pos ON p.codice_principale = pos.codice
+            WHERE pos.categoria = ?
+            GROUP BY p.id
+            ORDER BY pos.posizione ASC NULLS LAST, p.titolo
+            LIMIT ? OFFSET ?
+        ''', (categoria, per_page, offset))
+        prodotti = [dict(row) for row in c.fetchall()]
+
+        c.execute('SELECT COUNT(*) FROM posizioni WHERE categoria = ?', (categoria,))
+        total = c.fetchone()[0]
+
+        conn.close()
+        return jsonify({
+            'prodotti': prodotti,
+            'page': page,
+            'pages': (total + per_page - 1) // per_page,
+            'total': total,
+            'categoria': categoria
+        })
+
     if solo_task:
         # Solo prodotti con task aperti - ordinati per posizione
         query = '''
