@@ -36,6 +36,38 @@ for folder in [UPLOAD_FOLDER, FOTO_FOLDER, LOGO_FOLDER, ICONE_FOLDER, OUTPUT_FOL
 app = Flask(__name__, template_folder=str(BASE_DIR / "templates"))
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
 
+# Token segreto per deploy automatico (Claude)
+DEPLOY_TOKEN = "cat_deploy_2024_pugliese"
+
+# ============================================
+# DEPLOY AUTOMATICO (per Claude)
+# ============================================
+
+@app.route('/api/deploy', methods=['POST'])
+def api_deploy():
+    """Endpoint per deploy automatico - esegue git pull"""
+    import subprocess
+
+    token = request.headers.get('X-Deploy-Token') or request.json.get('token') if request.is_json else None
+    if token != DEPLOY_TOKEN:
+        return jsonify({'error': 'Token non valido'}), 403
+
+    try:
+        result = subprocess.run(
+            ['git', 'pull', 'origin', 'main'],
+            cwd=str(BASE_DIR),
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+        return jsonify({
+            'success': True,
+            'output': result.stdout,
+            'error': result.stderr if result.returncode != 0 else None
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 # ============================================
 # DATABASE
