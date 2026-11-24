@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-CATALOGO MANAGER v4.0
+CATALOGO MANAGER v4.1
 - Due template box (Tabella / Scheda Hyundai)
 - Sistema Task per lavorare in team
 - Import CSV basato su posizione colonne
@@ -9,6 +9,9 @@ CATALOGO MANAGER v4.0
 - v4: Flag verificato_catalogo + campo catalogo
 - v4: API verifica discrepanze PDF ↔ DB
 - v4: Alert codici variante duplicati
+- v4.1: Log modifiche con storico
+- v4.1: Backup automatico DB (JSON export)
+- v4.1: API bulk update prodotti
 """
 
 import os
@@ -33,8 +36,9 @@ LOGO_FOLDER = BASE_DIR / "loghi_brand"
 ICONE_FOLDER = BASE_DIR / "icone"
 OUTPUT_FOLDER = BASE_DIR / "output_box"
 EXPORT_FOLDER = BASE_DIR / "export_catalogo"
+BACKUP_FOLDER = BASE_DIR / "backups"
 
-for folder in [UPLOAD_FOLDER, FOTO_FOLDER, LOGO_FOLDER, ICONE_FOLDER, OUTPUT_FOLDER, EXPORT_FOLDER]:
+for folder in [UPLOAD_FOLDER, FOTO_FOLDER, LOGO_FOLDER, ICONE_FOLDER, OUTPUT_FOLDER, EXPORT_FOLDER, BACKUP_FOLDER]:
     folder.mkdir(exist_ok=True)
 
 app = Flask(__name__, template_folder=str(BASE_DIR / "templates"))
@@ -166,6 +170,21 @@ def init_db():
             errori TEXT
         )
     ''')
+
+    # === v4.1: Tabella LOG MODIFICHE ===
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS modifiche_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            prodotto_id INTEGER,
+            codice_principale TEXT,
+            campo TEXT NOT NULL,
+            valore_precedente TEXT,
+            valore_nuovo TEXT,
+            utente TEXT,
+            data_modifica TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (prodotto_id) REFERENCES prodotti(id) ON DELETE SET NULL
+        )
+    ''')
     
     # Migrazione: aggiungi colonne icone se non esistono
     try:
@@ -219,6 +238,8 @@ def init_db():
         c.execute('CREATE INDEX IF NOT EXISTS idx_prodotti_codice ON prodotti(codice_principale)')
         c.execute('CREATE INDEX IF NOT EXISTS idx_posizioni_codice ON posizioni(codice)')
         c.execute('CREATE INDEX IF NOT EXISTS idx_task_prodotto ON task(prodotto_id)')
+        c.execute('CREATE INDEX IF NOT EXISTS idx_modifiche_prodotto ON modifiche_log(prodotto_id)')
+        c.execute('CREATE INDEX IF NOT EXISTS idx_modifiche_data ON modifiche_log(data_modifica)')
     except:
         pass
     
@@ -1371,9 +1392,32 @@ def api_prodotto(id):
 @app.route('/api/prodotto/<int:id>', methods=['PUT'])
 def api_update_prodotto(id):
     data = request.json
+    utente = data.get('utente', 'web')
 
     conn = get_db()
     c = conn.cursor()
+
+    # Ottieni valori precedenti per il log
+    c.execute('SELECT * FROM prodotti WHERE id = ?', (id,))
+    prodotto_old = c.fetchone()
+    if not prodotto_old:
+        conn.close()
+        return jsonify({'error': 'Prodotto non trovato'}), 404
+
+    prodotto_old = dict(prodotto_old)
+    codice_principale = prodotto_old['codice_principale']
+
+    # Campi da aggiornare con log
+    campi_log = ['titolo', 'descrizione', 'immagine', 'logo', 'icona1', 'icona2',
+                 'icona3', 'icona4', 'template', 'scala_foto', 'stato',
+                 'verificato_catalogo', 'catalogo']
+
+    for campo in campi_log:
+        if campo in data and data[campo] is not None:
+            valore_nuovo = data[campo]
+            valore_old = prodotto_old.get(campo)
+            if str(valore_nuovo) != str(valore_old) if valore_old else valore_nuovo:
+                log_modifica(conn, id, codice_principale, campo, valore_old, valore_nuovo, utente)
 
     # Update base fields (inclusi nuovi campi v4: stato, verificato_catalogo, catalogo)
     c.execute('''
@@ -1397,23 +1441,27 @@ def api_update_prodotto(id):
           data.get('logo'), data.get('icona1'), data.get('icona2'), data.get('icona3'), data.get('icona4'),
           data.get('template'), data.get('scala_foto'),
           data.get('stato'), data.get('verificato_catalogo'), data.get('catalogo'), id))
-    
+
     # Gestisci posizione
     posizione = data.get('posizione')
-    c.execute('SELECT codice_principale FROM prodotti WHERE id = ?', (id,))
-    row = c.fetchone()
-    if row:
-        codice = row[0]
+    if posizione is not None:
+        # Log modifica posizione
+        c.execute('SELECT posizione FROM posizioni WHERE codice = ?', (codice_principale,))
+        pos_old = c.fetchone()
+        pos_old_val = pos_old[0] if pos_old else None
+        if str(posizione) != str(pos_old_val) if pos_old_val else posizione:
+            log_modifica(conn, id, codice_principale, 'posizione', pos_old_val, posizione, utente)
+
         if posizione:
             # Inserisci o aggiorna posizione
-            c.execute('INSERT OR REPLACE INTO posizioni (codice, posizione) VALUES (?, ?)', (codice, posizione))
+            c.execute('INSERT OR REPLACE INTO posizioni (codice, posizione) VALUES (?, ?)', (codice_principale, posizione))
         else:
             # Rimuovi posizione se vuota
-            c.execute('DELETE FROM posizioni WHERE codice = ?', (codice,))
-    
+            c.execute('DELETE FROM posizioni WHERE codice = ?', (codice_principale,))
+
     conn.commit()
     conn.close()
-    
+
     return jsonify({'success': True})
 
 
@@ -2573,6 +2621,298 @@ def api_verifica_codice_variante(codice):
         })
 
 
+# ============================================
+# API v4.1 - LOG MODIFICHE, BACKUP, BULK UPDATE
+# ============================================
+
+def log_modifica(conn, prodotto_id, codice_principale, campo, valore_precedente, valore_nuovo, utente='sistema'):
+    """Registra una modifica nel log"""
+    if valore_precedente == valore_nuovo:
+        return  # Nessuna modifica effettiva
+    c = conn.cursor()
+    c.execute('''
+        INSERT INTO modifiche_log (prodotto_id, codice_principale, campo, valore_precedente, valore_nuovo, utente)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ''', (prodotto_id, codice_principale, campo, str(valore_precedente) if valore_precedente else None,
+          str(valore_nuovo) if valore_nuovo else None, utente))
+
+
+@app.route('/api/modifiche/<int:prodotto_id>')
+def api_modifiche_prodotto(prodotto_id):
+    """
+    Storico modifiche di un prodotto.
+    Restituisce le ultime 100 modifiche.
+    """
+    conn = get_db()
+    c = conn.cursor()
+
+    c.execute('''
+        SELECT * FROM modifiche_log
+        WHERE prodotto_id = ?
+        ORDER BY data_modifica DESC
+        LIMIT 100
+    ''', (prodotto_id,))
+
+    modifiche = [dict(row) for row in c.fetchall()]
+    conn.close()
+
+    return jsonify({
+        'prodotto_id': prodotto_id,
+        'totale': len(modifiche),
+        'modifiche': modifiche
+    })
+
+
+@app.route('/api/modifiche')
+def api_modifiche_recenti():
+    """
+    Ultime modifiche globali.
+    Query params: limit (default 50), utente (filtro opzionale)
+    """
+    limit = int(request.args.get('limit', 50))
+    utente = request.args.get('utente', '')
+
+    conn = get_db()
+    c = conn.cursor()
+
+    if utente:
+        c.execute('''
+            SELECT m.*, p.titolo
+            FROM modifiche_log m
+            LEFT JOIN prodotti p ON m.prodotto_id = p.id
+            WHERE m.utente = ?
+            ORDER BY m.data_modifica DESC
+            LIMIT ?
+        ''', (utente, limit))
+    else:
+        c.execute('''
+            SELECT m.*, p.titolo
+            FROM modifiche_log m
+            LEFT JOIN prodotti p ON m.prodotto_id = p.id
+            ORDER BY m.data_modifica DESC
+            LIMIT ?
+        ''', (limit,))
+
+    modifiche = [dict(row) for row in c.fetchall()]
+    conn.close()
+
+    return jsonify({
+        'totale': len(modifiche),
+        'modifiche': modifiche
+    })
+
+
+@app.route('/api/backup', methods=['GET', 'POST'])
+def api_backup():
+    """
+    Genera un backup completo del database in formato JSON.
+    GET: genera e scarica il backup
+    POST: genera e salva nella cartella backups/
+    """
+    conn = get_db()
+    c = conn.cursor()
+
+    # Esporta tutte le tabelle
+    backup_data = {
+        'versione': '4.1',
+        'data_backup': datetime.now().isoformat(),
+        'prodotti': [],
+        'varianti': [],
+        'posizioni': [],
+        'task': [],
+        'brand': [],
+        'modifiche_log': []
+    }
+
+    # Prodotti
+    c.execute('SELECT * FROM prodotti')
+    backup_data['prodotti'] = [dict(row) for row in c.fetchall()]
+
+    # Varianti
+    c.execute('SELECT * FROM varianti')
+    backup_data['varianti'] = [dict(row) for row in c.fetchall()]
+
+    # Posizioni
+    c.execute('SELECT * FROM posizioni')
+    backup_data['posizioni'] = [dict(row) for row in c.fetchall()]
+
+    # Task
+    c.execute('SELECT * FROM task')
+    backup_data['task'] = [dict(row) for row in c.fetchall()]
+
+    # Brand
+    c.execute('SELECT * FROM brand')
+    backup_data['brand'] = [dict(row) for row in c.fetchall()]
+
+    # Log modifiche (ultime 1000)
+    c.execute('SELECT * FROM modifiche_log ORDER BY data_modifica DESC LIMIT 1000')
+    backup_data['modifiche_log'] = [dict(row) for row in c.fetchall()]
+
+    conn.close()
+
+    # Statistiche
+    backup_data['stats'] = {
+        'prodotti': len(backup_data['prodotti']),
+        'varianti': len(backup_data['varianti']),
+        'posizioni': len(backup_data['posizioni']),
+        'task': len(backup_data['task']),
+        'modifiche': len(backup_data['modifiche_log'])
+    }
+
+    # Nome file
+    filename = f"backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+
+    if request.method == 'POST':
+        # Salva nella cartella backups/
+        filepath = BACKUP_FOLDER / filename
+        with open(filepath, 'w', encoding='utf-8') as f:
+            json.dump(backup_data, f, ensure_ascii=False, indent=2)
+
+        return jsonify({
+            'success': True,
+            'filename': filename,
+            'path': str(filepath),
+            'stats': backup_data['stats']
+        })
+    else:
+        # Restituisci come download
+        json_data = json.dumps(backup_data, ensure_ascii=False, indent=2)
+        buffer = io.BytesIO(json_data.encode('utf-8'))
+        buffer.seek(0)
+        return send_file(buffer, mimetype='application/json', as_attachment=True, download_name=filename)
+
+
+@app.route('/api/backup/list')
+def api_backup_list():
+    """Lista dei backup disponibili"""
+    backups = []
+    for f in sorted(BACKUP_FOLDER.glob('backup_*.json'), reverse=True):
+        stat = f.stat()
+        backups.append({
+            'filename': f.name,
+            'size_kb': round(stat.st_size / 1024, 1),
+            'data': datetime.fromtimestamp(stat.st_mtime).isoformat()
+        })
+
+    return jsonify({'backups': backups, 'totale': len(backups)})
+
+
+@app.route('/api/backup/<filename>')
+def api_backup_download(filename):
+    """Scarica un backup specifico"""
+    filepath = BACKUP_FOLDER / filename
+    if not filepath.exists():
+        return jsonify({'error': 'Backup non trovato'}), 404
+    return send_file(str(filepath), mimetype='application/json', as_attachment=True, download_name=filename)
+
+
+@app.route('/api/prodotti/bulk-update', methods=['POST'])
+def api_bulk_update_prodotti():
+    """
+    Aggiorna un campo su più prodotti in blocco.
+    Input JSON: {
+        "codici": ["1001", "1002", ...],
+        "campo": "catalogo",
+        "valore": "BRICO",
+        "utente": "admin"
+    }
+    Campi consentiti: catalogo, stato, logo, template, verificato_catalogo
+    """
+    data = request.json
+    codici = data.get('codici', [])
+    campo = data.get('campo', '')
+    valore = data.get('valore')
+    utente = data.get('utente', 'api')
+
+    campi_consentiti = ['catalogo', 'stato', 'logo', 'template', 'verificato_catalogo',
+                        'descrizione', 'immagine', 'controllato']
+
+    if campo not in campi_consentiti:
+        return jsonify({'error': f'Campo non consentito. Usa: {campi_consentiti}'}), 400
+
+    if not codici:
+        return jsonify({'error': 'Nessun codice fornito'}), 400
+
+    conn = get_db()
+    c = conn.cursor()
+
+    # Prima ottieni i valori precedenti per il log
+    placeholders = ','.join('?' * len(codici))
+    c.execute(f'''
+        SELECT id, codice_principale, {campo} FROM prodotti
+        WHERE codice_principale IN ({placeholders})
+    ''', codici)
+
+    prodotti_da_aggiornare = c.fetchall()
+
+    # Log delle modifiche
+    for prod in prodotti_da_aggiornare:
+        log_modifica(conn, prod[0], prod[1], campo, prod[2], valore, utente)
+
+    # Esegui l'update
+    c.execute(f'''
+        UPDATE prodotti
+        SET {campo} = ?, data_modifica = CURRENT_TIMESTAMP
+        WHERE codice_principale IN ({placeholders})
+    ''', [valore] + codici)
+
+    aggiornati = c.rowcount
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        'success': True,
+        'aggiornati': aggiornati,
+        'campo': campo,
+        'valore': valore,
+        'utente': utente
+    })
+
+
+@app.route('/api/prodotti/bulk-delete', methods=['POST'])
+def api_bulk_delete_prodotti():
+    """
+    Elimina più prodotti in blocco.
+    Input JSON: { "codici": ["1001", "1002", ...], "utente": "admin" }
+    """
+    data = request.json
+    codici = data.get('codici', [])
+    utente = data.get('utente', 'api')
+
+    if not codici:
+        return jsonify({'error': 'Nessun codice fornito'}), 400
+
+    conn = get_db()
+    c = conn.cursor()
+
+    # Prima ottieni gli ID per eliminare varianti e task
+    placeholders = ','.join('?' * len(codici))
+    c.execute(f'SELECT id, codice_principale, titolo FROM prodotti WHERE codice_principale IN ({placeholders})', codici)
+    prodotti_da_eliminare = c.fetchall()
+
+    eliminati = 0
+    for prod in prodotti_da_eliminare:
+        prod_id, cod, titolo = prod
+
+        # Log eliminazione
+        log_modifica(conn, prod_id, cod, 'ELIMINATO', titolo, None, utente)
+
+        # Elimina varianti e task
+        c.execute('DELETE FROM varianti WHERE prodotto_id = ?', (prod_id,))
+        c.execute('DELETE FROM task WHERE prodotto_id = ?', (prod_id,))
+        c.execute('DELETE FROM prodotti WHERE id = ?', (prod_id,))
+        eliminati += 1
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        'success': True,
+        'eliminati': eliminati,
+        'utente': utente
+    })
+
+
 @app.route('/api/statistiche-catalogo')
 def api_statistiche_catalogo():
     """
@@ -2630,12 +2970,13 @@ init_db()
 if __name__ == '__main__':
     print("""
 ╔══════════════════════════════════════════════════════════╗
-║         📦 CATALOGO MANAGER v4.0 - VERIFICA CATALOGO     ║
+║         📦 CATALOGO MANAGER v4.1 - LOG & BACKUP          ║
 ╠══════════════════════════════════════════════════════════╣
 ║  🌐 Apri: http://localhost:5000                          ║
 ║  📁 Foto: foto_prodotti/                                 ║
 ║  🏷️ Loghi: loghi_brand/                                  ║
-║  ✅ Nuovo: Stato prodotti, Verifica PDF, Alert varianti  ║
+║  💾 Backups: backups/                                    ║
+║  ✅ v4.1: Log modifiche, Backup JSON, Bulk update        ║
 ╚══════════════════════════════════════════════════════════╝
     """)
     app.run(debug=True, host='0.0.0.0', port=5000)
