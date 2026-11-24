@@ -43,6 +43,7 @@ for folder in [UPLOAD_FOLDER, FOTO_FOLDER, LOGO_FOLDER, ICONE_FOLDER, OUTPUT_FOL
 
 app = Flask(__name__, template_folder=str(BASE_DIR / "templates"))
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
+app.config['TEMPLATES_AUTO_RELOAD'] = True  # Forza ricaricamento template
 
 # Token segreto per deploy automatico (Claude)
 DEPLOY_TOKEN = "cat_deploy_2024_pugliese"
