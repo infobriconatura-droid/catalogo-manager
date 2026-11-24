@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-CATALOGO MANAGER v3.0
+CATALOGO MANAGER v4.0
 - Due template box (Tabella / Scheda Hyundai)
 - Sistema Task per lavorare in team
 - Import CSV basato su posizione colonne
+- v4: Stato prodotti (attivo/obsoleto/da_verificare)
+- v4: Flag verificato_catalogo + campo catalogo
+- v4: API verifica discrepanze PDF ↔ DB
+- v4: Alert codici variante duplicati
 """
 
 import os
@@ -188,7 +192,26 @@ def init_db():
         c.execute('ALTER TABLE varianti ADD COLUMN escludi_stampa INTEGER DEFAULT 0')
     except:
         pass
-    
+
+    # === NUOVI CAMPI v4 ===
+    # Campo stato prodotto: attivo, obsoleto, da_verificare
+    try:
+        c.execute("ALTER TABLE prodotti ADD COLUMN stato TEXT DEFAULT 'attivo'")
+    except:
+        pass
+
+    # Flag verificato su catalogo PDF
+    try:
+        c.execute('ALTER TABLE prodotti ADD COLUMN verificato_catalogo INTEGER DEFAULT 0')
+    except:
+        pass
+
+    # Catalogo di appartenenza (BRICO, IDRAULICA, etc.)
+    try:
+        c.execute('ALTER TABLE prodotti ADD COLUMN catalogo TEXT')
+    except:
+        pass
+
     # Indici per velocizzare le query
     try:
         c.execute('CREATE INDEX IF NOT EXISTS idx_varianti_codice ON varianti(codice)')
@@ -1352,7 +1375,7 @@ def api_update_prodotto(id):
     conn = get_db()
     c = conn.cursor()
 
-    # Update base fields
+    # Update base fields (inclusi nuovi campi v4: stato, verificato_catalogo, catalogo)
     c.execute('''
         UPDATE prodotti
         SET titolo = COALESCE(?, titolo),
@@ -1365,11 +1388,15 @@ def api_update_prodotto(id):
             icona4 = COALESCE(?, icona4),
             template = COALESCE(?, template),
             scala_foto = COALESCE(?, scala_foto),
+            stato = COALESCE(?, stato),
+            verificato_catalogo = COALESCE(?, verificato_catalogo),
+            catalogo = COALESCE(?, catalogo),
             data_modifica = CURRENT_TIMESTAMP
         WHERE id = ?
     ''', (data.get('titolo'), data.get('descrizione'), data.get('immagine'),
           data.get('logo'), data.get('icona1'), data.get('icona2'), data.get('icona3'), data.get('icona4'),
-          data.get('template'), data.get('scala_foto'), id))
+          data.get('template'), data.get('scala_foto'),
+          data.get('stato'), data.get('verificato_catalogo'), data.get('catalogo'), id))
     
     # Gestisci posizione
     posizione = data.get('posizione')
@@ -2351,6 +2378,249 @@ def preview_page():
 
 
 # ============================================
+# API v4 - VERIFICA CATALOGO E STATO PRODOTTI
+# ============================================
+
+@app.route('/api/verifica-catalogo', methods=['POST'])
+def api_verifica_catalogo():
+    """
+    Confronta una lista di codici dal catalogo PDF con il database.
+    Input JSON: { "catalogo": "BRICO", "codici": ["1001", "1002", ...] }
+    Output: codici mancanti, codici presenti, codici come varianti
+    """
+    data = request.json
+    catalogo = data.get('catalogo', '')
+    codici_pdf = set(data.get('codici', []))
+
+    if not codici_pdf:
+        return jsonify({'error': 'Nessun codice fornito'}), 400
+
+    conn = get_db()
+    c = conn.cursor()
+
+    # Ottieni tutti i codici principali
+    c.execute('SELECT codice_principale FROM prodotti')
+    codici_principali = set(row[0] for row in c.fetchall())
+
+    # Ottieni tutti i codici varianti con il loro prodotto principale
+    c.execute('''
+        SELECT v.codice, p.codice_principale, p.titolo
+        FROM varianti v
+        JOIN prodotti p ON v.prodotto_id = p.id
+    ''')
+    varianti_map = {row[0]: {'principale': row[1], 'titolo': row[2]} for row in c.fetchall()}
+    codici_varianti = set(varianti_map.keys())
+
+    # Tutti i codici coperti
+    codici_coperti = codici_principali | codici_varianti
+
+    # Analisi
+    presenti_come_principali = codici_pdf & codici_principali
+    presenti_come_varianti = codici_pdf & codici_varianti
+    mancanti = codici_pdf - codici_coperti
+
+    # Dettaglio varianti
+    varianti_dettaglio = []
+    for cod in presenti_come_varianti:
+        varianti_dettaglio.append({
+            'codice': cod,
+            'principale': varianti_map[cod]['principale'],
+            'titolo': varianti_map[cod]['titolo']
+        })
+
+    conn.close()
+
+    return jsonify({
+        'catalogo': catalogo,
+        'totale_codici_pdf': len(codici_pdf),
+        'presenti_come_principali': len(presenti_come_principali),
+        'presenti_come_varianti': len(presenti_come_varianti),
+        'mancanti': len(mancanti),
+        'codici_mancanti': sorted(list(mancanti), key=lambda x: int(x) if x.isdigit() else 0),
+        'varianti_dettaglio': varianti_dettaglio
+    })
+
+
+@app.route('/api/prodotti/stato', methods=['POST'])
+def api_cambia_stato_prodotti():
+    """
+    Cambia lo stato di più prodotti in blocco.
+    Input JSON: { "codici": ["1001", "1002"], "stato": "obsoleto" }
+    Stati validi: attivo, obsoleto, da_verificare
+    """
+    data = request.json
+    codici = data.get('codici', [])
+    nuovo_stato = data.get('stato', '')
+
+    stati_validi = ['attivo', 'obsoleto', 'da_verificare']
+    if nuovo_stato not in stati_validi:
+        return jsonify({'error': f'Stato non valido. Usa: {stati_validi}'}), 400
+
+    if not codici:
+        return jsonify({'error': 'Nessun codice fornito'}), 400
+
+    conn = get_db()
+    c = conn.cursor()
+
+    placeholders = ','.join('?' * len(codici))
+    c.execute(f'''
+        UPDATE prodotti
+        SET stato = ?, data_modifica = CURRENT_TIMESTAMP
+        WHERE codice_principale IN ({placeholders})
+    ''', [nuovo_stato] + codici)
+
+    aggiornati = c.rowcount
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        'success': True,
+        'aggiornati': aggiornati,
+        'stato': nuovo_stato
+    })
+
+
+@app.route('/api/prodotti/verifica-catalogo', methods=['POST'])
+def api_segna_verificati():
+    """
+    Segna prodotti come verificati sul catalogo PDF.
+    Input JSON: { "codici": ["1001", "1002"], "catalogo": "BRICO", "verificato": true }
+    """
+    data = request.json
+    codici = data.get('codici', [])
+    catalogo = data.get('catalogo', '')
+    verificato = 1 if data.get('verificato', True) else 0
+
+    if not codici:
+        return jsonify({'error': 'Nessun codice fornito'}), 400
+
+    conn = get_db()
+    c = conn.cursor()
+
+    placeholders = ','.join('?' * len(codici))
+
+    # Aggiorna verificato_catalogo e catalogo
+    if catalogo:
+        c.execute(f'''
+            UPDATE prodotti
+            SET verificato_catalogo = ?, catalogo = ?, data_modifica = CURRENT_TIMESTAMP
+            WHERE codice_principale IN ({placeholders})
+        ''', [verificato, catalogo] + codici)
+    else:
+        c.execute(f'''
+            UPDATE prodotti
+            SET verificato_catalogo = ?, data_modifica = CURRENT_TIMESTAMP
+            WHERE codice_principale IN ({placeholders})
+        ''', [verificato] + codici)
+
+    aggiornati = c.rowcount
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        'success': True,
+        'aggiornati': aggiornati,
+        'verificato': verificato == 1,
+        'catalogo': catalogo
+    })
+
+
+@app.route('/api/verifica-codice-variante/<codice>')
+def api_verifica_codice_variante(codice):
+    """
+    Verifica se un codice è già usato come variante di un altro prodotto.
+    Usato per alert durante l'import.
+    """
+    conn = get_db()
+    c = conn.cursor()
+
+    # Cerca come codice principale
+    c.execute('SELECT id, titolo FROM prodotti WHERE codice_principale = ?', (codice,))
+    principale = c.fetchone()
+
+    # Cerca come variante
+    c.execute('''
+        SELECT v.codice, p.codice_principale, p.titolo
+        FROM varianti v
+        JOIN prodotti p ON v.prodotto_id = p.id
+        WHERE v.codice = ?
+    ''', (codice,))
+    variante = c.fetchone()
+
+    conn.close()
+
+    if principale:
+        return jsonify({
+            'esiste': True,
+            'tipo': 'principale',
+            'prodotto_id': principale[0],
+            'titolo': principale[1],
+            'alert': f'⚠️ Codice {codice} già usato come prodotto principale: {principale[1]}'
+        })
+    elif variante:
+        return jsonify({
+            'esiste': True,
+            'tipo': 'variante',
+            'codice_principale': variante[1],
+            'titolo': variante[2],
+            'alert': f'⚠️ Codice {codice} già usato come variante del prodotto {variante[1]}: {variante[2]}'
+        })
+    else:
+        return jsonify({
+            'esiste': False,
+            'tipo': None,
+            'alert': None
+        })
+
+
+@app.route('/api/statistiche-catalogo')
+def api_statistiche_catalogo():
+    """
+    Statistiche sui prodotti per catalogo e stato.
+    """
+    conn = get_db()
+    c = conn.cursor()
+
+    # Per catalogo
+    c.execute('''
+        SELECT catalogo, COUNT(*) as count
+        FROM prodotti
+        WHERE catalogo IS NOT NULL AND catalogo != ''
+        GROUP BY catalogo
+    ''')
+    per_catalogo = {row[0]: row[1] for row in c.fetchall()}
+
+    # Per stato
+    c.execute('''
+        SELECT COALESCE(stato, 'attivo') as stato, COUNT(*) as count
+        FROM prodotti
+        GROUP BY stato
+    ''')
+    per_stato = {row[0]: row[1] for row in c.fetchall()}
+
+    # Verificati
+    c.execute('SELECT COUNT(*) FROM prodotti WHERE verificato_catalogo = 1')
+    verificati = c.fetchone()[0]
+
+    c.execute('SELECT COUNT(*) FROM prodotti WHERE verificato_catalogo = 0 OR verificato_catalogo IS NULL')
+    non_verificati = c.fetchone()[0]
+
+    # Totale
+    c.execute('SELECT COUNT(*) FROM prodotti')
+    totale = c.fetchone()[0]
+
+    conn.close()
+
+    return jsonify({
+        'totale_prodotti': totale,
+        'per_catalogo': per_catalogo,
+        'per_stato': per_stato,
+        'verificati_catalogo': verificati,
+        'non_verificati_catalogo': non_verificati
+    })
+
+
+# ============================================
 # MAIN
 # ============================================
 
@@ -2360,11 +2630,12 @@ init_db()
 if __name__ == '__main__':
     print("""
 ╔══════════════════════════════════════════════════════════╗
-║         📦 CATALOGO MANAGER v3.0 - TEAM EDITION          ║
+║         📦 CATALOGO MANAGER v4.0 - VERIFICA CATALOGO     ║
 ╠══════════════════════════════════════════════════════════╣
 ║  🌐 Apri: http://localhost:5000                          ║
 ║  📁 Foto: foto_prodotti/                                 ║
 ║  🏷️ Loghi: loghi_brand/                                  ║
+║  ✅ Nuovo: Stato prodotti, Verifica PDF, Alert varianti  ║
 ╚══════════════════════════════════════════════════════════╝
     """)
     app.run(debug=True, host='0.0.0.0', port=5000)
