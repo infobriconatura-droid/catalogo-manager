@@ -3,1844 +3,1097 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📦 Catalogo Manager v3.0 - Team Edition</title>
+    <title>📦 Catalogo Manager v4.0</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
+
         :root {
-            --bg: #0f0f1a;
-            --bg-card: #1a1a2e;
-            --bg-surface: #252540;
-            --accent: #6366f1;
+            --bg: #0a0a12;
+            --bg-card: #12121f;
+            --bg-surface: #1a1a2e;
+            --bg-hover: #252540;
+            --accent: #2d6a4f;
+            --accent-light: #40916c;
             --green: #10b981;
             --red: #ef4444;
             --yellow: #f59e0b;
             --orange: #f97316;
+            --blue: #3b82f6;
             --text: #e2e8f0;
-            --text-muted: #94a3b8;
-            --border: #334155;
+            --text-muted: #64748b;
+            --border: #2a3f5f;
+            --shadow: rgba(0,0,0,0.3);
         }
-        
+
         body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
             background: var(--bg);
             color: var(--text);
             min-height: 100vh;
         }
-        
+
+        /* ===== HEADER ===== */
         .header {
-            background: linear-gradient(135deg, var(--bg-card), var(--bg-surface));
-            padding: 0.6rem 1rem;
+            background: linear-gradient(135deg, #1b4332, #2d6a4f);
+            padding: 10px 20px;
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            border-bottom: 1px solid var(--border);
+            gap: 16px;
+            box-shadow: 0 4px 20px var(--shadow);
             position: sticky;
             top: 0;
             z-index: 100;
         }
-        
-        .header h1 { font-size: 1.1rem; }
-        
-        .stats {
+
+        .logo {
             display: flex;
-            gap: 0.5rem;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .logo h1 {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .logo span {
+            font-size: 0.65rem;
+            background: rgba(255,255,255,0.2);
+            padding: 2px 6px;
+            border-radius: 8px;
+            margin-left: 6px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 4px;
+            margin-left: 20px;
+        }
+
+        .nav-tab {
+            padding: 6px 14px;
+            background: transparent;
+            border: none;
+            color: rgba(255,255,255,0.7);
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+
+        .nav-tab:hover {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+
+        .nav-tab.active {
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+            font-weight: 500;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 12px;
             margin-left: auto;
         }
-        
-        .stat {
+
+        .header-stat {
             text-align: center;
-            padding: 0.3rem 0.6rem;
-            background: var(--bg);
-            border-radius: 5px;
-            min-width: 60px;
+            padding: 4px 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 6px;
         }
-        
-        .stat-value { font-size: 1rem; font-weight: bold; }
-        .stat-value.green { color: var(--green); }
-        .stat-value.orange { color: var(--orange); }
-        .stat-label { font-size: 0.6rem; color: var(--text-muted); }
-        
-        .btn {
-            background: var(--bg-surface);
-            color: var(--text);
-            border: 1px solid var(--border);
-            padding: 0.4rem 0.7rem;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.75rem;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
+
+        .header-stat-value {
+            font-size: 1rem;
+            font-weight: 700;
         }
-        
-        .btn:hover { background: var(--accent); border-color: var(--accent); }
-        .btn-primary { background: var(--accent); border-color: var(--accent); }
-        .btn-success { background: var(--green); border-color: var(--green); }
-        .btn-danger { background: var(--red); border-color: var(--red); }
-        .btn-warning { background: var(--orange); border-color: var(--orange); }
-        .btn-small { padding: 0.2rem 0.4rem; font-size: 0.7rem; }
-        
+
+        .header-stat-label {
+            font-size: 0.6rem;
+            opacity: 0.7;
+            text-transform: uppercase;
+        }
+
+        /* ===== MAIN LAYOUT ===== */
         .main {
             display: grid;
-            grid-template-columns: 280px 1fr 480px;
-            height: calc(100vh - 50px);
+            grid-template-columns: 240px 1fr 380px;
+            height: calc(100vh - 52px);
         }
-        
-        .panel {
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
             background: var(--bg-card);
             border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
-            overflow: hidden;
-        }
-        
-        .panel:last-child { border-right: none; }
-        
-        .panel-header {
-            padding: 0.5rem 0.75rem;
-            background: var(--bg-surface);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        
-        .panel-header h2 { font-size: 0.85rem; }
-        .panel-content { flex: 1; overflow-y: auto; padding: 0.5rem; }
-        
-        .search-box {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 0.5rem;
-        }
-        
-        .search-box input {
-            flex: 1;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            color: var(--text);
-            padding: 0.5rem;
-            border-radius: 5px;
-            font-size: 0.8rem;
-        }
-        
-        .search-box input:focus { outline: none; border-color: var(--accent); }
-        
-        .filter-row {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 0.5rem;
-        }
-        
-        .filter-row label {
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
-            font-size: 0.75rem;
-            cursor: pointer;
-        }
-        
-        .product-list { list-style: none; }
-        
-        .product-item {
-            padding: 0.5rem;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-bottom: 0.3rem;
-            background: var(--bg);
-            border: 1px solid transparent;
-            transition: all 0.2s;
-            position: relative;
-        }
-        
-        .product-item:hover { border-color: var(--accent); }
-        .product-item.selected { background: var(--bg-surface); border-color: var(--accent); }
-        
-        .product-item .task-badge {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background: var(--orange);
-            color: white;
-            padding: 0.1rem 0.3rem;
-            border-radius: 3px;
-            font-size: 0.65rem;
-            font-weight: bold;
-        }
-        
-        .product-item .complete-badge {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background: var(--green);
-            color: white;
-            padding: 0.1rem 0.4rem;
-            border-radius: 3px;
-            font-size: 0.75rem;
-            font-weight: bold;
-        }
-        
-        .product-pos {
-            display: inline-block;
-            background: var(--accent-green);
-            color: white;
-            padding: 0.1rem 0.35rem;
-            border-radius: 3px;
-            font-size: 0.65rem;
-            font-weight: bold;
-            margin-right: 0.4rem;
-        }
-        
-        .product-code {
-            font-size: 0.7rem;
-            color: var(--accent);
-            font-weight: 600;
-            font-family: monospace;
-        }
-        
-        .product-title {
-            font-size: 0.8rem;
-            margin-top: 0.15rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        .product-meta {
-            font-size: 0.65rem;
-            color: var(--text-muted);
-        }
-        
-        .tabs {
-            display: flex;
-            border-bottom: 1px solid var(--border);
-            background: var(--bg-surface);
-        }
-        
-        .tab {
-            padding: 0.5rem 0.75rem;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            font-size: 0.8rem;
-        }
-        
-        .tab:hover { background: var(--bg); }
-        .tab.active { border-color: var(--accent); background: var(--bg-card); }
-        
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        
-        .form-group { margin-bottom: 0.6rem; }
-        
-        .form-group label {
-            display: block;
-            font-size: 0.7rem;
-            font-weight: 600;
-            margin-bottom: 0.15rem;
-            color: var(--accent);
-            text-transform: uppercase;
-        }
-        
-        .form-group input,
-        .form-group textarea,
-        .form-group select {
-            width: 100%;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            color: var(--text);
-            padding: 0.4rem;
-            border-radius: 4px;
-            font-size: 0.8rem;
-        }
-        
-        .form-group textarea { min-height: 50px; resize: vertical; }
-        .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: var(--accent); }
-        
-        .form-row { display: flex; gap: 0.5rem; }
-        .form-row .form-group { flex: 1; }
-        
-        /* Template selector */
-        .template-selector {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 0.75rem;
-        }
-        
-        .template-option {
-            flex: 1;
-            padding: 0.5rem;
-            background: var(--bg);
-            border: 2px solid var(--border);
-            border-radius: 6px;
-            cursor: pointer;
-            text-align: center;
-            transition: all 0.2s;
-        }
-        
-        .template-option:hover { border-color: var(--accent); }
-        .template-option.selected { border-color: var(--green); background: rgba(16, 185, 129, 0.1); }
-        .template-option .icon { font-size: 1.5rem; }
-        .template-option .name { font-size: 0.75rem; margin-top: 0.25rem; }
-        
-        /* Task checklist */
-        .task-section {
-            background: var(--bg);
-            border-radius: 6px;
-            padding: 0.75rem;
-            margin-top: 0.75rem;
-        }
-        
-        .task-section h3 {
-            font-size: 0.8rem;
-            margin-bottom: 0.5rem;
-            color: var(--orange);
-        }
-        
-        .task-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.4rem;
-            background: var(--bg-surface);
-            border-radius: 4px;
-            margin-bottom: 0.3rem;
-        }
-        
-        .task-item input[type="checkbox"] {
-            width: 16px;
-            height: 16px;
-            cursor: pointer;
-        }
-        
-        .task-item .campo {
-            font-weight: 600;
-            font-size: 0.75rem;
-            min-width: 100px;
-        }
-        
-        .task-item .nota {
-            flex: 1;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            color: var(--text);
-            padding: 0.25rem 0.4rem;
-            border-radius: 3px;
-            font-size: 0.75rem;
-        }
-        
-        .task-item .nota:focus { outline: none; border-color: var(--accent); }
-        
-        .task-item .btn-add-task {
-            padding: 0.2rem 0.4rem;
-            font-size: 0.7rem;
-        }
-        
-        .task-item.completato {
-            opacity: 0.5;
-            text-decoration: line-through;
-        }
-        
-        /* Preview panel */
-        .preview-container {
-            background: white;
-            border-radius: 6px;
-            overflow: auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 300px;
-        }
-        
-        .preview-container img {
-            max-width: 100%;
-            max-height: 100%;
-        }
-        
-        .preview-placeholder {
-            text-align: center;
-            color: #666;
-            padding: 2rem;
-        }
-        
-        /* Task summary panel */
-        .task-summary {
-            background: var(--bg);
-            border-radius: 6px;
-            padding: 0.5rem;
-            margin-top: 0.5rem;
-            max-height: 200px;
             overflow-y: auto;
         }
-        
-        .task-summary-item {
+
+        .sidebar-section {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar-title {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+        }
+
+        .category-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+
+        .category-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .category-card:hover {
+            background: var(--bg-hover);
+            border-color: var(--accent);
+            transform: translateY(-1px);
+        }
+
+        .category-card.active {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .category-icon { font-size: 20px; margin-bottom: 4px; }
+        .category-name { font-size: 0.7rem; font-weight: 500; margin-bottom: 2px; }
+        .category-count { font-size: 0.6rem; color: var(--text-muted); }
+        .category-card.active .category-count { color: rgba(255,255,255,0.8); }
+
+        .quick-actions { display: flex; flex-direction: column; gap: 4px; }
+
+        .quick-action {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            padding: 0.4rem;
+            gap: 8px;
+            padding: 8px 10px;
             background: var(--bg-surface);
-            border-radius: 4px;
-            margin-bottom: 0.3rem;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .task-summary-item:hover { background: var(--accent); }
-        
-        .task-summary-item .codice {
-            font-family: monospace;
-            font-size: 0.7rem;
-            color: var(--green);
-            font-weight: bold;
-        }
-        
-        .task-summary-item .campo {
-            background: var(--orange);
-            color: white;
-            padding: 0.1rem 0.3rem;
-            border-radius: 3px;
-            font-size: 0.65rem;
-        }
-        
-        .task-summary-item .nota {
-            flex: 1;
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        
-        /* Upload areas */
-        .upload-area {
-            border: 2px dashed var(--border);
+            border: 1px solid var(--border);
             border-radius: 6px;
-            padding: 0.75rem;
-            text-align: center;
             cursor: pointer;
             transition: all 0.2s;
-        }
-        
-        .upload-area:hover { border-color: var(--accent); }
-        
-        .upload-preview {
-            max-width: 100px;
-            max-height: 60px;
-            margin: 0.25rem auto;
-            display: block;
-            border-radius: 4px;
-        }
-        
-        /* Table styles */
-        table {
-            width: 100%;
-            border-collapse: collapse;
             font-size: 0.75rem;
+            color: var(--text);
+            text-decoration: none;
         }
-        
-        th {
-            background: var(--green);
-            color: white;
-            padding: 0.4rem;
-            text-align: center;
-            font-weight: 600;
+
+        .quick-action:hover {
+            background: var(--bg-hover);
+            border-color: var(--accent);
         }
-        
-        td {
-            padding: 0.3rem;
-            border-bottom: 1px solid var(--border);
-            text-align: center;
-        }
-        
-        tr:nth-child(even) { background: var(--bg); }
-        
-        td input {
+
+        .progress-bar {
             width: 100%;
+            height: 4px;
+            background: var(--bg);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 6px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent-light));
+            border-radius: 2px;
+        }
+
+        /* ===== CONTENT ===== */
+        .content {
+            background: var(--bg);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .content-header {
+            padding: 12px 16px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .content-title { font-size: 1rem; font-weight: 600; }
+        .content-subtitle { font-size: 0.75rem; color: var(--text-muted); }
+
+        .search-filters {
+            display: flex;
+            gap: 10px;
+            margin-left: auto;
+        }
+
+        .search-input {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px 10px;
+            color: var(--text);
+            width: 200px;
+            font-size: 0.8rem;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .view-toggles {
+            display: flex;
+            background: var(--bg);
+            border-radius: 6px;
+            padding: 3px;
+            border: 1px solid var(--border);
+        }
+
+        .view-toggle {
+            padding: 5px 10px;
             background: transparent;
             border: none;
-            color: var(--text);
-            text-align: center;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: 4px;
             font-size: 0.75rem;
         }
-        
-        td input:focus {
-            background: var(--bg-surface);
-            outline: 1px solid var(--accent);
+
+        .view-toggle.active {
+            background: var(--accent);
+            color: #fff;
         }
-        
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            z-index: 1000;
+
+        .product-grid {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 16px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 12px;
+            align-content: start;
+        }
+
+        .product-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .product-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--shadow);
+        }
+
+        .product-card.selected {
+            border-color: var(--green);
+            border-width: 2px;
+        }
+
+        .product-image {
+            height: 120px;
+            background: var(--bg-surface);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .product-image img {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+        }
+
+        .product-no-image {
+            color: var(--text-muted);
+            font-size: 2rem;
+        }
+
+        .product-badge {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            background: var(--accent);
+            color: #fff;
+            font-size: 0.6rem;
+            padding: 2px 6px;
+            border-radius: 8px;
+        }
+
+        .product-badge.warning { background: var(--orange); }
+
+        .product-info { padding: 10px; }
+        .product-code { font-size: 0.65rem; color: var(--accent-light); font-weight: 600; margin-bottom: 3px; }
+        .product-name { font-size: 0.75rem; font-weight: 500; line-height: 1.3; height: 2.6em; overflow: hidden; margin-bottom: 6px; }
+        .product-meta { display: flex; justify-content: space-between; align-items: center; }
+        .product-price { font-size: 0.8rem; font-weight: 700; color: var(--green); }
+        .product-position { font-size: 0.65rem; color: var(--text-muted); background: var(--bg); padding: 2px 5px; border-radius: 3px; }
+
+        /* ===== DETAIL PANEL ===== */
+        .detail-panel {
+            background: var(--bg-card);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detail-header {
+            padding: 12px;
+            background: var(--bg-surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .detail-title { font-size: 0.85rem; font-weight: 600; }
+        .detail-actions { display: flex; gap: 6px; }
+
+        .detail-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+        }
+
+        .preview-image {
+            background: var(--bg);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 12px;
+            text-align: center;
+            min-height: 150px;
+            display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
         }
-        
-        .modal.active { display: flex; }
-        
-        .modal-content {
-            background: var(--bg-card);
-            padding: 1.25rem;
+
+        .preview-image img {
+            max-width: 100%;
+            max-height: 150px;
+            object-fit: contain;
+        }
+
+        /* Scale Control */
+        .scale-control {
+            background: var(--bg);
+            border: 1px solid var(--border);
             border-radius: 8px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
+            padding: 12px;
+            margin-bottom: 12px;
         }
-        
-        .modal-content h2 { margin-bottom: 0.75rem; font-size: 1rem; }
-        .modal-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; justify-content: flex-end; }
-        
-        /* Modal Preview Grande */
-        .preview-modal-content {
-            max-width: 90vw !important;
-            width: auto !important;
-            max-height: 95vh !important;
-            padding: 1rem !important;
+
+        .scale-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
         }
-        
-        .preview-modal-header {
+
+        .scale-label { font-size: 0.75rem; font-weight: 500; }
+        .scale-value { font-size: 1rem; font-weight: 700; color: var(--accent-light); }
+
+        .scale-slider {
+            width: 100%;
+            height: 6px;
+            background: var(--bg-surface);
+            border-radius: 3px;
+            appearance: none;
+            cursor: pointer;
+        }
+
+        .scale-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--accent);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .scale-presets {
+            display: flex;
+            gap: 4px;
+            margin-top: 8px;
+        }
+
+        .scale-preset {
+            flex: 1;
+            padding: 4px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text);
+            cursor: pointer;
+            font-size: 0.7rem;
+            text-align: center;
+        }
+
+        .scale-preset:hover { background: var(--bg-hover); border-color: var(--accent); }
+        .scale-preset.active { background: var(--accent); border-color: var(--accent); }
+
+        /* Position Control */
+        .position-control {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+
+        .position-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem;
-            padding-bottom: 0.75rem;
-            border-bottom: 1px solid var(--border);
+            margin-bottom: 10px;
         }
-        
-        .preview-modal-header h2 {
-            margin: 0;
-            font-size: 1.1rem;
+
+        .position-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
         }
-        
-        .preview-modal-body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: auto;
-            max-height: calc(95vh - 100px);
-            background: #f5f5f5;
-            border-radius: 6px;
-            padding: 1rem;
-        }
-        
-        .preview-modal-body img {
-            max-width: 100%;
-            max-height: calc(90vh - 120px);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            border-radius: 4px;
-        }
-        
-        .drop-zone {
+
+        .position-slot {
+            aspect-ratio: 1;
+            background: var(--bg-surface);
             border: 2px dashed var(--border);
             border-radius: 6px;
-            padding: 1.25rem;
-            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            color: var(--text-muted);
             cursor: pointer;
         }
-        
-        .drop-zone:hover { border-color: var(--accent); }
-        .drop-zone .icon { font-size: 1.5rem; }
-        
-        .alert {
-            padding: 0.5rem;
-            border-radius: 5px;
-            margin-bottom: 0.5rem;
+
+        .position-slot:hover { border-color: var(--accent); background: var(--bg-hover); }
+        .position-slot.occupied { border-style: solid; }
+        .position-slot.current { border-color: var(--green); background: rgba(16, 185, 129, 0.1); color: var(--green); }
+
+        /* Form */
+        .form-section { margin-bottom: 16px; }
+        .form-section-title { font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; letter-spacing: 0.5px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .form-group { margin-bottom: 10px; }
+        .form-group.full { grid-column: span 2; }
+        .form-label { display: block; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 4px; }
+
+        .form-input {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 10px;
+            color: var(--text);
             font-size: 0.8rem;
         }
-        
-        .alert-success { background: rgba(16, 185, 129, 0.2); border: 1px solid var(--green); }
-        .alert-error { background: rgba(239, 68, 68, 0.2); border: 1px solid var(--red); }
-        .alert-warning { background: rgba(245, 158, 11, 0.2); border: 1px solid var(--yellow); }
-        .alert-info { background: rgba(99, 102, 241, 0.2); border: 1px solid var(--accent); }
-        
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: var(--bg); }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-        
+
+        .form-input:focus { outline: none; border-color: var(--accent); }
+        .form-input:disabled { opacity: 0.5; }
+
+        /* Buttons */
+        .btn {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent-light); }
+        .btn-secondary { background: var(--bg-surface); color: var(--text); border: 1px solid var(--border); }
+        .btn-secondary:hover { background: var(--bg-hover); }
+        .btn-danger { background: var(--red); color: #fff; }
+        .btn-icon { width: 28px; height: 28px; padding: 0; }
+
+        .status-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+        .status-dot.green { background: var(--green); }
+        .status-dot.orange { background: var(--orange); }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 16px;
+            box-shadow: 0 8px 30px var(--shadow);
+            display: none;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .toast.show { display: flex; animation: slideIn 0.3s ease; }
+        .toast.error { border-color: var(--red); }
+        .toast.success { border-color: var(--green); }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Loading */
         .loading {
-            display: inline-block;
-            width: 14px;
-            height: 14px;
-            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+
+        .spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid var(--border);
             border-top-color: var(--accent);
             border-radius: 50%;
             animation: spin 1s linear infinite;
+            margin-right: 12px;
         }
-        
+
         @keyframes spin { to { transform: rotate(360deg); } }
-        
-        /* Drag & Drop Varianti */
-        #variantiBody tr {
-            transition: background-color 0.2s;
+
+        /* Varianti */
+        .varianti-list {
+            background: var(--bg);
+            border-radius: 6px;
+            padding: 8px;
+            font-size: 0.75rem;
+            max-height: 150px;
+            overflow-y: auto;
         }
-        #variantiBody tr:hover {
-            background-color: var(--bg-surface);
+
+        .variante-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px;
+            border-bottom: 1px solid var(--border);
         }
-        #variantiBody tr.dragging {
-            opacity: 0.5;
-            background-color: var(--accent);
-        }
-        .drag-handle {
-            font-size: 1.2rem;
-            user-select: none;
-        }
-        .drag-handle:hover {
-            color: var(--accent) !important;
-        }
+
+        .variante-row:last-child { border-bottom: none; }
     </style>
 </head>
 <body>
-    <header class="header">
-        <h1>📦 Catalogo Manager v3</h1>
-        <div class="stats">
-            <div class="stat">
-                <div class="stat-value" id="statProdotti">0</div>
-                <div class="stat-label">Prodotti</div>
-            </div>
-            <div class="stat">
-                <div class="stat-value" id="statVarianti">0</div>
-                <div class="stat-label">Varianti</div>
-            </div>
-            <div class="stat">
-                <div class="stat-value green" id="statPosizioni">0</div>
-                <div class="stat-label">Posizioni</div>
-            </div>
-            <div class="stat">
-                <div class="stat-value orange" id="statTaskAperti">0</div>
-                <div class="stat-label">Task Aperti</div>
-            </div>
-            <div class="stat">
-                <div class="stat-value green" id="statTaskCompletati">0</div>
-                <div class="stat-label">Completati</div>
-            </div>
+    <div class="header">
+        <div class="logo">
+            <div class="logo-icon">📦</div>
+            <h1>Catalogo Manager <span>v4.0</span></h1>
         </div>
-        <button class="btn btn-primary" onclick="openModal('importModal')">📥 Importa</button>
-        <button class="btn btn-success" onclick="openModal('posizioniModal')">📊 Posizioni</button>
-        <button class="btn btn-warning" onclick="openModal('taskSummaryModal')">📋 Task</button>
-        <button class="btn" style="background: #8b5cf6;" onclick="saveAllBoxes()">💾 Salva Tutti</button>
-        <button class="btn btn-success" onclick="openModal('newProductModal')">➕ Nuovo</button>
-        <button class="btn btn-danger btn-small" onclick="confirmReset()">🗑️</button>
-    </header>
-    
-    <div class="main">
-        <!-- Lista Prodotti -->
-        <div class="panel">
-            <div class="panel-header">
-                <h2>📋 Prodotti</h2>
-                <span id="productCount" style="font-size: 0.75rem; color: var(--text-muted);">0</span>
+
+        <nav class="nav-tabs">
+            <button class="nav-tab active" data-tab="prodotti">📋 Prodotti</button>
+            <button class="nav-tab" data-tab="preview" onclick="window.location='/preview'">👁️ Preview</button>
+            <button class="nav-tab" data-tab="export">📤 Export</button>
+        </nav>
+
+        <div class="header-stats">
+            <div class="header-stat">
+                <div class="header-stat-value" id="totalProducts">-</div>
+                <div class="header-stat-label">Prodotti</div>
             </div>
-            <div class="panel-content">
-                <div class="search-box">
-                    <input type="text" id="searchInput" placeholder="🔍 Cerca..." onkeyup="debounceSearch()">
-                </div>
-                <div class="filter-row">
-                    <label>
-                        <input type="checkbox" id="filterTask" onchange="loadProducts(1)">
-                        Solo con task aperti
-                    </label>
-                </div>
-                <ul class="product-list" id="productList"></ul>
-            </div>
-            <div id="pagination" style="padding: 0.4rem; border-top: 1px solid var(--border); text-align: center;"></div>
-        </div>
-        
-        <!-- Editor -->
-        <div class="panel">
-            <div class="tabs">
-                <div class="tab active" onclick="showTab('info')">📝 Info</div>
-                <div class="tab" onclick="showTab('varianti')">📊 Varianti</div>
-                <div class="tab" onclick="showTab('icone')">🎯 Icone</div>
-            </div>
-            <div class="panel-content">
-                <!-- Tab Info -->
-                <div id="tabInfo" class="tab-content active">
-                    <div id="editorContent">
-                        <div class="preview-placeholder">
-                            <p>👆 Seleziona un prodotto</p>
-                        </div>
-                    </div>
-                    <!-- Task sotto Info -->
-                    <div id="taskContent" style="margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1rem;">
-                    </div>
-                </div>
-                
-                <!-- Tab Varianti -->
-                <div id="tabVarianti" class="tab-content">
-                    <div id="variantiContent">
-                        <div class="preview-placeholder">
-                            <p>📊 Seleziona un prodotto</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Tab Icone -->
-                <div id="tabIcone" class="tab-content">
-                    <div id="iconeContent">
-                        <div class="preview-placeholder">
-                            <p>🎯 Seleziona un prodotto</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Preview -->
-        <div class="panel">
-            <div class="panel-header">
-                <h2>👁️ Anteprima</h2>
-                <div style="display: flex; gap: 0.5rem;">
-                    <select id="templateSelect" onchange="reloadPreview()" style="padding: 0.2rem; font-size: 0.75rem; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 4px;">
-                        <option value="corporate">🏢 Corporate</option>
-                        <option value="fullhd">🖥️ Full HD</option>
-                    </select>
-                    <button class="btn btn-small" onclick="openPreviewModal()" id="btnZoom" disabled title="Ingrandisci">🔍</button>
-                    <button class="btn btn-small btn-success" onclick="downloadBox()" id="btnDownload" disabled>💾 Scarica</button>
-                </div>
-            </div>
-            <div class="panel-content">
-                <div class="preview-container" id="previewContainer" onclick="openPreviewModal()" style="cursor: pointer;" title="Clicca per ingrandire">
-                    <div class="preview-placeholder">
-                        <p>🖼️ Seleziona un prodotto</p>
-                    </div>
-                </div>
-                
-                <!-- Task Summary sotto preview -->
-                <div class="task-section" style="margin-top: 0.75rem;">
-                    <h3>📋 Task Recenti (clicca per andare)</h3>
-                    <div id="recentTasks" class="task-summary"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Modal Anteprima Grande -->
-    <div class="modal" id="previewModal">
-        <div class="modal-content preview-modal-content">
-            <div class="preview-modal-header">
-                <h2 id="previewModalTitle">👁️ Anteprima</h2>
-                <div style="display: flex; gap: 0.5rem; align-items: center;">
-                    <select id="previewModalTemplate" onchange="reloadPreviewModal()" style="padding: 0.3rem 0.5rem; font-size: 0.85rem; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 4px;">
-                        <option value="corporate">🏢 Corporate</option>
-                        <option value="fullhd">🖥️ Full HD</option>
-                    </select>
-                    <button class="btn btn-success" onclick="downloadBox()">💾 Scarica</button>
-                    <button class="btn" onclick="closeModal('previewModal')">✕</button>
-                </div>
-            </div>
-            <div class="preview-modal-body" id="previewModalBody">
-                <div class="preview-placeholder">
-                    <p>🖼️ Caricamento...</p>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Modal Import -->
-    <div class="modal" id="importModal">
-        <div class="modal-content">
-            <h2>📥 Importa CSV</h2>
-            <div class="drop-zone" onclick="document.getElementById('fileInput').click()">
-                <div class="icon">📄</div>
-                <p>Trascina CSV o clicca</p>
-            </div>
-            <input type="file" id="fileInput" accept=".csv" multiple style="display: none" onchange="handleCSVFiles(this.files)">
-            <div id="importResults" style="margin-top: 0.75rem;"></div>
-            <div class="modal-actions">
-                <button class="btn" onclick="closeModal('importModal')">Chiudi</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Modal Posizioni -->
-    <div class="modal" id="posizioniModal">
-        <div class="modal-content">
-            <h2>📊 Gestione Posizioni</h2>
-            
-            <!-- Import Posizioni -->
-            <div style="border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 1rem;">
-                <h3 style="font-size: 0.9rem; margin-bottom: 0.5rem;">📥 Importa Posizioni</h3>
-                <div class="alert alert-info" style="margin-bottom: 0.75rem; font-size: 0.8rem;">
-                    Carica Excel/CSV con colonne <strong>CODICE</strong> e <strong>NUMERO</strong>
-                </div>
-                <div class="form-group">
-                    <label>Nome Categoria</label>
-                    <input type="text" id="categoriaInput" placeholder="Es: IRRIGAZIONE" value="">
-                </div>
-                <div class="drop-zone" onclick="document.getElementById('posizioniInput').click()">
-                    <div class="icon">📊</div>
-                    <p>Trascina Excel/CSV o clicca</p>
-                </div>
-                <input type="file" id="posizioniInput" accept=".xlsx,.xls,.csv" style="display: none" onchange="handlePosizioniFile(this.files[0])">
-                <div id="posizioniResults" style="margin-top: 0.5rem;"></div>
-            </div>
-            
-            <!-- Export Catalogo -->
-            <div>
-                <h3 style="font-size: 0.9rem; margin-bottom: 0.5rem;">📤 Esporta Catalogo</h3>
-                <div class="alert alert-info" style="margin-bottom: 0.75rem; font-size: 0.8rem;">
-                    Genera i box in <code>export_catalogo/CATEGORIA/</code><br>
-                    Nome file: <code>POSIZIONE_CODICE.jpg</code>
-                </div>
-                <div class="form-group">
-                    <label>Categoria da Esportare</label>
-                    <select id="exportCategoria" style="width: 100%; padding: 0.5rem; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 4px;">
-                        <option value="">-- Seleziona --</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Template</label>
-                    <select id="exportTemplate" style="width: 100%; padding: 0.5rem; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 4px;">
-                        <option value="corporate">🏢 Corporate</option>
-                        <option value="fullhd">🖥️ Full HD</option>
-                    </select>
-                </div>
-                <button class="btn btn-success" onclick="executeExport()" style="width: 100%;">📤 Esporta Catalogo</button>
-                <div id="exportResults" style="margin-top: 0.5rem;"></div>
-            </div>
-            
-            <!-- Salva Tutti i Box -->
-            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);">
-                <h3 style="font-size: 0.9rem; margin-bottom: 0.5rem;">💾 Salva Tutti i Box</h3>
-                <div class="alert alert-info" style="margin-bottom: 0.75rem; font-size: 0.8rem;">
-                    Salva tutti i box nella cartella <code>output_box/</code>
-                </div>
-                <div class="form-group">
-                    <label>Template</label>
-                    <select id="saveAllTemplate" style="width: 100%; padding: 0.5rem; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 4px;">
-                        <option value="corporate">🏢 Corporate</option>
-                        <option value="fullhd">🖥️ Full HD</option>
-                    </select>
-                </div>
-                <button class="btn btn-accent" onclick="saveAllBoxes()" style="width: 100%;">💾 Salva Tutti i Box</button>
-                <div id="saveAllResults" style="margin-top: 0.5rem;"></div>
-            </div>
-            
-            <div class="modal-actions">
-                <button class="btn" onclick="closeModal('posizioniModal')">Chiudi</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Modal Task Summary -->
-    <div class="modal" id="taskSummaryModal">
-        <div class="modal-content" style="max-width: 700px;">
-            <h2>📋 Riepilogo Task Aperti</h2>
-            <div id="fullTaskSummary" style="max-height: 500px; overflow-y: auto;"></div>
-            <div class="modal-actions">
-                <button class="btn" onclick="closeModal('taskSummaryModal')">Chiudi</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Modal Aggiungi Variante -->
-    <div class="modal" id="addVarianteModal">
-        <div class="modal-content">
-            <h2>➕ Aggiungi Variante</h2>
-            <div class="form-group">
-                <label>Codice *</label>
-                <input type="text" id="newVarCodice">
-            </div>
-            <div class="form-group">
-                <label>Modello</label>
-                <input type="text" id="newVarModello">
-            </div>
-            <div class="form-row">
-                <div class="form-group"><label>U.M.</label><input type="text" id="newVarUm" value="PZ"></div>
-                <div class="form-group"><label>MV</label><input type="text" id="newVarMv" value="1"></div>
-                <div class="form-group"><label>CF</label><input type="text" id="newVarCf"></div>
-                <div class="form-group"><label>Listino</label><input type="text" id="newVarListino"></div>
-            </div>
-            <div class="modal-actions">
-                <button class="btn" onclick="closeModal('addVarianteModal')">Annulla</button>
-                <button class="btn btn-success" onclick="saveNewVariante()">💾 Salva</button>
+            <div class="header-stat">
+                <div class="header-stat-value" id="totalCategories">-</div>
+                <div class="header-stat-label">Categorie</div>
             </div>
         </div>
     </div>
 
-    <!-- Modale Nuovo Prodotto -->
-    <div class="modal" id="newProductModal">
-        <div class="modal-content">
-            <h2>➕ Nuovo Prodotto</h2>
-            <div class="form-row">
-                <div class="form-group" style="flex: 1;">
-                    <label>Codice Principale *</label>
-                    <input type="text" id="newProdCodice" placeholder="Es: 1234">
-                </div>
-                <div class="form-group" style="flex: 0 0 100px;">
-                    <label>📍 Posizione</label>
-                    <input type="number" id="newProdPosizione" placeholder="N°" min="1">
+    <div class="main">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">📁 Categorie</div>
+                <div class="category-grid" id="categoryGrid">
+                    <div class="loading"><div class="spinner"></div></div>
                 </div>
             </div>
-            <div class="form-group">
-                <label>Titolo</label>
-                <input type="text" id="newProdTitolo" placeholder="Nome del prodotto">
+
+            <div class="sidebar-section">
+                <div class="sidebar-title">⚡ Azioni Rapide</div>
+                <div class="quick-actions">
+                    <a href="/preview" class="quick-action">👁️ Preview Catalogo</a>
+                    <a href="#" class="quick-action" onclick="exportPDF()">📄 Genera PDF</a>
+                    <a href="#" class="quick-action" onclick="exportInDesign()">📝 Script InDesign</a>
+                    <a href="#" class="quick-action" onclick="showImportModal()">📊 Import CSV</a>
+                </div>
             </div>
-            <div class="form-group">
-                <label>Descrizione</label>
-                <textarea id="newProdDescrizione" placeholder="Descrizione opzionale"></textarea>
+
+            <div class="sidebar-section">
+                <div class="sidebar-title">📈 Statistiche</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px;">
+                    <span class="status-dot green"></span> Con foto: <span id="withPhoto">-</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="photoProgress" style="width: 0%;"></div>
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 10px; margin-bottom: 6px;">
+                    <span class="status-dot orange"></span> Senza foto: <span id="withoutPhoto">-</span>
+                </div>
             </div>
-            <div class="modal-actions">
-                <button class="btn" onclick="closeModal('newProductModal')">Annulla</button>
-                <button class="btn btn-success" onclick="saveNewProduct()">💾 Crea Prodotto</button>
+        </div>
+
+        <!-- CONTENT -->
+        <div class="content">
+            <div class="content-header">
+                <div>
+                    <div class="content-title" id="currentCategoryName">Tutti i Prodotti</div>
+                    <div class="content-subtitle" id="currentCategoryCount">Caricamento...</div>
+                </div>
+
+                <div class="search-filters">
+                    <input type="text" class="search-input" id="searchInput" placeholder="🔍 Cerca codice o nome...">
+
+                    <div class="view-toggles">
+                        <button class="view-toggle active" data-view="grid">📦</button>
+                        <button class="view-toggle" data-view="list">📋</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="product-grid" id="productGrid">
+                <div class="loading"><div class="spinner"></div> Caricamento prodotti...</div>
+            </div>
+        </div>
+
+        <!-- DETAIL PANEL -->
+        <div class="detail-panel">
+            <div class="detail-header">
+                <div class="detail-title">✏️ Editor Prodotto</div>
+                <div class="detail-actions">
+                    <button class="btn btn-icon btn-secondary" onclick="deleteProduct()" title="Elimina">🗑️</button>
+                    <button class="btn btn-primary" onclick="saveProduct()">💾 Salva</button>
+                </div>
+            </div>
+
+            <div class="detail-content" id="detailContent">
+                <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+                    <div style="font-size: 3rem; margin-bottom: 10px;">👆</div>
+                    <p>Seleziona un prodotto dalla griglia</p>
+                </div>
             </div>
         </div>
     </div>
+
+    <div class="toast" id="toast"></div>
 
     <script>
-        let currentProductId = null;
+        // State
+        let currentCategory = 'Tutto';
         let currentProduct = null;
-        let currentPage = 1;
-        let searchTimeout = null;
-        
-        // Campi per task
-        const TASK_FIELDS = ['IMMAGINE', 'DESCRIZIONE', 'U.M.', 'MV', 'CF', 'LISTINO', 'LOGO_BRAND'];
-        
+        let products = [];
+        let categories = [];
+
+        // Icons per categoria
+        const categoryIcons = {
+            'Tutto': '📦',
+            'Agricoltura': '🌱',
+            'Brico': '🔧',
+            'Idraulica': '🚰',
+            'Vino Olio Macello': '🍷',
+            'Pet e Zootecnia': '🐾',
+            'Fumisteria': '🔥',
+            'Elettricita': '⚡',
+            'None': '❓'
+        };
+
+        // Init
         document.addEventListener('DOMContentLoaded', () => {
-            loadStats();
+            loadCategories();
             loadProducts();
-            loadRecentTasks();
+
+            // Search
+            document.getElementById('searchInput').addEventListener('input', debounce(filterProducts, 300));
         });
-        
-        async function api(endpoint, options = {}) {
-            const response = await fetch(`/api${endpoint}`, {
-                headers: { 'Content-Type': 'application/json' },
-                ...options
-            });
-            return response.json();
+
+        // Debounce
+        function debounce(func, wait) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
         }
-        
-        async function loadStats() {
-            const stats = await api('/stats');
-            document.getElementById('statProdotti').textContent = stats.prodotti;
-            document.getElementById('statVarianti').textContent = stats.varianti;
-            document.getElementById('statPosizioni').textContent = stats.posizioni;
-            document.getElementById('statTaskAperti').textContent = stats.task_aperti;
-            document.getElementById('statTaskCompletati').textContent = stats.task_completati;
-            
-            // Popola select categorie per export
-            const select = document.getElementById('exportCategoria');
-            if (select && stats.categorie) {
-                select.innerHTML = '<option value="">-- Seleziona --</option>';
-                stats.categorie.forEach(cat => {
-                    select.innerHTML += `<option value="${cat}">${cat}</option>`;
-                });
+
+        // Load categories
+        async function loadCategories() {
+            try {
+                const res = await fetch('/api/catalog/categories');
+                const data = await res.json();
+                categories = data.categories || [];
+
+                // Add "Tutto" at start
+                if (!categories.find(c => c.categoria === 'Tutto')) {
+                    categories.unshift({ categoria: 'Tutto', count: categories.reduce((a, c) => a + c.count, 0) });
+                }
+
+                renderCategories();
+                updateStats();
+            } catch (err) {
+                console.error('Error loading categories:', err);
             }
         }
-        
-        async function loadProducts(page = 1) {
+
+        // Render categories
+        function renderCategories() {
+            const grid = document.getElementById('categoryGrid');
+            grid.innerHTML = categories.map(cat => `
+                <div class="category-card ${cat.categoria === currentCategory ? 'active' : ''}"
+                     onclick="selectCategory('${cat.categoria}')">
+                    <div class="category-icon">${categoryIcons[cat.categoria] || '📁'}</div>
+                    <div class="category-name">${cat.categoria || 'Senza cat.'}</div>
+                    <div class="category-count">${cat.count} prod.</div>
+                </div>
+            `).join('');
+
+            document.getElementById('totalCategories').textContent = categories.length;
+        }
+
+        // Select category
+        function selectCategory(cat) {
+            currentCategory = cat;
+            renderCategories();
+            loadProducts();
+        }
+
+        // Load products
+        async function loadProducts(search = '') {
+            const grid = document.getElementById('productGrid');
+            grid.innerHTML = '<div class="loading"><div class="spinner"></div> Caricamento...</div>';
+
+            try {
+                let url = `/api/prodotti?per_page=100`;
+                if (search) url += `&search=${encodeURIComponent(search)}`;
+
+                // Filtro categoria
+                if (currentCategory && currentCategory !== 'Tutto') {
+                    url += `&categoria=${encodeURIComponent(currentCategory)}`;
+                }
+
+                console.log('Loading products:', url);
+                const res = await fetch(url);
+                const data = await res.json();
+                products = data.prodotti || [];
+                console.log('Loaded', products.length, 'products');
+
+                renderProducts();
+                updateCategoryInfo();
+            } catch (err) {
+                console.error('Error loading products:', err);
+                grid.innerHTML = '<div class="loading">Errore nel caricamento: ' + err.message + '</div>';
+            }
+        }
+
+        // Filter products
+        function filterProducts() {
             const search = document.getElementById('searchInput').value;
-            const soloTask = document.getElementById('filterTask').checked ? '1' : '';
-            
-            const data = await api(`/prodotti?page=${page}&per_page=50&search=${encodeURIComponent(search)}&solo_task=${soloTask}`);
-            
-            currentPage = page;
-            document.getElementById('productCount').textContent = data.total;
-            
-            const list = document.getElementById('productList');
-            
-            if (data.prodotti.length === 0) {
-                list.innerHTML = `<li style="text-align: center; padding: 1rem; color: var(--text-muted);">Nessun risultato</li>`;
-            } else {
-                list.innerHTML = data.prodotti.map(p => `
-                    <li class="product-item ${p.id === currentProductId ? 'selected' : ''}" onclick="selectProduct(${p.id})">
-                        ${p.controllato ? `<span class="complete-badge">✓</span>` : (p.task_aperti > 0 ? `<span class="task-badge">${p.task_aperti} task</span>` : '')}
-                        <div>
-                            ${p.posizione ? `<span class="product-pos">#${p.posizione}</span>` : ''}
-                            <span class="product-code">${p.codice_principale}</span>
-                        </div>
-                        <div class="product-title">${escapeHtml(p.titolo)}</div>
-                        <div class="product-meta">📊 ${p.num_varianti} var.</div>
-                    </li>
-                `).join('');
+            loadProducts(search);
+        }
+
+        // Render products
+        function renderProducts() {
+            const grid = document.getElementById('productGrid');
+
+            if (products.length === 0) {
+                grid.innerHTML = '<div class="loading">Nessun prodotto trovato</div>';
+                return;
             }
-            
-            renderPagination(data.page, data.pages);
+
+            grid.innerHTML = products.map(p => `
+                <div class="product-card ${currentProduct?.id === p.id ? 'selected' : ''}"
+                     onclick="selectProduct(${p.id})">
+                    <div class="product-image">
+                        ${p.immagine ?
+                            `<img src="/static/foto/${p.immagine}" onerror="this.parentElement.innerHTML='<div class=product-no-image>📷</div>'">` :
+                            '<div class="product-no-image">📷</div>'}
+                        ${p.posizione ? `<span class="product-badge">Pos. ${p.posizione}</span>` :
+                            '<span class="product-badge warning">No Pos</span>'}
+                    </div>
+                    <div class="product-info">
+                        <div class="product-code">ART. ${p.codice_principale}</div>
+                        <div class="product-name">${p.titolo || p.descrizione?.substring(0, 50) || 'Senza titolo'}</div>
+                        <div class="product-meta">
+                            <span class="product-price">${p.prezzo_catalogo ? '€' + p.prezzo_catalogo : '-'}</span>
+                            <span class="product-position">${p.num_varianti || 0} var.</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
         }
-        
-        function renderPagination(current, total) {
-            const container = document.getElementById('pagination');
-            if (total <= 1) { container.innerHTML = ''; return; }
-            
-            let html = '';
-            if (current > 1) html += `<button class="btn btn-small" onclick="loadProducts(${current - 1})">◀</button>`;
-            html += `<span style="margin: 0 0.5rem; font-size: 0.75rem;">${current}/${total}</span>`;
-            if (current < total) html += `<button class="btn btn-small" onclick="loadProducts(${current + 1})">▶</button>`;
-            container.innerHTML = html;
-        }
-        
-        function debounceSearch() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => loadProducts(1), 300);
-        }
-        
+
+        // Select product
         async function selectProduct(id) {
-            currentProductId = id;
-            document.querySelectorAll('.product-item').forEach(el => el.classList.remove('selected'));
-            event.currentTarget?.classList.add('selected');
-            
-            currentProduct = await api(`/prodotto/${id}`);
-            
-            renderEditor();
-            renderVarianti();
-            renderIcone();
-            renderTaskTab();
-            reloadPreview();
-            
-            document.getElementById('btnDownload').disabled = false;
-            document.getElementById('btnZoom').disabled = false;
+            currentProduct = products.find(p => p.id === id);
+            renderProducts();
+            renderDetail();
         }
-        
-        function renderEditor() {
+
+        // Render detail panel
+        function renderDetail() {
+            if (!currentProduct) return;
+
             const p = currentProduct;
-            
-            document.getElementById('editorContent').innerHTML = `
-                <div class="form-row">
-                    <div class="form-group" style="flex: 0 0 100px;">
-                        <label>Codice</label>
-                        <input type="text" value="${p.codice_principale}" disabled style="opacity: 0.6;">
+            const content = document.getElementById('detailContent');
+
+            content.innerHTML = `
+                <!-- Preview Image -->
+                <div class="preview-image">
+                    ${p.immagine ?
+                        `<img src="/static/foto/${p.immagine}" onerror="this.src='/static/no-image.png'">` :
+                        '<div style="font-size: 3rem; color: var(--text-muted);">📷</div><div style="color: var(--text-muted); margin-top: 8px; font-size: 0.75rem;">Nessuna foto</div>'}
+                </div>
+
+                <!-- Scale Control -->
+                <div class="scale-control">
+                    <div class="scale-header">
+                        <span class="scale-label">📐 Scala Foto</span>
+                        <span class="scale-value" id="scaleValue">${p.scala_foto || 100}%</span>
                     </div>
-                    <div class="form-group" style="flex: 0 0 100px;">
-                        <label>📍 Posizione</label>
-                        <input type="number" id="editPosizione" value="${p.posizione || ''}" placeholder="N°" min="1">
+                    <input type="range" class="scale-slider" id="scaleSlider"
+                           min="50" max="150" value="${p.scala_foto || 100}"
+                           oninput="updateScale(this.value)">
+                    <div class="scale-presets">
+                        <button class="scale-preset ${p.scala_foto == 50 ? 'active' : ''}" onclick="setScale(50)">50%</button>
+                        <button class="scale-preset ${p.scala_foto == 75 ? 'active' : ''}" onclick="setScale(75)">75%</button>
+                        <button class="scale-preset ${!p.scala_foto || p.scala_foto == 100 ? 'active' : ''}" onclick="setScale(100)">100%</button>
+                        <button class="scale-preset ${p.scala_foto == 125 ? 'active' : ''}" onclick="setScale(125)">125%</button>
+                        <button class="scale-preset ${p.scala_foto == 150 ? 'active' : ''}" onclick="setScale(150)">150%</button>
                     </div>
                 </div>
-                
-                <div class="form-group">
-                    <label>Titolo</label>
-                    <input type="text" id="editTitolo" value="${escapeHtml(p.titolo)}">
-                </div>
-                
-                <div class="form-group">
-                    <label>Descrizione</label>
-                    <textarea id="editDescrizione">${escapeHtml(p.descrizione || '')}</textarea>
-                </div>
-                
-                <div class="form-row">
+
+                <!-- Form Fields -->
+                <div class="form-section">
+                    <div class="form-section-title">📝 Informazioni</div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Codice</label>
+                            <input type="text" class="form-input" id="editCode" value="${p.codice_principale}" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Posizione</label>
+                            <input type="number" class="form-input" id="editPosition" value="${p.posizione || ''}" placeholder="Es: 1">
+                        </div>
+                    </div>
+
                     <div class="form-group">
-                        <label>📷 Immagine Prodotto</label>
-                        <div class="upload-area" onclick="document.getElementById('fotoInput').click()">
-                            ${p.immagine ? `<img src="/api/foto/${p.immagine}" class="upload-preview" onerror="this.style.display='none'">` : ''}
-                            <p style="font-size: 0.7rem; color: var(--text-muted);">${p.immagine || 'Clicca per caricare'}</p>
-                        </div>
-                        <input type="file" id="fotoInput" accept="image/*" style="display: none" onchange="uploadFoto(this.files[0])">
-                        <div style="display: flex; gap: 0.25rem; margin-top: 0.25rem;">
-                            <input type="text" id="editImmagine" value="${escapeHtml(p.immagine || '')}" placeholder="nome file" style="flex: 1;">
-                            ${p.immagine ? `<button class="btn btn-danger btn-small" onclick="deleteImage('immagine')" title="Cancella">🗑️</button>` : ''}
-                        </div>
+                        <label class="form-label">Titolo</label>
+                        <input type="text" class="form-input" id="editTitle" value="${p.titolo || ''}">
                     </div>
-                    
+
                     <div class="form-group">
-                        <label>🏷️ Logo Brand</label>
-                        <div class="upload-area" onclick="document.getElementById('logoInput').click()">
-                            ${p.logo ? `<img src="/api/logo/${p.logo}" class="upload-preview" onerror="this.style.display='none'">` : ''}
-                            <p style="font-size: 0.7rem; color: var(--text-muted);">${p.logo || 'Clicca per caricare'}</p>
+                        <label class="form-label">Descrizione</label>
+                        <textarea class="form-input" id="editDesc" rows="3">${p.descrizione || ''}</textarea>
+                    </div>
+                </div>
+
+                <!-- Position Grid -->
+                <div class="form-section">
+                    <div class="form-section-title">📍 Posizione in Pagina</div>
+                    <div class="position-control">
+                        <div class="position-header">
+                            <span style="font-size: 0.8rem;">Layout 2×3</span>
                         </div>
-                        <input type="file" id="logoInput" accept="image/*" style="display: none" onchange="uploadLogo(this.files[0])">
-                        <div style="display: flex; gap: 0.25rem; margin-top: 0.25rem;">
-                            <input type="text" id="editLogo" value="${escapeHtml(p.logo || '')}" placeholder="nome file" style="flex: 1;">
-                            ${p.logo ? `<button class="btn btn-danger btn-small" onclick="deleteImage('logo')" title="Cancella">🗑️</button>` : ''}
+                        <div class="position-grid">
+                            ${[1,2,3,4,5,6].map(pos => `
+                                <div class="position-slot ${p.posizione == pos ? 'current' : ''}"
+                                     onclick="setPosition(${pos})">
+                                    ${pos}${p.posizione == pos ? ' ✓' : ''}
+                                </div>
+                            `).join('')}
                         </div>
                     </div>
                 </div>
-                
-                <div class="form-group">
-                    <label>Template Box</label>
-                    <div class="template-selector">
-                        <div class="template-option ${(p.template || 'scheda') === 'scheda' ? 'selected' : ''}" onclick="selectTemplate('scheda')">
-                            <div class="icon">📇</div>
-                            <div class="name">Scheda</div>
-                        </div>
-                        <div class="template-option ${p.template === 'tabella' ? 'selected' : ''}" onclick="selectTemplate('tabella')">
-                            <div class="icon">📊</div>
-                            <div class="name">Tabella</div>
-                        </div>
+
+                <!-- Varianti -->
+                ${p.num_varianti > 0 ? `
+                <div class="form-section">
+                    <div class="form-section-title">📦 Varianti (${p.num_varianti})</div>
+                    <div class="varianti-list" id="variantiList">
+                        <div class="loading"><div class="spinner"></div></div>
                     </div>
                 </div>
-                
-                <div style="display: flex; gap: 0.5rem; align-items: center;">
-                    <button class="btn btn-success" onclick="saveProduct()">💾 Salva</button>
-                    <button class="btn btn-danger btn-small" onclick="deleteProduct()">🗑️ Elimina</button>
-                    <div style="margin-left: auto;">
-                        <button class="btn ${p.controllato ? 'btn-checked' : ''}" onclick="toggleControllato()" style="background: ${p.controllato ? 'var(--green)' : 'var(--bg-surface)'};">
-                            ${p.controllato ? '✓ Controllato' : '☐ Controllato'}
-                        </button>
-                    </div>
-                </div>
+                ` : ''}
             `;
-        }
-        
-        function renderVarianti() {
-            const varianti = currentProduct.varianti;
-            
-            let html = `
-                <button class="btn btn-success btn-small" style="margin-bottom: 0.5rem;" onclick="openModal('addVarianteModal')">➕ Aggiungi</button>
-                <div style="overflow-x: auto;">
-                    <table id="variantiTable">
-                        <thead><tr>
-                            <th style="width: 30px;"></th>
-                            <th>Codice</th>
-                            <th>Modello</th>
-                            <th>U.M.</th>
-                            <th>MV</th>
-                            <th>CF</th>
-                            <th>Netto</th>
-                            <th title="Escludi dalla stampa" style="width: 40px;">🖨️</th>
-                            <th></th>
-                        </tr></thead>
-                        <tbody id="variantiBody">
-            `;
-            
-            varianti.forEach((v, idx) => {
-                const isExcluded = v.escludi_stampa == 1;
-                html += `
-                    <tr data-codice="${v.codice}" data-ordine="${idx}" draggable="true" 
-                        ondragstart="dragStart(event)" ondragover="dragOver(event)" 
-                        ondrop="dropRow(event)" ondragend="dragEnd(event)"
-                        style="cursor: grab; ${isExcluded ? 'opacity: 0.5; background: #fff3cd;' : ''}">
-                        <td class="drag-handle" style="cursor: grab; color: var(--text-muted);">⋮⋮</td>
-                        <td><strong>${v.codice}</strong></td>
-                        <td><input value="${escapeHtml(v.modello || '')}" onchange="updateVariante('${v.codice}')"></td>
-                        <td><input value="${escapeHtml(v.um || '')}" onchange="updateVariante('${v.codice}')" style="width: 50px;"></td>
-                        <td><input value="${escapeHtml(v.mv || '')}" onchange="updateVariante('${v.codice}')" style="width: 50px;"></td>
-                        <td><input value="${escapeHtml(v.cf || '')}" onchange="updateVariante('${v.codice}')" style="width: 50px;"></td>
-                        <td><input value="${escapeHtml(v.listino || '')}" onchange="updateVariante('${v.codice}')" style="width: 80px;"></td>
-                        <td style="text-align: center;">
-                            <input type="checkbox" ${isExcluded ? 'checked' : ''} 
-                                   onchange="toggleEscludiStampa('${v.codice}')" 
-                                   title="${isExcluded ? 'Esclusa dalla stampa' : 'Inclusa nella stampa'}"
-                                   style="width: 18px; height: 18px; cursor: pointer;">
-                        </td>
-                        <td><button class="btn btn-danger btn-small" onclick="deleteVariante('${v.codice}')">🗑️</button></td>
-                    </tr>
-                `;
-            });
-            
-            html += '</tbody></table></div>';
-            document.getElementById('variantiContent').innerHTML = html;
-        }
-        
-        // Drag & Drop per riordinare varianti
-        let draggedRow = null;
-        
-        function dragStart(e) {
-            draggedRow = e.target.closest('tr');
-            draggedRow.style.opacity = '0.5';
-            e.dataTransfer.effectAllowed = 'move';
-        }
-        
-        function dragOver(e) {
-            e.preventDefault();
-            const tr = e.target.closest('tr');
-            if (tr && tr !== draggedRow) {
-                tr.style.borderTop = '2px solid var(--accent)';
+
+            // Load varianti if any
+            if (p.num_varianti > 0) {
+                loadVarianti(p.codice_principale);
             }
         }
-        
-        function dragEnd(e) {
-            draggedRow.style.opacity = '1';
-            document.querySelectorAll('#variantiBody tr').forEach(tr => {
-                tr.style.borderTop = '';
+
+        // Update scale
+        function updateScale(value) {
+            document.getElementById('scaleValue').textContent = value + '%';
+            document.querySelectorAll('.scale-preset').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent === value + '%');
             });
         }
-        
-        async function dropRow(e) {
-            e.preventDefault();
-            const targetRow = e.target.closest('tr');
-            if (!targetRow || targetRow === draggedRow) return;
-            
-            const tbody = document.getElementById('variantiBody');
-            const rows = Array.from(tbody.querySelectorAll('tr'));
-            const draggedIdx = rows.indexOf(draggedRow);
-            const targetIdx = rows.indexOf(targetRow);
-            
-            if (draggedIdx < targetIdx) {
-                targetRow.after(draggedRow);
-            } else {
-                targetRow.before(draggedRow);
-            }
-            
-            // Salva nuovo ordine
-            await saveVariantiOrder();
+
+        function setScale(value) {
+            document.getElementById('scaleSlider').value = value;
+            updateScale(value);
         }
-        
-        async function saveVariantiOrder() {
-            const tbody = document.getElementById('variantiBody');
-            const rows = tbody.querySelectorAll('tr');
-            const ordine = [];
-            
-            rows.forEach((row, idx) => {
-                ordine.push({
-                    codice: row.dataset.codice,
-                    ordine: idx
-                });
+
+        function setPosition(pos) {
+            document.getElementById('editPosition').value = pos;
+            document.querySelectorAll('.position-slot').forEach((slot, idx) => {
+                slot.classList.toggle('current', idx + 1 === pos);
+                slot.textContent = (idx + 1) + (idx + 1 === pos ? ' ✓' : '');
             });
-            
-            await api(`/prodotto/${currentProductId}/ordine_varianti`, {
-                method: 'POST',
-                body: JSON.stringify({ ordine: ordine })
-            });
-            
-            // Ricarica prodotto per aggiornare
-            currentProduct = await api(`/prodotto/${currentProductId}`);
-            reloadPreview();
-            notify('Ordine aggiornato', 'success');
         }
-        
-        function renderTaskTab() {
-            const tasks = currentProduct.task || [];
-            
-            let html = `
-                <div class="alert alert-info">
-                    Assegna task per i campi da modificare. Il collaboratore vedrà la lista e potrà completarli.
-                </div>
-                
-                <h3 style="font-size: 0.85rem; margin: 0.75rem 0 0.5rem;">➕ Aggiungi Task</h3>
-            `;
-            
-            // Form per aggiungere task
-            TASK_FIELDS.forEach(campo => {
-                const existingTask = tasks.find(t => t.campo === campo && !t.completato);
-                
-                html += `
-                    <div class="task-item ${existingTask ? '' : 'new'}">
-                        <input type="checkbox" ${existingTask ? 'checked' : ''} 
-                               onchange="toggleTaskField('${campo}', this.checked)"
-                               ${existingTask ? 'disabled' : ''}>
-                        <span class="campo">${campo}</span>
-                        <input type="text" class="nota" id="nota_${campo}" 
-                               placeholder="Nota..." 
-                               value="${existingTask ? escapeHtml(existingTask.nota || '') : ''}">
-                        ${existingTask ? 
-                            `<button class="btn btn-success btn-small" onclick="completeTask(${existingTask.id})">✓</button>
-                             <button class="btn btn-danger btn-small" onclick="deleteTask(${existingTask.id})">✕</button>` :
-                            `<button class="btn btn-primary btn-small btn-add-task" onclick="addTask('${campo}')">+</button>`
-                        }
-                    </div>
-                `;
-            });
-            
-            // Task completati
-            const completati = tasks.filter(t => t.completato);
-            if (completati.length > 0) {
-                html += `<h3 style="font-size: 0.85rem; margin: 1rem 0 0.5rem; color: var(--green);">✅ Completati (${completati.length})</h3>`;
-                completati.forEach(t => {
-                    html += `
-                        <div class="task-item completato">
-                            <input type="checkbox" checked disabled>
-                            <span class="campo">${t.campo}</span>
-                            <span style="flex: 1; font-size: 0.75rem;">${escapeHtml(t.nota || '')}</span>
-                            <span style="font-size: 0.65rem; color: var(--text-muted);">${t.completato_da || ''}</span>
+
+        // Load varianti
+        async function loadVarianti(codice) {
+            try {
+                const res = await fetch(`/api/varianti/${codice}`);
+                const data = await res.json();
+                const list = document.getElementById('variantiList');
+
+                if (data.varianti?.length > 0) {
+                    list.innerHTML = data.varianti.map(v => `
+                        <div class="variante-row">
+                            <span>${v.codice_variante}</span>
+                            <span>${v.descrizione?.substring(0, 30) || '-'}</span>
+                            <span>${v.prezzo || '-'}</span>
                         </div>
-                    `;
-                });
+                    `).join('');
+                } else {
+                    list.innerHTML = '<div style="text-align: center; padding: 10px; color: var(--text-muted);">Nessuna variante</div>';
+                }
+            } catch (err) {
+                console.error(err);
             }
-            
-            document.getElementById('taskContent').innerHTML = html;
         }
-        
-        async function addTask(campo) {
-            const nota = document.getElementById(`nota_${campo}`).value;
-            
-            await api('/task', {
-                method: 'POST',
-                body: JSON.stringify({
-                    prodotto_id: currentProductId,
-                    campo: campo,
-                    nota: nota,
-                    assegnato_da: 'Utente'
-                })
-            });
-            
-            // Ricarica
-            currentProduct = await api(`/prodotto/${currentProductId}`);
-            renderTaskTab();
-            loadStats();
-            loadRecentTasks();
-            loadProducts(currentPage);
-            notify('Task aggiunto', 'success');
-        }
-        
-        async function completeTask(taskId) {
-            await api(`/task/${taskId}`, {
-                method: 'PUT',
-                body: JSON.stringify({
-                    completato: true,
-                    completato_da: 'Operatore'
-                })
-            });
-            
-            currentProduct = await api(`/prodotto/${currentProductId}`);
-            renderTaskTab();
-            loadStats();
-            loadRecentTasks();
-            loadProducts(currentPage);
-            notify('Task completato!', 'success');
-        }
-        
-        async function deleteTask(taskId) {
-            await api(`/task/${taskId}`, { method: 'DELETE' });
-            
-            currentProduct = await api(`/prodotto/${currentProductId}`);
-            renderTaskTab();
-            loadStats();
-            loadRecentTasks();
-            loadProducts(currentPage);
-        }
-        
-        async function loadRecentTasks() {
-            const tasks = await api('/task_summary');
-            
-            const container = document.getElementById('recentTasks');
-            
-            if (tasks.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: var(--text-muted); font-size: 0.75rem;">Nessun task aperto</p>';
-                return;
-            }
-            
-            container.innerHTML = tasks.slice(0, 10).map(t => `
-                <div class="task-summary-item" onclick="goToProduct(${t.prodotto_id})">
-                    <span class="codice">${t.codice_principale}</span>
-                    <span class="campo">${t.campo}</span>
-                    <span class="nota">${escapeHtml(t.nota || t.titolo?.substring(0, 30) || '')}</span>
-                </div>
-            `).join('');
-            
-            // Full summary per modal
-            document.getElementById('fullTaskSummary').innerHTML = tasks.map(t => `
-                <div class="task-summary-item" onclick="goToProduct(${t.prodotto_id}); closeModal('taskSummaryModal');">
-                    <span class="codice">${t.codice_principale}</span>
-                    <span class="campo">${t.campo}</span>
-                    <span class="nota">${escapeHtml(t.nota || '')}</span>
-                    <span style="font-size: 0.65rem; color: var(--text-muted);">${t.titolo?.substring(0, 25) || ''}</span>
-                </div>
-            `).join('');
-        }
-        
-        function goToProduct(productId) {
-            // Simula click sul prodotto
-            currentProductId = productId;
-            selectProduct(productId);
-            loadProducts(currentPage);
-        }
-        
-        function selectTemplate(template) {
-            document.querySelectorAll('.template-option').forEach(el => el.classList.remove('selected'));
-            event.currentTarget.classList.add('selected');
-            document.getElementById('templateSelect').value = template;
-            reloadPreview();
-        }
-        
+
+        // Save product
         async function saveProduct() {
-            const template = document.querySelector('.template-option.selected')?.querySelector('.name')?.textContent?.toLowerCase() || 'tabella';
-            const posizione = document.getElementById('editPosizione')?.value;
-            
-            await api(`/prodotto/${currentProductId}`, {
-                method: 'PUT',
-                body: JSON.stringify({
-                    titolo: document.getElementById('editTitolo').value,
-                    descrizione: document.getElementById('editDescrizione').value,
-                    immagine: document.getElementById('editImmagine').value,
-                    logo: document.getElementById('editLogo').value,
-                    template: template,
-                    posizione: posizione ? parseInt(posizione) : null
-                })
-            });
-            
-            // Auto-salva box in output_box/
-            const previewTemplate = document.getElementById('templateSelect').value;
-            await api(`/box/${currentProductId}/save`, {
-                method: 'POST',
-                body: JSON.stringify({ template: previewTemplate })
-            });
-            
-            currentProduct = await api(`/prodotto/${currentProductId}`);
-            loadProducts(currentPage);
-            reloadPreview();
-            notify('Salvato + Box aggiornato!', 'success');
-        }
-        
-        async function deleteProduct() {
-            if (!confirm('Eliminare questo prodotto?')) return;
-            await api(`/prodotto/${currentProductId}`, { method: 'DELETE' });
-            currentProductId = null;
-            loadStats();
-            loadProducts(currentPage);
-            document.getElementById('editorContent').innerHTML = '<div class="preview-placeholder"><p>👆 Seleziona</p></div>';
-            document.getElementById('previewContainer').innerHTML = '<div class="preview-placeholder"><p>🖼️</p></div>';
-        }
-        
-        async function toggleControllato() {
-            const result = await api(`/prodotto/${currentProductId}/toggle_controllato`, { method: 'POST' });
-            if (result.success) {
-                currentProduct.controllato = result.controllato;
-                renderEditor();
-                loadProducts(currentPage);
-                notify(result.controllato ? '✓ Segnato come controllato' : 'Rimosso da controllato', 'success');
-            }
-        }
-        
-        async function updateVariante(codice) {
-            const row = document.querySelector(`tr[data-codice="${codice}"]`);
-            const inputs = row.querySelectorAll('input');
-            
-            await api(`/variante/${codice}`, {
-                method: 'PUT',
-                body: JSON.stringify({
-                    modello: inputs[0].value,
-                    um: inputs[1].value,
-                    mv: inputs[2].value,
-                    cf: inputs[3].value,
-                    listino: inputs[4].value
-                })
-            });
-            
-            reloadPreview();
-        }
-        
-        async function deleteVariante(codice) {
-            if (!confirm(`Eliminare ${codice}?`)) return;
-            await api(`/variante/${codice}`, { method: 'DELETE' });
-            currentProduct = await api(`/prodotto/${currentProductId}`);
-            renderVarianti();
-            loadStats();
-            reloadPreview();
-        }
-        
-        async function toggleEscludiStampa(codice) {
-            const result = await api(`/variante/${codice}/toggle_stampa`, { method: 'POST' });
-            if (result.success) {
-                // Aggiorna i dati locali
-                currentProduct = await api(`/prodotto/${currentProductId}`);
-                renderVarianti();
-                reloadPreview();
-                showNotification(result.escludi_stampa ? 
-                    `Variante ${codice} esclusa dalla stampa` : 
-                    `Variante ${codice} inclusa nella stampa`, 'success');
-            }
-        }
-        
-        async function saveNewProduct() {
-            const codice = document.getElementById('newProdCodice').value.trim();
-            if (!codice) { 
-                alert('Inserisci il codice principale'); 
-                return; 
-            }
-            
-            const result = await api('/prodotto', {
-                method: 'POST',
-                body: JSON.stringify({
-                    codice_principale: codice,
-                    titolo: document.getElementById('newProdTitolo').value.trim(),
-                    descrizione: document.getElementById('newProdDescrizione').value.trim(),
-                    posizione: document.getElementById('newProdPosizione').value || null
-                })
-            });
-            
-            if (result.error) { 
-                alert(result.error); 
-                return; 
-            }
-            
-            closeModal('newProductModal');
-            
-            // Reset campi
-            document.getElementById('newProdCodice').value = '';
-            document.getElementById('newProdTitolo').value = '';
-            document.getElementById('newProdDescrizione').value = '';
-            document.getElementById('newProdPosizione').value = '';
-            
-            // Ricarica e seleziona il nuovo prodotto
-            loadStats();
-            loadProducts(1);
-            
-            // Seleziona il nuovo prodotto
-            setTimeout(() => {
-                selectProduct(result.id);
-            }, 300);
-            
-            notify('Prodotto creato! Aggiungi le varianti.', 'success');
-        }
-        
-        async function saveNewVariante() {
-            const codice = document.getElementById('newVarCodice').value.trim();
-            if (!codice) { alert('Inserisci codice'); return; }
-            
-            const result = await api('/variante', {
-                method: 'POST',
-                body: JSON.stringify({
-                    codice,
-                    prodotto_id: currentProductId,
-                    modello: document.getElementById('newVarModello').value,
-                    um: document.getElementById('newVarUm').value,
-                    mv: document.getElementById('newVarMv').value,
-                    cf: document.getElementById('newVarCf').value,
-                    listino: document.getElementById('newVarListino').value
-                })
-            });
-            
-            if (result.error) { alert(result.error); return; }
-            
-            closeModal('addVarianteModal');
-            currentProduct = await api(`/prodotto/${currentProductId}`);
-            renderVarianti();
-            loadStats();
-            reloadPreview();
-            notify('Variante aggiunta', 'success');
-        }
-        
-        async function uploadFoto(file) {
-            if (!file) return;
-            const formData = new FormData();
-            formData.append('file', file);
-            
-            const response = await fetch(`/api/upload_foto/${currentProductId}`, {
-                method: 'POST',
-                body: formData
-            });
-            
-            const result = await response.json();
-            if (result.success) {
-                document.getElementById('editImmagine').value = result.filename;
-                currentProduct = await api(`/prodotto/${currentProductId}`);
-                renderEditor();
-                reloadPreview();
-                notify('Foto caricata!', 'success');
-            }
-        }
-        
-        async function uploadLogo(file) {
-            if (!file) return;
-            const formData = new FormData();
-            formData.append('file', file);
-            
-            const response = await fetch(`/api/upload_logo/${currentProductId}`, {
-                method: 'POST',
-                body: formData
-            });
-            
-            const result = await response.json();
-            if (result.success) {
-                document.getElementById('editLogo').value = result.filename;
-                currentProduct = await api(`/prodotto/${currentProductId}`);
-                renderEditor();
-                reloadPreview();
-                notify('Logo caricato!', 'success');
-            }
-        }
-        
-        async function deleteImage(tipo) {
-            if (!confirm(`Vuoi cancellare ${tipo}?`)) return;
-            
-            const response = await fetch(`/api/prodotto/${currentProductId}/delete_image/${tipo}`, {
-                method: 'DELETE'
-            });
-            
-            const result = await response.json();
-            if (result.success) {
-                currentProduct = await api(`/prodotto/${currentProductId}`);
-                renderEditor();
-                renderIcone();
-                reloadPreview();
-                notify(`${tipo} cancellato!`, 'success');
-            }
-        }
-        
-        async function uploadIcona(file, num) {
-            if (!file) return;
-            const formData = new FormData();
-            formData.append('file', file);
-            
-            const response = await fetch(`/api/prodotto/${currentProductId}/icona/${num}`, {
-                method: 'POST',
-                body: formData
-            });
-            
-            const result = await response.json();
-            if (result.success) {
-                currentProduct = await api(`/prodotto/${currentProductId}`);
-                renderIcone();
-                reloadPreview();
-                notify(`Icona ${num} caricata!`, 'success');
-            }
-        }
-        
-        function renderIcone() {
-            if (!currentProduct) {
-                document.getElementById('iconeContent').innerHTML = '<div class="preview-placeholder"><p>🎯 Seleziona un prodotto</p></div>';
-                return;
-            }
-            
-            const p = currentProduct;
-            
-            document.getElementById('iconeContent').innerHTML = `
-                <p style="color: var(--text-muted); margin-bottom: 1rem;">Le icone appaiono nel template Full HD (monoprodotto)</p>
-                
-                <div class="form-row" style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                    <div class="form-group" style="flex: 1; min-width: 120px;">
-                        <label>🎯 Icona 1</label>
-                        <div class="upload-area" onclick="document.getElementById('icona1Input').click()" style="height: 120px;">
-                            ${p.icona1 ? `<img src="/api/icona/${p.icona1}" class="upload-preview" style="max-height: 80px;" onerror="this.style.display='none'">` : ''}
-                            <p style="font-size: 0.7rem; color: var(--text-muted);">${p.icona1 || 'Clicca'}</p>
-                        </div>
-                        <input type="file" id="icona1Input" accept="image/*" style="display: none" onchange="uploadIcona(this.files[0], 1)">
-                        ${p.icona1 ? `<button class="btn btn-danger btn-small" style="width: 100%; margin-top: 0.25rem;" onclick="deleteImage('icona1')">🗑️</button>` : ''}
-                    </div>
-                    
-                    <div class="form-group" style="flex: 1; min-width: 120px;">
-                        <label>🎯 Icona 2</label>
-                        <div class="upload-area" onclick="document.getElementById('icona2Input').click()" style="height: 120px;">
-                            ${p.icona2 ? `<img src="/api/icona/${p.icona2}" class="upload-preview" style="max-height: 80px;" onerror="this.style.display='none'">` : ''}
-                            <p style="font-size: 0.7rem; color: var(--text-muted);">${p.icona2 || 'Clicca'}</p>
-                        </div>
-                        <input type="file" id="icona2Input" accept="image/*" style="display: none" onchange="uploadIcona(this.files[0], 2)">
-                        ${p.icona2 ? `<button class="btn btn-danger btn-small" style="width: 100%; margin-top: 0.25rem;" onclick="deleteImage('icona2')">🗑️</button>` : ''}
-                    </div>
-                    
-                    <div class="form-group" style="flex: 1; min-width: 120px;">
-                        <label>🎯 Icona 3</label>
-                        <div class="upload-area" onclick="document.getElementById('icona3Input').click()" style="height: 120px;">
-                            ${p.icona3 ? `<img src="/api/icona/${p.icona3}" class="upload-preview" style="max-height: 80px;" onerror="this.style.display='none'">` : ''}
-                            <p style="font-size: 0.7rem; color: var(--text-muted);">${p.icona3 || 'Clicca'}</p>
-                        </div>
-                        <input type="file" id="icona3Input" accept="image/*" style="display: none" onchange="uploadIcona(this.files[0], 3)">
-                        ${p.icona3 ? `<button class="btn btn-danger btn-small" style="width: 100%; margin-top: 0.25rem;" onclick="deleteImage('icona3')">🗑️</button>` : ''}
-                    </div>
-                    
-                    <div class="form-group" style="flex: 1; min-width: 120px;">
-                        <label>🎯 Icona 4</label>
-                        <div class="upload-area" onclick="document.getElementById('icona4Input').click()" style="height: 120px;">
-                            ${p.icona4 ? `<img src="/api/icona/${p.icona4}" class="upload-preview" style="max-height: 80px;" onerror="this.style.display='none'">` : ''}
-                            <p style="font-size: 0.7rem; color: var(--text-muted);">${p.icona4 || 'Clicca'}</p>
-                        </div>
-                        <input type="file" id="icona4Input" accept="image/*" style="display: none" onchange="uploadIcona(this.files[0], 4)">
-                        ${p.icona4 ? `<button class="btn btn-danger btn-small" style="width: 100%; margin-top: 0.25rem;" onclick="deleteImage('icona4')">🗑️</button>` : ''}
-                    </div>
-                </div>
-            `;
-        }
-        
-        async function reloadPreview() {
-            if (!currentProductId) return;
-            
-            const template = document.getElementById('templateSelect').value;
-            document.getElementById('previewContainer').innerHTML = '<div class="preview-placeholder"><div class="loading"></div></div>';
-            
-            const data = await api(`/box/${currentProductId}?template=${template}`);
-            if (data.image) {
-                document.getElementById('previewContainer').innerHTML = `<img src="${data.image}">`;
-            }
-        }
-        
-        function downloadBox() {
-            if (!currentProductId) return;
-            const template = document.getElementById('templateSelect').value;
-            window.open(`/api/box/${currentProductId}/download?template=${template}`, '_blank');
-        }
-        
-        async function handleCSVFiles(files) {
-            const results = document.getElementById('importResults');
-            results.innerHTML = '';
-            
-            for (const file of files) {
-                results.innerHTML += `<div class="alert alert-warning">⏳ ${file.name}...</div>`;
-                
-                const formData = new FormData();
-                formData.append('file', file);
-                
-                const response = await fetch('/api/import', { method: 'POST', body: formData });
-                const result = await response.json();
-                
-                if (result.error) {
-                    results.innerHTML += `<div class="alert alert-error">❌ ${file.name}: ${result.error}</div>`;
-                } else {
-                    results.innerHTML += `<div class="alert alert-success">✅ ${file.name}: ${result.prodotti_importati} prod, ${result.varianti_importate} var</div>`;
-                }
-            }
-            
-            loadStats();
-            loadProducts(1);
-        }
-        
-        async function handlePosizioniFile(file) {
-            if (!file) return;
-            const categoria = document.getElementById('categoriaInput').value.trim() || 'default';
-            const results = document.getElementById('posizioniResults');
-            results.innerHTML = '<div class="alert alert-warning">⏳ Caricamento...</div>';
-            
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('categoria', categoria);
-            
-            const response = await fetch('/api/import_posizioni', { method: 'POST', body: formData });
-            const result = await response.json();
-            
-            if (result.error) {
-                results.innerHTML = `<div class="alert alert-error">❌ ${result.error}</div>`;
-            } else {
-                results.innerHTML = `<div class="alert alert-success">✅ ${result.importati} posizioni caricate per "${result.categoria}"</div>`;
-                loadStats();
-                loadProducts(1);
-            }
-        }
-        
-        async function executeExport() {
-            const categoria = document.getElementById('exportCategoria').value;
-            const template = document.getElementById('exportTemplate').value;
-            
-            if (!categoria) {
-                alert('Seleziona una categoria');
-                return;
-            }
-            
-            const results = document.getElementById('exportResults');
-            results.innerHTML = '<div class="alert alert-warning">⏳ Esportazione in corso...</div>';
-            
-            const response = await api('/export_catalogo', {
-                method: 'POST',
-                body: JSON.stringify({ categoria, template })
-            });
-            
-            if (response.error) {
-                results.innerHTML = `<div class="alert alert-error">❌ ${response.error}</div>`;
-            } else {
-                results.innerHTML = `
-                    <div class="alert alert-success">
-                        ✅ Esportati ${response.exported} box<br>
-                        📁 Cartella: ${response.output_folder}
-                        ${response.errors.length ? `<br>⚠️ Errori: ${response.errors.length}` : ''}
-                    </div>
-                `;
-            }
-        }
-        
-        async function saveAllBoxes() {
-            const template = document.getElementById('saveAllTemplate').value;
-            
-            const results = document.getElementById('saveAllResults');
-            results.innerHTML = '<div class="alert alert-warning">⏳ Salvataggio in corso...</div>';
-            
-            const response = await api('/save_all_boxes', {
-                method: 'POST',
-                body: JSON.stringify({ template })
-            });
-            
-            if (response.error) {
-                results.innerHTML = `<div class="alert alert-error">❌ ${response.error}</div>`;
-            } else {
-                results.innerHTML = `
-                    <div class="alert alert-success">
-                        ✅ Salvati ${response.saved} box<br>
-                        📁 Cartella: ${response.output_folder}
-                        ${response.errors.length ? `<br>⚠️ Errori: ${response.errors.length}` : ''}
-                    </div>
-                `;
-            }
-        }
-        
-        async function saveAllBoxes() {
-            const template = document.getElementById('templateSelect').value;
-            
-            if (!confirm(`Salvare tutti i box con template "${template}" nella cartella output_box?`)) return;
-            
-            notify('Salvataggio in corso...', 'warning');
-            
+            if (!currentProduct) return;
+
+            const data = {
+                titolo: document.getElementById('editTitle').value,
+                descrizione: document.getElementById('editDesc').value,
+                posizione: document.getElementById('editPosition').value,
+                scala_foto: document.getElementById('scaleSlider').value
+            };
+
             try {
-                const result = await api('/save_all_boxes', {
-                    method: 'POST',
-                    body: JSON.stringify({ template: template })
+                const res = await fetch(`/api/prodotto/${currentProduct.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
                 });
-                
-                if (result.error) {
-                    notify(result.error, 'error');
+
+                if (res.ok) {
+                    showToast('✅ Prodotto salvato!', 'success');
+                    loadProducts();
                 } else {
-                    notify(`✅ Salvati ${result.saved} box in ${result.output_folder}`, 'success');
-                    if (result.errors && result.errors.length > 0) {
-                        console.log('Errori:', result.errors);
-                    }
+                    showToast('❌ Errore nel salvataggio', 'error');
                 }
-            } catch (e) {
-                notify('Errore durante il salvataggio', 'error');
+            } catch (err) {
+                showToast('❌ Errore di connessione', 'error');
             }
         }
-        
-        async function confirmReset() {
-            if (!confirm('⚠️ Eliminare TUTTI i dati?')) return;
-            if (!confirm('🚨 CONFERMA FINALE?')) return;
-            await api('/reset_db', { method: 'POST' });
-            loadStats();
-            loadProducts(1);
-            loadRecentTasks();
-            notify('Database resettato', 'warning');
-        }
-        
-        function showTab(name) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-            document.getElementById('tab' + name.charAt(0).toUpperCase() + name.slice(1)).classList.add('active');
-        }
-        
-        function openModal(id) { document.getElementById(id).classList.add('active'); }
-        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-        
-        function openPreviewModal() {
-            if (!currentProductId) return;
-            
-            // Sincronizza template selezionato
-            const template = document.getElementById('templateSelect').value;
-            document.getElementById('previewModalTemplate').value = template;
-            
-            // Aggiorna titolo
-            if (currentProduct) {
-                document.getElementById('previewModalTitle').textContent = '👁️ ' + currentProduct.titolo;
-            }
-            
-            // Carica immagine nel modal
-            reloadPreviewModal();
-            
-            // Apri modal
-            openModal('previewModal');
-        }
-        
-        async function reloadPreviewModal() {
-            if (!currentProductId) return;
-            
-            const template = document.getElementById('previewModalTemplate').value;
-            const body = document.getElementById('previewModalBody');
-            
-            body.innerHTML = '<div class="preview-placeholder"><p>⏳ Caricamento...</p></div>';
-            
+
+        // Delete product
+        async function deleteProduct() {
+            if (!currentProduct) return;
+            if (!confirm('Eliminare questo prodotto?')) return;
+
             try {
-                const data = await api(`/box/${currentProductId}?template=${template}`);
-                body.innerHTML = `<img src="${data.image}" alt="Preview" onclick="event.stopPropagation()">`;
-                
-                // Sincronizza anche il select principale
-                document.getElementById('templateSelect').value = template;
-            } catch (e) {
-                body.innerHTML = '<div class="preview-placeholder"><p>❌ Errore caricamento</p></div>';
+                const res = await fetch(`/api/prodotto/${currentProduct.id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    showToast('🗑️ Prodotto eliminato', 'success');
+                    currentProduct = null;
+                    loadProducts();
+                    document.getElementById('detailContent').innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-muted);"><div style="font-size: 3rem;">👆</div><p>Seleziona un prodotto</p></div>';
+                }
+            } catch (err) {
+                showToast('❌ Errore', 'error');
             }
         }
-        
-        function escapeHtml(str) {
-            if (!str) return '';
-            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+        // Update stats
+        function updateStats() {
+            const total = categories.reduce((a, c) => a + (c.count || 0), 0);
+            document.getElementById('totalProducts').textContent = total;
+
+            // Placeholder for photo stats
+            const withPhoto = Math.round(total * 0.8);
+            const withoutPhoto = total - withPhoto;
+            document.getElementById('withPhoto').textContent = withPhoto;
+            document.getElementById('withoutPhoto').textContent = withoutPhoto;
+            document.getElementById('photoProgress').style.width = (withPhoto / total * 100) + '%';
         }
-        
-        function notify(msg, type = 'success') {
-            const n = document.createElement('div');
-            n.className = `alert alert-${type}`;
-            n.style.cssText = 'position:fixed;top:60px;right:10px;z-index:1001;min-width:120px;';
-            n.textContent = msg;
-            document.body.appendChild(n);
-            setTimeout(() => n.remove(), 2000);
+
+        function updateCategoryInfo() {
+            document.getElementById('currentCategoryName').textContent =
+                currentCategory === 'Tutto' ? 'Tutti i Prodotti' : currentCategory;
+            document.getElementById('currentCategoryCount').textContent =
+                `${products.length} prodotti`;
+        }
+
+        // Toast
+        function showToast(message, type = '') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast show ' + type;
+            setTimeout(() => toast.className = 'toast', 3000);
+        }
+
+        // Export functions
+        function exportPDF() {
+            showToast('📄 Vai alla pagina Preview per generare il PDF');
+            setTimeout(() => window.location = '/preview', 1000);
+        }
+
+        function exportInDesign() {
+            showToast('📝 Generazione script InDesign...');
+            // TODO: Implement
+        }
+
+        function showImportModal() {
+            showToast('📊 Import CSV - Funzione in sviluppo');
         }
     </script>
 </body>
