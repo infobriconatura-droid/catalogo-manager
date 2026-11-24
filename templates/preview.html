@@ -348,7 +348,7 @@
             `;
 
             try {
-                const res = await fetch(`/api/catalog/page/${pageNum}?categoria=${encodeURIComponent(categoria)}&items_per_page=${itemsPerPage}`);
+                const res = await fetch(`/api/catalog/page-dynamic/${pageNum}?categoria=${encodeURIComponent(categoria)}`);
                 const data = await res.json();
 
                 if (data.error) {
@@ -381,7 +381,7 @@
             if (!categoria) return;
 
             try {
-                const res = await fetch(`/api/catalog/pages?categoria=${encodeURIComponent(categoria)}&items_per_page=${itemsPerPage}`);
+                const res = await fetch(`/api/catalog/pages-dynamic?categoria=${encodeURIComponent(categoria)}`);
                 const data = await res.json();
 
                 document.getElementById('totalProducts').textContent = data.total_products;
