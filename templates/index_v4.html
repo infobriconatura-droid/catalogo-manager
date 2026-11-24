@@ -841,7 +841,7 @@
                      onclick="selectProduct(${p.id})">
                     <div class="product-image">
                         ${p.immagine ?
-                            `<img src="/static/foto/${p.immagine}" onerror="this.parentElement.innerHTML='<div class=product-no-image>📷</div>'">` :
+                            `<img src="/api/foto/${p.immagine}" onerror="this.parentElement.innerHTML='<div class=product-no-image>📷</div>'">` :
                             '<div class="product-no-image">📷</div>'}
                         ${p.posizione ? `<span class="product-badge">Pos. ${p.posizione}</span>` :
                             '<span class="product-badge warning">No Pos</span>'}
@@ -876,7 +876,7 @@
                 <!-- Preview Image -->
                 <div class="preview-image">
                     ${p.immagine ?
-                        `<img src="/static/foto/${p.immagine}" onerror="this.src='/static/no-image.png'">` :
+                        `<img src="/api/foto/${p.immagine}" onerror="this.src='/api/foto/no-image.png'">` :
                         '<div style="font-size: 3rem; color: var(--text-muted);">📷</div><div style="color: var(--text-muted); margin-top: 8px; font-size: 0.75rem;">Nessuna foto</div>'}
                 </div>
 
