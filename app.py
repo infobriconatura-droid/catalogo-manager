@@ -2230,87 +2230,98 @@ def calcola_altezza_box(num_varianti):
 def impagina_dinamico(prodotti, conn, page_height=3400, col_width=1150, margin_top=60, row_gap=30):
     """
     Impagina i prodotti dinamicamente in base all'altezza reale dei box.
-    Layout: 2 colonne, riempimento dall'alto verso il basso.
+    Layout: 2 colonne, ordine di lettura standard (sinistra-destra, poi giù).
     Ritorna lista di pagine, ogni pagina è lista di prodotti con coordinate.
     """
     c = conn.cursor()
 
-    pages = []
-    current_page = []
-    col1_y = margin_top
-    col2_y = margin_top
-
+    # Pre-calcola altezze per tutti i prodotti
+    prod_heights = []
     for prod in prodotti:
-        # Conta varianti per questo prodotto
         c.execute('''
             SELECT COUNT(*) FROM varianti
             WHERE prodotto_id = ? AND (escludi_stampa = 0 OR escludi_stampa IS NULL)
         ''', (prod['id'],))
         num_var = c.fetchone()[0] or 1
-
         box_h = calcola_altezza_box(num_var)
-
-        # Ridimensiona per colonna (box originale 1080px -> ~1150px colonna)
         scale = col_width / 1080
         box_h_scaled = int(box_h * scale)
+        prod_heights.append((prod, box_h_scaled, num_var))
 
-        # Trova colonna con più spazio
-        if col1_y <= col2_y:
-            # Prova colonna 1
-            if col1_y + box_h_scaled > page_height:
-                # Colonna 1 piena, prova colonna 2
-                if col2_y + box_h_scaled > page_height:
-                    # Entrambe piene - nuova pagina
-                    if current_page:
-                        pages.append(current_page)
-                    current_page = []
-                    col1_y = margin_top
-                    col2_y = margin_top
-                    # Metti in colonna 1 della nuova pagina
-                    prod['_col'] = 0
-                    prod['_y'] = col1_y
-                    prod['_h'] = box_h_scaled
-                    prod['_num_var'] = num_var
-                    current_page.append(prod)
-                    col1_y += box_h_scaled + row_gap
-                else:
-                    # Metti in colonna 2
+    pages = []
+    current_page = []
+    col1_y = margin_top
+    col2_y = margin_top
+    next_col = 0  # 0 = sinistra, 1 = destra
+
+    i = 0
+    while i < len(prod_heights):
+        prod, box_h_scaled, num_var = prod_heights[i]
+
+        if next_col == 0:
+            # Prova colonna sinistra
+            if col1_y + box_h_scaled <= page_height:
+                prod['_col'] = 0
+                prod['_y'] = col1_y
+                prod['_h'] = box_h_scaled
+                prod['_num_var'] = num_var
+                current_page.append(prod)
+                col1_y += box_h_scaled + row_gap
+                next_col = 1  # prossimo va a destra
+                i += 1
+            else:
+                # Colonna sinistra piena, verifica se destra ha spazio
+                if col2_y + box_h_scaled <= page_height:
+                    # Prova a mettere in colonna destra
                     prod['_col'] = 1
                     prod['_y'] = col2_y
                     prod['_h'] = box_h_scaled
                     prod['_num_var'] = num_var
                     current_page.append(prod)
                     col2_y += box_h_scaled + row_gap
-            else:
-                # Entra in colonna 1
-                prod['_col'] = 0
-                prod['_y'] = col1_y
-                prod['_h'] = box_h_scaled
-                prod['_num_var'] = num_var
-                current_page.append(prod)
-                col1_y += box_h_scaled + row_gap
+                    next_col = 0  # prossimo torna a sinistra (nuova riga)
+                    i += 1
+                else:
+                    # Entrambe piene - nuova pagina
+                    if current_page:
+                        pages.append(current_page)
+                    current_page = []
+                    col1_y = margin_top
+                    col2_y = margin_top
+                    next_col = 0
+                    # Non incremento i, riprovo nella nuova pagina
         else:
-            # Prova colonna 2
-            if col2_y + box_h_scaled > page_height:
-                # Colonna 2 piena, nuova pagina
-                if current_page:
-                    pages.append(current_page)
-                current_page = []
-                col1_y = margin_top
-                col2_y = margin_top
-                prod['_col'] = 0
-                prod['_y'] = col1_y
-                prod['_h'] = box_h_scaled
-                prod['_num_var'] = num_var
-                current_page.append(prod)
-                col1_y += box_h_scaled + row_gap
-            else:
+            # Prova colonna destra
+            if col2_y + box_h_scaled <= page_height:
                 prod['_col'] = 1
                 prod['_y'] = col2_y
                 prod['_h'] = box_h_scaled
                 prod['_num_var'] = num_var
                 current_page.append(prod)
                 col2_y += box_h_scaled + row_gap
+                next_col = 0  # prossimo va a sinistra (nuova riga)
+                i += 1
+            else:
+                # Colonna destra piena, verifica se sinistra ha spazio
+                if col1_y + box_h_scaled <= page_height:
+                    # Prova a mettere in colonna sinistra
+                    prod['_col'] = 0
+                    prod['_y'] = col1_y
+                    prod['_h'] = box_h_scaled
+                    prod['_num_var'] = num_var
+                    current_page.append(prod)
+                    col1_y += box_h_scaled + row_gap
+                    next_col = 1
+                    i += 1
+                else:
+                    # Entrambe piene - nuova pagina
+                    if current_page:
+                        pages.append(current_page)
+                    current_page = []
+                    col1_y = margin_top
+                    col2_y = margin_top
+                    next_col = 0
+                    # Non incremento i, riprovo nella nuova pagina
 
     # Ultima pagina
     if current_page:
