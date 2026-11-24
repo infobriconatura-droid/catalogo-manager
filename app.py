@@ -77,6 +77,25 @@ def api_deploy():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/reload', methods=['POST'])
+def api_reload():
+    """Forza reload del server WSGI (PythonAnywhere)"""
+    token = request.headers.get('X-Deploy-Token') or request.json.get('token') if request.is_json else None
+    if token != DEPLOY_TOKEN:
+        return jsonify({'error': 'Token non valido'}), 403
+
+    try:
+        # Path WSGI su PythonAnywhere
+        wsgi_path = '/var/www/appuntamenti-briconatura_pythonanywhere_com_wsgi.py'
+        if os.path.exists(wsgi_path):
+            os.utime(wsgi_path, None)  # Touch del file
+            return jsonify({'success': True, 'reloaded': True, 'wsgi': wsgi_path})
+        else:
+            return jsonify({'success': False, 'error': 'File WSGI non trovato', 'wsgi': wsgi_path})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 # ============================================
 # DATABASE
 # ============================================
