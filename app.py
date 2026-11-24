@@ -1201,6 +1201,12 @@ box_generator = BoxGenerator()
 
 @app.route('/')
 def index():
+    # Use v4 interface by default
+    return render_template('index_v4.html')
+
+@app.route('/v3')
+def index_v3():
+    # Legacy v3 interface
     return render_template('index.html')
 
 
@@ -1342,19 +1348,28 @@ def api_prodotto(id):
 @app.route('/api/prodotto/<int:id>', methods=['PUT'])
 def api_update_prodotto(id):
     data = request.json
-    
+
     conn = get_db()
     c = conn.cursor()
-    
+
+    # Update base fields
     c.execute('''
-        UPDATE prodotti 
-        SET titolo = ?, descrizione = ?, immagine = ?, logo = ?, 
-            icona1 = ?, icona2 = ?, icona3 = ?, icona4 = ?,
-            template = ?, data_modifica = CURRENT_TIMESTAMP
+        UPDATE prodotti
+        SET titolo = COALESCE(?, titolo),
+            descrizione = COALESCE(?, descrizione),
+            immagine = COALESCE(?, immagine),
+            logo = COALESCE(?, logo),
+            icona1 = COALESCE(?, icona1),
+            icona2 = COALESCE(?, icona2),
+            icona3 = COALESCE(?, icona3),
+            icona4 = COALESCE(?, icona4),
+            template = COALESCE(?, template),
+            scala_foto = COALESCE(?, scala_foto),
+            data_modifica = CURRENT_TIMESTAMP
         WHERE id = ?
-    ''', (data.get('titolo'), data.get('descrizione'), data.get('immagine'), 
+    ''', (data.get('titolo'), data.get('descrizione'), data.get('immagine'),
           data.get('logo'), data.get('icona1'), data.get('icona2'), data.get('icona3'), data.get('icona4'),
-          data.get('template', 'corporate'), id))
+          data.get('template'), data.get('scala_foto'), id))
     
     # Gestisci posizione
     posizione = data.get('posizione')
