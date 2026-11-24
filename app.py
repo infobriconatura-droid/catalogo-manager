@@ -605,18 +605,36 @@ class BoxGenerator:
                       'table_header', 'table_cell']:
                 self.fonts[k] = default
     
-    def load_image(self, filename):
-        """Carica immagine da cartelle foto/logo"""
-        if not filename:
+    def load_image(self, filename, codice=None):
+        """Carica immagine da cartelle foto/logo - cerca anche per codice"""
+        if not filename and not codice:
             return None
-        for folder in [FOTO_FOLDER, LOGO_FOLDER]:
-            path = folder / filename
-            if path.exists():
-                try:
-                    img = Image.open(path)
-                    return img.convert('RGBA')
-                except:
-                    pass
+
+        # Prima cerca il nome esatto
+        if filename:
+            for folder in [FOTO_FOLDER, LOGO_FOLDER]:
+                path = folder / filename
+                if path.exists():
+                    try:
+                        img = Image.open(path)
+                        return img.convert('RGBA')
+                    except:
+                        pass
+
+        # Se non trova e abbiamo il codice, cerca file che iniziano con il codice
+        if codice:
+            for folder in [FOTO_FOLDER, LOGO_FOLDER]:
+                if folder.exists():
+                    for ext in ['.jpg', '.jpeg', '.png', '.JPG', '.JPEG', '.PNG', '.jfif']:
+                        # Cerca codice.ext o codice_*.ext
+                        for pattern in [f"{codice}{ext}", f"{codice}_*{ext}", f"P{codice}*{ext}"]:
+                            matches = list(folder.glob(pattern))
+                            if matches:
+                                try:
+                                    img = Image.open(matches[0])
+                                    return img.convert('RGBA')
+                                except:
+                                    pass
         return None
     
     def load_icona(self, filename):
@@ -766,7 +784,7 @@ class BoxGenerator:
         y = PAD_TOP + title_h + top_gap
         
         # --- Immagine prodotto centrata ---
-        prod = self.load_image(prodotto.get("immagine"))
+        prod = self.load_image(prodotto.get("immagine"), prodotto.get("codice_principale"))
         if prod:
             prod = self._contain(prod, W - 2 * PAD_X - 80, img_area_h)
             px = (W - prod.size[0]) // 2
@@ -857,7 +875,7 @@ class BoxGenerator:
         draw = ImageDraw.Draw(img)
         
         # Immagine prodotto (sinistra)
-        prod = self.load_image(prodotto.get("immagine"))
+        prod = self.load_image(prodotto.get("immagine"), prodotto.get("codice_principale"))
         if prod:
             prod = self._contain(prod, 450, 420)
             px = 50
@@ -1014,7 +1032,7 @@ class BoxGenerator:
         img_y = top_section
         
         # Immagine prodotto CENTRATA e PIÙ GRANDE
-        prod = self.load_image(prodotto.get("immagine"))
+        prod = self.load_image(prodotto.get("immagine"), prodotto.get("codice_principale"))
         if prod:
             prod = self._contain(prod, 500, img_h - 20)  # Più grande
             px = (W - prod.size[0]) // 2  # Centrata
@@ -1135,7 +1153,7 @@ class BoxGenerator:
         # ==========================================
         # 1. ZONA IMMAGINE (Sinistra - 45%)
         # ==========================================
-        prod = self.load_image(prodotto.get("immagine"))
+        prod = self.load_image(prodotto.get("immagine"), prodotto.get("codice_principale"))
         if prod:
             prod = self._contain(prod, 800, 900)
             img_x = (850 - prod.size[0]) // 2 + 50
