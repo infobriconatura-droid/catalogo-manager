@@ -727,35 +727,35 @@
                     <div class="detail-section" style="margin-bottom: 16px;">
                         <div class="detail-section-title">🖨️ Preview Box Catalogo <span id="previewModeLabel" style="font-size:10px; color: var(--primary); margin-left:8px;"></span></div>
                         <div class="box-preview-container" style="background: #f5f5f5; padding: 10px; overflow: hidden; border-radius: 8px;">
-                            <div class="box-preview" id="boxPreview" style="background: white; color: #000; padding: 0; font-family: Arial, sans-serif; border: 1px solid #ddd; max-width: 320px; margin: 0 auto;">
-                                <!-- Header Verde con Titolo + Logo -->
-                                <div style="background: linear-gradient(135deg, #2d5a27 0%, #3d7a37 100%); padding: 6px 10px; display: flex; justify-content: space-between; align-items: center;">
-                                    <div class="box-title" id="boxTitle" style="font-weight: bold; font-size: 10px; color: white; flex: 1; text-transform: uppercase;">TITOLO PRODOTTO</div>
-                                    <div class="box-logo" id="boxLogo" style="width: 45px; height: 22px; background: white; border-radius: 2px; display: flex; align-items: center; justify-content: center; overflow: hidden;"></div>
+                            <div class="box-preview" id="boxPreview" style="background: white; color: #000; padding: 8px; font-family: Arial, sans-serif; border: 1px solid #ddd; max-width: 320px; margin: 0 auto;">
+                                <!-- Header: Titolo sottolineato + Logo a destra -->
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                                    <div style="flex: 1;">
+                                        <div class="box-title" id="boxTitle" style="font-weight: bold; font-size: 11px; color: #2d5a27; text-transform: uppercase; padding-bottom: 3px; border-bottom: 2px solid #2d5a27; display: inline-block;">TITOLO PRODOTTO</div>
+                                    </div>
+                                    <div class="box-logo" id="boxLogo" style="width: 50px; height: 25px; display: flex; align-items: center; justify-content: center; overflow: hidden;"></div>
                                 </div>
-                                <!-- Immagine centrata -->
-                                <div class="box-image" id="boxImage" style="display: flex; justify-content: center; align-items: center; height: 100px; padding: 8px; overflow: hidden; background: white;">📷</div>
-                                <!-- Descrizione centrata sotto immagine -->
-                                <div class="box-desc" id="boxDesc" style="font-size: 7px; color: #333; line-height: 1.3; padding: 4px 8px; text-align: center; font-style: italic; max-height: 32px; overflow: hidden;">Descrizione prodotto...</div>
-                                <!-- Tabella Varianti -->
-                                <div class="box-table-wrapper" style="overflow-x: auto;">
-                                    <table class="box-table" style="width: 100%; border-collapse: collapse; font-size: 6.5px;">
+                                <!-- Immagine CENTRATA -->
+                                <div class="box-image" id="boxImage" style="display: flex; justify-content: center; align-items: center; height: 90px; padding: 5px; overflow: hidden; background: white;">📷</div>
+                                <!-- Descrizione centrata sotto immagine (corsivo) -->
+                                <div class="box-desc" id="boxDesc" style="font-size: 7px; color: #555; line-height: 1.3; padding: 4px 8px; text-align: center; font-style: italic; max-height: 28px; overflow: hidden;">Descrizione prodotto...</div>
+                                <!-- Tabella Varianti con header verde -->
+                                <div class="box-table-wrapper" style="overflow-x: auto; margin-top: 5px;">
+                                    <table class="box-table" style="width: 100%; border-collapse: collapse; font-size: 7px;">
                                         <thead>
                                             <tr style="background: #2d5a27; color: white;">
-                                                <th style="padding: 3px 4px; text-align: left; font-weight: bold;">CODICE</th>
-                                                <th style="padding: 3px 4px; text-align: left; font-weight: bold;">MODELLO</th>
-                                                <th style="padding: 3px 4px; text-align: center; font-weight: bold;">U.M.</th>
-                                                <th style="padding: 3px 4px; text-align: center; font-weight: bold;">MV</th>
-                                                <th style="padding: 3px 4px; text-align: center; font-weight: bold;">CF</th>
-                                                <th style="padding: 3px 4px; text-align: right; font-weight: bold;">NETTO</th>
+                                                <th style="padding: 3px 4px; text-align: left; font-weight: bold; border: 1px solid #2d5a27;">CODICE</th>
+                                                <th style="padding: 3px 4px; text-align: left; font-weight: bold; border: 1px solid #2d5a27;">MODELLO</th>
+                                                <th style="padding: 3px 4px; text-align: center; font-weight: bold; border: 1px solid #2d5a27;">U.M.</th>
+                                                <th style="padding: 3px 4px; text-align: center; font-weight: bold; border: 1px solid #2d5a27;">MV</th>
+                                                <th style="padding: 3px 4px; text-align: center; font-weight: bold; border: 1px solid #2d5a27;">CF</th>
+                                                <th style="padding: 3px 4px; text-align: right; font-weight: bold; border: 1px solid #2d5a27;">NETTO</th>
                                             </tr>
                                         </thead>
                                         <tbody id="boxVarianti" style="color: #000;">
                                         </tbody>
                                     </table>
                                 </div>
-                                <!-- Strip verde in basso -->
-                                <div style="height: 4px; background: linear-gradient(135deg, #2d5a27 0%, #3d7a37 100%);"></div>
                             </div>
                         </div>
                         <!-- CONTROLLI PREVIEW -->
@@ -1365,8 +1365,7 @@
             const boxVarianti = document.getElementById('boxVarianti');
             const varRows = document.querySelectorAll('#variantiBody tr');
 
-            const rowStyle = 'border-bottom: 1px solid #ddd;';
-            const cellStyle = 'padding: 1px 3px;';
+            const cellStyle = 'padding: 2px 4px; border: 1px solid #ddd;';
 
             if (varRows.length > 0) {
                 // Leggi dai campi input
@@ -1379,8 +1378,8 @@
                     const cf = cells[4].querySelector('input')?.value || '';
                     const listino = cells[5].querySelector('input')?.value || '';
 
-                    return `<tr style="${rowStyle}">
-                        <td style="${cellStyle}">${codice}</td>
+                    return `<tr>
+                        <td style="${cellStyle} color:#2d5a27; font-weight:bold;">${codice}</td>
                         <td style="${cellStyle}">${modello}</td>
                         <td style="${cellStyle} text-align:center;">${um}</td>
                         <td style="${cellStyle} text-align:center;">${mv}</td>
@@ -1391,8 +1390,8 @@
             } else if (varianti) {
                 // Usa varianti passate
                 boxVarianti.innerHTML = varianti.filter(v => !v.escludi_stampa).map(v => `
-                    <tr style="${rowStyle}">
-                        <td style="${cellStyle}">${v.codice}</td>
+                    <tr>
+                        <td style="${cellStyle} color:#2d5a27; font-weight:bold;">${v.codice}</td>
                         <td style="${cellStyle}">${v.modello || ''}</td>
                         <td style="${cellStyle} text-align:center;">${v.um || ''}</td>
                         <td style="${cellStyle} text-align:center;">${v.mv || ''}</td>
