@@ -2757,6 +2757,37 @@ def impagina_dinamico(prodotti, conn, page_height=3400, col_width=1160, margin_t
     if current_page:
         pages.append(current_page)
 
+    # REDISTRIBUISCI SPAZIO: per ogni pagina, distribuisci lo spazio vuoto
+    for page in pages:
+        if not page:
+            continue
+
+        # Separa prodotti per colonna
+        col0 = [p for p in page if p.get('_col') == 0]
+        col1 = [p for p in page if p.get('_col') == 1]
+
+        # Redistribuisci colonna sinistra
+        if col0:
+            total_h = sum(p['_h'] for p in col0)
+            space_available = page_height - margin_top - total_h
+            if len(col0) > 1 and space_available > 0:
+                extra_gap = space_available // (len(col0))
+                y = margin_top
+                for p in col0:
+                    p['_y'] = y
+                    y += p['_h'] + row_gap + extra_gap
+
+        # Redistribuisci colonna destra
+        if col1:
+            total_h = sum(p['_h'] for p in col1)
+            space_available = page_height - margin_top - total_h
+            if len(col1) > 1 and space_available > 0:
+                extra_gap = space_available // (len(col1))
+                y = margin_top
+                for p in col1:
+                    p['_y'] = y
+                    y += p['_h'] + row_gap + extra_gap
+
     return pages
 
 
