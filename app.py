@@ -1328,6 +1328,19 @@ def index_v3():
     return render_template('index.html')
 
 
+@app.route('/api/debug/posizione/<codice>')
+def api_debug_posizione(codice):
+    """Debug: mostra cosa c'è nella tabella posizioni per un codice"""
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT * FROM posizioni WHERE codice = ?', (codice,))
+    row = c.fetchone()
+    conn.close()
+    if row:
+        return jsonify(dict(row))
+    return jsonify({'error': 'Non trovato', 'codice': codice})
+
+
 @app.route('/api/stats')
 def api_stats():
     conn = get_db()
