@@ -102,16 +102,17 @@ def api_reload():
 
 @app.route('/api/cache/clear', methods=['POST'])
 def api_clear_cache():
-    """Pulisce la cache dei box"""
+    """Pulisce la cache dei box (jpg e png)"""
     token = request.headers.get('X-Deploy-Token') or request.json.get('token') if request.is_json else None
     if token != DEPLOY_TOKEN:
         return jsonify({'error': 'Token non valido'}), 403
 
     try:
         count = 0
-        for f in BOX_CACHE_FOLDER.glob('*.png'):
-            f.unlink()
-            count += 1
+        for ext in ['*.jpg', '*.png']:
+            for f in BOX_CACHE_FOLDER.glob(ext):
+                f.unlink()
+                count += 1
         return jsonify({'success': True, 'deleted': count})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -121,7 +122,7 @@ def api_clear_cache():
 def api_cache_status():
     """Mostra stato della cache"""
     try:
-        files = list(BOX_CACHE_FOLDER.glob('*.png'))
+        files = list(BOX_CACHE_FOLDER.glob('*.jpg')) + list(BOX_CACHE_FOLDER.glob('*.png'))
         total_size = sum(f.stat().st_size for f in files)
         return jsonify({
             'folder': str(BOX_CACHE_FOLDER),
@@ -184,7 +185,7 @@ def api_cache_test_box(prodotto_id):
 
         # Test cache key
         cache_key = box_generator._get_cache_key(prodotto, varianti, 'corporate')
-        cache_path = BOX_CACHE_FOLDER / f"{cache_key}.png"
+        cache_path = BOX_CACHE_FOLDER / f"{cache_key}.jpg"
         was_cached = cache_path.exists()
 
         # Genera box
@@ -261,7 +262,7 @@ def api_cache_test_page(page_num):
             if varianti:
                 try:
                     cache_key = box_generator._get_cache_key(prod, varianti, template)
-                    cache_path = BOX_CACHE_FOLDER / f"{cache_key}.png"
+                    cache_path = BOX_CACHE_FOLDER / f"{cache_key}.jpg"
                     was_cached = cache_path.exists()
 
                     # Genera
@@ -494,6 +495,11 @@ def init_db():
         c.execute('CREATE INDEX IF NOT EXISTS idx_task_prodotto ON task(prodotto_id)')
         c.execute('CREATE INDEX IF NOT EXISTS idx_modifiche_prodotto ON modifiche_log(prodotto_id)')
         c.execute('CREATE INDEX IF NOT EXISTS idx_modifiche_data ON modifiche_log(data_modifica)')
+        # Index aggiuntivi per performance
+        c.execute('CREATE INDEX IF NOT EXISTS idx_posizioni_categoria ON posizioni(categoria)')
+        c.execute('CREATE INDEX IF NOT EXISTS idx_posizioni_cat_pos ON posizioni(categoria, posizione)')
+        c.execute('CREATE INDEX IF NOT EXISTS idx_varianti_escludi ON varianti(prodotto_id, escludi_stampa)')
+        c.execute('CREATE INDEX IF NOT EXISTS idx_task_completato ON task(prodotto_id, completato)')
     except:
         pass
     
@@ -1642,7 +1648,7 @@ class BoxGenerator:
         if use_cache:
             try:
                 cache_key = self._get_cache_key(prodotto, varianti, template)
-                cache_path = BOX_CACHE_FOLDER / f"{cache_key}.png"
+                cache_path = BOX_CACHE_FOLDER / f"{cache_key}.jpg"
 
                 # Se esiste in cache, carica
                 if cache_path.exists():
@@ -1660,13 +1666,18 @@ class BoxGenerator:
         else:
             box_img = self.generate_corporate(prodotto, varianti)
 
-        # Salva in cache
+        # Salva in cache (JPEG per dimensioni ridotte e caricamento veloce)
         if use_cache and box_img:
             try:
                 cache_key = self._get_cache_key(prodotto, varianti, template)
-                cache_path = BOX_CACHE_FOLDER / f"{cache_key}.png"
-                box_img.save(cache_path, 'PNG')
-                print(f"[CACHE] Salvato: {cache_path}")
+                cache_path = BOX_CACHE_FOLDER / f"{cache_key}.jpg"
+                # Converti RGBA -> RGB per JPEG
+                if box_img.mode == 'RGBA':
+                    background = Image.new('RGB', box_img.size, (255, 255, 255))
+                    background.paste(box_img, mask=box_img.split()[-1])
+                    background.save(cache_path, 'JPEG', quality=92, optimize=True)
+                else:
+                    box_img.save(cache_path, 'JPEG', quality=92, optimize=True)
             except Exception as e:
                 print(f"[CACHE] Errore salvataggio: {e}")
 
