@@ -942,7 +942,7 @@
 
             grid.innerHTML = products.map(p => `
                 <div class="product-card ${currentProduct?.codice_principale === p.codice_principale ? 'selected' : ''}"
-                     onclick="selectProduct('${p.codice_principale}')">
+                     onclick="selectProduct('${p.codice_principale}', this)">
                     <div class="product-img">
                         ${p.immagine
                             ? `<img src="/api/foto/${p.immagine}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"><div class="no-img" style="display:none">📷<br><small>${p.codice_principale}</small></div>`
@@ -991,7 +991,7 @@
             }, 300);
         }
 
-        async function selectProduct(codice) {
+        async function selectProduct(codice, cardElement) {
             try {
                 const res = await fetch(`/api/prodotto/${codice}`);
                 currentProduct = await res.json();
@@ -1000,8 +1000,9 @@
 
                 // Update selection in grid
                 document.querySelectorAll('.product-card').forEach(c => c.classList.remove('selected'));
-                event.currentTarget.classList.add('selected');
+                if (cardElement) cardElement.classList.add('selected');
             } catch (err) {
+                console.error('Errore:', err);
                 showToast('Errore caricamento prodotto', 'error');
             }
         }
