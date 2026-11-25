@@ -214,7 +214,7 @@
             overflow: hidden;
             cursor: pointer;
             transition: all 0.2s;
-            border: 2px solid transparent;
+            border: 1px solid var(--border);
         }
 
         .product-card:hover {
@@ -243,8 +243,21 @@
         }
 
         .product-img .no-img {
-            color: #ccc;
-            font-size: 3rem;
+            color: #999;
+            font-size: 2.5rem;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            width: 100%;
+        }
+
+        .product-img .no-img small {
+            font-size: 0.7rem;
+            color: #666;
+            margin-top: 4px;
         }
 
         .product-info {
@@ -807,7 +820,9 @@
                 <div class="product-card ${currentProduct?.codice_principale === p.codice_principale ? 'selected' : ''}"
                      onclick="selectProduct('${p.codice_principale}')">
                     <div class="product-img">
-                        ${p.immagine ? `<img src="/foto_prodotti/${p.immagine}" onerror="this.outerHTML='<span class=no-img>📷</span>'">` : '<span class="no-img">📷</span>'}
+                        ${p.immagine
+                            ? `<img src="/foto_prodotti/${p.immagine}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"><div class="no-img" style="display:none">📷<br><small>${p.codice_principale}</small></div>`
+                            : `<span class="no-img">📷<br><small>${p.codice_principale}</small></span>`}
                     </div>
                     <div class="product-info">
                         <span class="product-pos">Pos. ${p.posizione || '-'}</span>
