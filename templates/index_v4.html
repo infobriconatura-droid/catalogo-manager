@@ -678,6 +678,23 @@
             border-color: var(--accent);
         }
 
+        .variante-delete-btn {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.65rem;
+            transition: all 0.2s;
+        }
+
+        .variante-delete-btn:hover {
+            background: var(--red);
+            color: white;
+            border-color: var(--red);
+        }
+
         /* Modal edit variante */
         .variante-modal {
             position: fixed;
@@ -1196,7 +1213,8 @@
                                 <span class="modello">${v.modello || '-'}</span>
                                 <span class="prezzo">${v.listino ? v.listino + ' €' : '-'}</span>
                             </div>
-                            <button class="variante-edit-btn" onclick="editVariante('${v.codice}', '${(v.modello || '').replace(/'/g, "\\'")}', '${v.um || ''}', '${v.mv || ''}', '${v.cf || ''}', '${v.listino || ''}')">✏️ Edit</button>
+                            <button class="variante-edit-btn" onclick="editVariante('${v.codice}', '${(v.modello || '').replace(/'/g, "\\'")}', '${v.um || ''}', '${v.mv || ''}', '${v.cf || ''}', '${v.listino || ''}')">✏️</button>
+                            <button class="variante-delete-btn" onclick="deleteVariante('${v.codice}')">🗑️</button>
                         </div>
                     `).join('');
                 } else {
@@ -1281,6 +1299,31 @@
                     }
                 } else {
                     showToast('❌ Errore nel salvataggio', 'error');
+                }
+            } catch (err) {
+                showToast('❌ Errore: ' + err.message, 'error');
+            }
+        }
+
+        async function deleteVariante(codice) {
+            if (!confirm(`Sei sicuro di voler eliminare la variante ${codice}?`)) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/variante/${codice}`, {
+                    method: 'DELETE'
+                });
+
+                if (res.ok) {
+                    showToast('🗑️ Variante eliminata!', 'success');
+                    // Ricarica varianti e prodotti (per aggiornare il conteggio)
+                    if (currentProduct) {
+                        loadVarianti(currentProduct.codice_principale);
+                        loadProducts();
+                    }
+                } else {
+                    showToast('❌ Errore nell\'eliminazione', 'error');
                 }
             } catch (err) {
                 showToast('❌ Errore: ' + err.message, 'error');
