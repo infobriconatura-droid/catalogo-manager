@@ -2657,7 +2657,7 @@ def calcola_altezza_box(num_varianti):
     return TOP_SECTION + IMG_SECTION + HEADER_ROW + (num_varianti * VAR_ROW) + STRIP + PADDING
 
 
-def impagina_dinamico(prodotti, conn, page_height=3400, col_width=1160, margin_top=60, row_gap=30):
+def impagina_dinamico(prodotti, conn, page_height=3400, col_width=1160, margin_top=60, row_gap=15):
     """
     Impagina i prodotti dinamicamente in base all'altezza reale dei box.
     Layout: 2 colonne, ordine di lettura standard (sinistra-destra, poi giù).
