@@ -2321,6 +2321,17 @@ def api_foto(filename):
     return '', 404
 
 
+@app.route('/api/logos')
+def api_logos():
+    """Lista tutti i loghi disponibili"""
+    logos = []
+    if LOGO_FOLDER.exists():
+        for f in sorted(LOGO_FOLDER.iterdir()):
+            if f.suffix.lower() in ['.png', '.jpg', '.jpeg', '.gif', '.webp']:
+                logos.append(f.name)
+    return jsonify({'logos': logos})
+
+
 @app.route('/api/logo/<filename>')
 def api_logo(filename):
     return send_from_directory(str(LOGO_FOLDER), filename)

@@ -789,7 +789,7 @@
 
                         <!-- GESTIONE IMMAGINE -->
                         <div class="detail-row" style="margin-top: 10px; flex-direction: column; align-items: flex-start; gap: 8px;">
-                            <span class="detail-label">📷 Immagine</span>
+                            <span class="detail-label">📷 Immagine Prodotto</span>
                             <div style="display: flex; gap: 8px; align-items: center; width: 100%;">
                                 <input type="file" id="imageUpload" accept="image/*" style="display: none;" onchange="uploadImage(this)">
                                 <button onclick="document.getElementById('imageUpload').click()" style="padding: 6px 12px; background: var(--accent); border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 12px;">
@@ -804,6 +804,26 @@
                                 <input type="range" id="detailScala" min="50" max="150" value="100" style="flex: 1;" onchange="updateScala(this.value)">
                                 <span id="scalaValue" style="font-size: 11px; color: var(--text-muted); min-width: 35px;">100%</span>
                             </div>
+                        </div>
+
+                        <!-- GESTIONE LOGO BRAND -->
+                        <div class="detail-row" style="margin-top: 10px; flex-direction: column; align-items: flex-start; gap: 8px;">
+                            <span class="detail-label">🏷️ Logo Brand</span>
+                            <div style="display: flex; gap: 8px; align-items: center; width: 100%;">
+                                <div id="logoPreview" style="width: 80px; height: 40px; background: var(--bg-surface); border-radius: 4px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                    <span style="color: var(--text-muted); font-size: 10px;">Nessun logo</span>
+                                </div>
+                                <input type="file" id="logoUpload" accept="image/*" style="display: none;" onchange="uploadLogo(this)">
+                                <button onclick="document.getElementById('logoUpload').click()" style="padding: 6px 12px; background: var(--accent); border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 12px;">
+                                    📤 Carica
+                                </button>
+                                <button onclick="removeLogo()" style="padding: 6px 12px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 4px; color: var(--text); cursor: pointer; font-size: 12px;">
+                                    ❌ Rimuovi
+                                </button>
+                            </div>
+                            <select id="logoSelect" onchange="selectLogo(this.value)" style="width: 100%; padding: 6px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 12px;">
+                                <option value="">-- Seleziona logo esistente --</option>
+                            </select>
                         </div>
 
                         <div class="detail-row" style="margin-top: 10px;">
@@ -863,6 +883,7 @@
         document.addEventListener('DOMContentLoaded', async () => {
             renderCategoryTabs();
             await loadProducts();
+            loadLogos(); // Carica lista loghi disponibili
 
             // Controlla se c'è un prodotto da aprire dall'URL
             const urlParams = new URLSearchParams(window.location.search);
@@ -1014,6 +1035,9 @@
             const scala = p.scala_immagine || 100;
             document.getElementById('detailScala').value = scala;
             document.getElementById('scalaValue').textContent = scala + '%';
+
+            // Logo
+            updateLogoPreview();
         }
 
         function toggleDoppiaColonna(isDouble) {
@@ -1121,6 +1145,86 @@
                     ? `<img src="/api/foto/${currentProduct.immagine}" onerror="this.src='/static/no-image.png'">`
                     : '<div style="font-size:48px">📷</div>';
             }
+        }
+
+        // === GESTIONE LOGO ===
+        async function loadLogos() {
+            try {
+                const res = await fetch('/api/logos');
+                const data = await res.json();
+                const select = document.getElementById('logoSelect');
+                select.innerHTML = '<option value="">-- Seleziona logo esistente --</option>';
+                (data.logos || []).forEach(logo => {
+                    select.innerHTML += `<option value="${logo}">${logo}</option>`;
+                });
+            } catch (err) {
+                console.error('Errore caricamento loghi:', err);
+            }
+        }
+
+        function updateLogoPreview() {
+            const preview = document.getElementById('logoPreview');
+            if (currentProduct && currentProduct.logo) {
+                preview.innerHTML = `<img src="/api/logo/${currentProduct.logo}" style="max-width: 100%; max-height: 100%;" onerror="this.outerHTML='<span style=\\'color:var(--text-muted);font-size:10px\\'>Errore</span>'">`;
+                document.getElementById('logoSelect').value = currentProduct.logo;
+            } else {
+                preview.innerHTML = '<span style="color: var(--text-muted); font-size: 10px;">Nessun logo</span>';
+                document.getElementById('logoSelect').value = '';
+            }
+        }
+
+        async function uploadLogo(input) {
+            if (!currentProduct || !input.files[0]) return;
+
+            const file = input.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const res = await fetch(`/api/upload_logo/${currentProduct.id}`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success) {
+                    currentProduct.logo = data.filename;
+                    updateLogoPreview();
+                    updateBoxPreview();
+                    loadLogos(); // Aggiorna lista
+                    alert('✅ Logo caricato!');
+                } else {
+                    alert('❌ Errore: ' + data.error);
+                }
+            } catch (err) {
+                alert('❌ Errore upload: ' + err.message);
+            }
+            input.value = '';
+        }
+
+        async function selectLogo(logoName) {
+            if (!currentProduct) return;
+
+            try {
+                const res = await fetch(`/api/prodotto/${currentProduct.codice_principale}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ logo: logoName || null })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    currentProduct.logo = logoName || null;
+                    updateLogoPreview();
+                    updateBoxPreview();
+                }
+            } catch (err) {
+                console.error('Errore selezione logo:', err);
+            }
+        }
+
+        async function removeLogo() {
+            if (!currentProduct) return;
+            await selectLogo(null);
+            alert('✅ Logo rimosso!');
         }
 
         async function loadVarianti(codice) {
