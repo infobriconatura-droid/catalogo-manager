@@ -207,6 +207,105 @@ def api_cache_test_box(prodotto_id):
         return jsonify({'error': str(e), 'traceback': traceback.format_exc()}), 500
 
 
+@app.route('/api/cache/test-page/<int:page_num>')
+def api_cache_test_page(page_num):
+    """Test cache durante generazione pagina - simula esattamente cosa succede"""
+    categoria = request.args.get('categoria', 'SIGILLANTI E ADESIVI')
+    template = request.args.get('template', 'corporate')
+
+    try:
+        conn = get_db()
+        c = conn.cursor()
+
+        # Stesso codice della generazione pagina
+        c.execute('''
+            SELECT p.*, pos.posizione
+            FROM prodotti p
+            INNER JOIN posizioni pos ON p.codice_principale = pos.codice
+            WHERE pos.categoria = ?
+            ORDER BY pos.posizione
+        ''', (categoria,))
+        all_products = [dict(row) for row in c.fetchall()]
+
+        if not all_products:
+            conn.close()
+            return jsonify({'error': 'Nessun prodotto trovato'}), 404
+
+        pages = impagina_dinamico(all_products, conn)
+
+        if page_num < 1 or page_num > len(pages):
+            conn.close()
+            return jsonify({'error': 'Pagina non trovata'}), 404
+
+        page_products = pages[page_num - 1]
+
+        # Carica varianti
+        prod_ids = [prod['id'] for prod in page_products]
+        if prod_ids:
+            placeholders = ','.join('?' * len(prod_ids))
+            c.execute(f'''
+                SELECT * FROM varianti
+                WHERE prodotto_id IN ({placeholders}) AND (escludi_stampa = 0 OR escludi_stampa IS NULL)
+                ORDER BY prodotto_id, ordine
+            ''', prod_ids)
+            all_varianti = [dict(row) for row in c.fetchall()]
+            varianti_map = {}
+            for v in all_varianti:
+                pid = v['prodotto_id']
+                if pid not in varianti_map:
+                    varianti_map[pid] = []
+                varianti_map[pid].append(v)
+        else:
+            varianti_map = {}
+
+        conn.close()
+
+        # Test ogni prodotto
+        results = []
+        cache_before = len(list(BOX_CACHE_FOLDER.glob('*.png')))
+
+        for prod in page_products:
+            varianti = varianti_map.get(prod['id'], [])
+            if varianti:
+                try:
+                    cache_key = box_generator._get_cache_key(prod, varianti, template)
+                    cache_path = BOX_CACHE_FOLDER / f"{cache_key}.png"
+                    was_cached = cache_path.exists()
+
+                    # Genera
+                    box_img = box_generator.generate(prod, varianti, template)
+
+                    is_cached = cache_path.exists()
+                    results.append({
+                        'id': prod['id'],
+                        'titolo': prod['titolo'][:30],
+                        'varianti': len(varianti),
+                        'cache_key': cache_key[:8],
+                        'was_cached': was_cached,
+                        'is_cached': is_cached,
+                        'has_box': box_img is not None
+                    })
+                except Exception as e:
+                    results.append({
+                        'id': prod['id'],
+                        'error': str(e)
+                    })
+
+        cache_after = len(list(BOX_CACHE_FOLDER.glob('*.png')))
+
+        return jsonify({
+            'page': page_num,
+            'products': len(page_products),
+            'generated': len(results),
+            'cache_before': cache_before,
+            'cache_after': cache_after,
+            'results': results
+        })
+    except Exception as e:
+        import traceback
+        return jsonify({'error': str(e), 'traceback': traceback.format_exc()}), 500
+
+
 def invalidate_product_cache(prodotto_id):
     """Invalida la cache per un prodotto specifico"""
     pass
