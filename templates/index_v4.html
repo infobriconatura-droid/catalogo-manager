@@ -689,6 +689,12 @@
                         <button class="view-toggle active" data-view="grid">📦</button>
                         <button class="view-toggle" data-view="list">📋</button>
                     </div>
+
+                    <div class="pagination-controls" style="display: flex; align-items: center; gap: 8px; margin-left: 16px;">
+                        <button id="prevPageBtn" onclick="goToPage(currentPage - 1)" class="btn btn-sm" style="padding: 4px 10px;">◀ Prec</button>
+                        <span id="paginationInfo" style="font-size: 0.8rem; color: var(--text-muted);">Pag. 1 di 1</span>
+                        <button id="nextPageBtn" onclick="goToPage(currentPage + 1)" class="btn btn-sm" style="padding: 4px 10px;">Succ ▶</button>
+                    </div>
                 </div>
             </div>
 
@@ -825,13 +831,18 @@
             loadProducts();
         }
 
+        // Paginazione
+        let currentPage = 1;
+        let totalPages = 1;
+        const perPage = 100;
+
         // Load products
-        async function loadProducts(search = '') {
+        async function loadProducts(search = '', page = 1) {
             const grid = document.getElementById('productGrid');
             grid.innerHTML = '<div class="loading"><div class="spinner"></div> Caricamento...</div>';
 
             try {
-                let url = `/api/prodotti?per_page=100`;
+                let url = `/api/prodotti?per_page=${perPage}&page=${page}`;
                 if (search) url += `&search=${encodeURIComponent(search)}`;
 
                 // Filtro per categoria
@@ -842,11 +853,34 @@
                 const res = await fetch(url);
                 const data = await res.json();
                 products = data.prodotti || [];
+                currentPage = data.page || 1;
+                totalPages = data.pages || 1;
 
                 renderProducts();
                 updateCategoryInfo();
+                updatePagination();
             } catch (err) {
                 grid.innerHTML = '<div class="loading">Errore nel caricamento</div>';
+            }
+        }
+
+        // Update pagination display
+        function updatePagination() {
+            const info = document.getElementById('paginationInfo');
+            if (info) {
+                info.textContent = `Pag. ${currentPage} di ${totalPages}`;
+            }
+            const prevBtn = document.getElementById('prevPageBtn');
+            const nextBtn = document.getElementById('nextPageBtn');
+            if (prevBtn) prevBtn.disabled = currentPage <= 1;
+            if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
+        }
+
+        // Go to page
+        function goToPage(page) {
+            if (page >= 1 && page <= totalPages) {
+                const search = document.getElementById('searchInput').value;
+                loadProducts(search, page);
             }
         }
 
@@ -954,24 +988,6 @@
                     </div>
                 </div>
 
-                <!-- Position Grid -->
-                <div class="form-section">
-                    <div class="form-section-title">📍 Posizione in Pagina</div>
-                    <div class="position-control">
-                        <div class="position-header">
-                            <span style="font-size: 0.8rem;">Layout 2×3</span>
-                        </div>
-                        <div class="position-grid">
-                            ${[1,2,3,4,5,6].map(pos => `
-                                <div class="position-slot ${p.posizione == pos ? 'current' : ''}"
-                                     onclick="setPosition(${pos})">
-                                    ${pos}${p.posizione == pos ? ' ✓' : ''}
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Varianti -->
                 ${p.num_varianti > 0 ? `
                 <div class="form-section">
@@ -1020,9 +1036,9 @@
                 if (data.varianti?.length > 0) {
                     list.innerHTML = data.varianti.map(v => `
                         <div class="variante-row">
-                            <span>${v.codice_variante}</span>
-                            <span>${v.descrizione?.substring(0, 30) || '-'}</span>
-                            <span>${v.prezzo || '-'}</span>
+                            <span>${v.codice || '-'}</span>
+                            <span>${v.modello?.substring(0, 30) || '-'}</span>
+                            <span>${v.listino ? v.listino + ' €' : '-'}</span>
                         </div>
                     `).join('');
                 } else {
