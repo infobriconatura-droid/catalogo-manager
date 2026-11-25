@@ -635,6 +635,22 @@ class BoxGenerator:
                       'table_header', 'table_cell']:
                 self.fonts[k] = default
     
+    def _build_file_cache(self):
+        """Costruisce cache lowercase->realpath per ricerca veloce"""
+        if hasattr(self, '_file_cache') and self._file_cache:
+            return  # Cache già costruita
+
+        self._file_cache = {}
+        for folder in [FOTO_FOLDER, LOGO_FOLDER]:
+            if folder.exists():
+                for f in folder.iterdir():
+                    if f.is_file():
+                        self._file_cache[f.name.lower()] = f
+
+    def _invalidate_cache(self):
+        """Invalida la cache (chiamare dopo upload nuove immagini)"""
+        self._file_cache = None
+
     def load_image(self, filename, codice=None):
         """Carica immagine da cartelle foto/logo - cerca anche per codice"""
         if not filename and not codice:
@@ -651,17 +667,15 @@ class BoxGenerator:
                     except:
                         pass
 
-            # Se non trova, prova ricerca CASE-INSENSITIVE
+            # Se non trova, prova ricerca CASE-INSENSITIVE con CACHE
+            self._build_file_cache()
             filename_lower = filename.lower()
-            for folder in [FOTO_FOLDER, LOGO_FOLDER]:
-                if folder.exists():
-                    for f in folder.iterdir():
-                        if f.name.lower() == filename_lower:
-                            try:
-                                img = Image.open(f)
-                                return img.convert('RGBA')
-                            except:
-                                pass
+            if filename_lower in self._file_cache:
+                try:
+                    img = Image.open(self._file_cache[filename_lower])
+                    return img.convert('RGBA')
+                except:
+                    pass
 
         # Se non trova e abbiamo il codice, cerca file che iniziano con il codice
         if codice:
@@ -1499,13 +1513,19 @@ def api_prodotti():
             query += " GROUP BY p.id ORDER BY pos.posizione ASC NULLS LAST, p.titolo LIMIT ? OFFSET ?"
             c.execute(query, (per_page, offset))
     else:
+        # Query ottimizzata: LEFT JOIN invece di subquery correlata
         if search:
             c.execute('''
-                SELECT p.*, COUNT(v.codice) as num_varianti, pos.posizione,
-                       (SELECT COUNT(*) FROM task t WHERE t.prodotto_id = p.id AND t.completato = 0) as task_aperti
+                SELECT p.*, COUNT(DISTINCT v.codice) as num_varianti, pos.posizione,
+                       COALESCE(t_count.task_aperti, 0) as task_aperti
                 FROM prodotti p
                 LEFT JOIN varianti v ON p.id = v.prodotto_id
                 LEFT JOIN posizioni pos ON p.codice_principale = pos.codice
+                LEFT JOIN (
+                    SELECT prodotto_id, COUNT(*) as task_aperti
+                    FROM task WHERE completato = 0
+                    GROUP BY prodotto_id
+                ) t_count ON p.id = t_count.prodotto_id
                 WHERE p.titolo LIKE ? OR p.codice_principale LIKE ?
                 GROUP BY p.id
                 ORDER BY pos.posizione ASC NULLS LAST, p.titolo
@@ -1513,11 +1533,16 @@ def api_prodotti():
             ''', (f'%{search}%', f'%{search}%', per_page, offset))
         else:
             c.execute('''
-                SELECT p.*, COUNT(v.codice) as num_varianti, pos.posizione,
-                       (SELECT COUNT(*) FROM task t WHERE t.prodotto_id = p.id AND t.completato = 0) as task_aperti
+                SELECT p.*, COUNT(DISTINCT v.codice) as num_varianti, pos.posizione,
+                       COALESCE(t_count.task_aperti, 0) as task_aperti
                 FROM prodotti p
                 LEFT JOIN varianti v ON p.id = v.prodotto_id
                 LEFT JOIN posizioni pos ON p.codice_principale = pos.codice
+                LEFT JOIN (
+                    SELECT prodotto_id, COUNT(*) as task_aperti
+                    FROM task WHERE completato = 0
+                    GROUP BY prodotto_id
+                ) t_count ON p.id = t_count.prodotto_id
                 GROUP BY p.id
                 ORDER BY pos.posizione ASC NULLS LAST, p.titolo
                 LIMIT ? OFFSET ?
@@ -2130,7 +2155,10 @@ def api_upload_foto(prodotto_id):
     filename = secure_filename(file.filename)
     filepath = FOTO_FOLDER / filename
     file.save(str(filepath))
-    
+
+    # Invalida cache immagini
+    box_generator._invalidate_cache()
+
     conn = get_db()
     c = conn.cursor()
     c.execute('UPDATE prodotti SET immagine = ? WHERE id = ?', (filename, prodotto_id))
@@ -2265,13 +2293,16 @@ def api_upload_logo(prodotto_id):
     filename = secure_filename(file.filename)
     filepath = LOGO_FOLDER / filename
     file.save(str(filepath))
-    
+
+    # Invalida cache immagini
+    box_generator._invalidate_cache()
+
     conn = get_db()
     c = conn.cursor()
     c.execute('UPDATE prodotti SET logo = ? WHERE id = ?', (filename, prodotto_id))
     conn.commit()
     conn.close()
-    
+
     return jsonify({'success': True, 'filename': filename})
 
 
