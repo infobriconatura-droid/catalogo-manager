@@ -1002,10 +1002,29 @@ class BoxGenerator:
             f_td_bold = f_th
         
         # ==========================================
-        # 1. INTESTAZIONE (Titolo + Logo)
+        # 1. INTESTAZIONE (Titolo + Logo + Badge Posizione)
         # ==========================================
         y_start = 8
-        
+        badge_offset = 0
+
+        # Badge posizione (Top Left Corner)
+        posizione = prodotto.get('posizione') or prodotto.get('_posizione')
+        if posizione:
+            badge_size = 50
+            badge_x, badge_y = 5, 5
+            # Cerchio verde
+            draw.ellipse([badge_x, badge_y, badge_x + badge_size, badge_y + badge_size], fill=GREEN_DARK)
+            # Numero
+            try:
+                f_badge = ImageFont.truetype(self.font_paths['bold'], 24)
+            except:
+                f_badge = f_title
+            pos_text = str(posizione)
+            bbox = draw.textbbox((0, 0), pos_text, font=f_badge)
+            tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
+            draw.text((badge_x + (badge_size - tw) // 2, badge_y + (badge_size - th) // 2 - 2), pos_text, font=f_badge, fill=(255, 255, 255))
+            badge_offset = badge_size + 10
+
         # Logo (Top Right)
         logo_w = 0
         logo = self.load_image(prodotto.get("logo"))
@@ -1013,19 +1032,20 @@ class BoxGenerator:
             logo = self._contain(logo, 170, 75)
             img.paste(logo, (W - logo.size[0] - pad, y_start + 5), logo)
             logo_w = logo.size[0] + 20
-        
-        # Titolo PIÙ EVIDENTE (Top Left)
+
+        # Titolo PIÙ EVIDENTE (dopo badge)
         title_text = (prodotto.get("titolo") or "").upper()
-        max_title_w = W - logo_w - pad * 2
+        title_x = pad + badge_offset  # Sposta a destra per fare spazio al badge
+        max_title_w = W - logo_w - pad * 2 - badge_offset
         try:
             f_title = self._fit_font(draw, title_text, max_title_w, 70, self.font_paths['bold'], start_size=44, min_size=28)
         except:
             pass
-        draw.text((pad, y_start), title_text, font=f_title, fill=TEXT_MAIN)
+        draw.text((title_x, y_start), title_text, font=f_title, fill=TEXT_MAIN)
         
         # Linea sotto titolo per evidenziarlo
-        title_bbox = draw.textbbox((pad, y_start), title_text, font=f_title)
-        draw.line([pad, title_bbox[3] + 5, title_bbox[2] + 10, title_bbox[3] + 5], fill=GREEN_DARK, width=3)
+        title_bbox = draw.textbbox((title_x, y_start), title_text, font=f_title)
+        draw.line([title_x, title_bbox[3] + 5, title_bbox[2] + 10, title_bbox[3] + 5], fill=GREEN_DARK, width=3)
         
         # ==========================================
         # 2. IMMAGINE CENTRATA + DESCRIZIONE SOTTO
@@ -2228,7 +2248,7 @@ def calcola_altezza_box(num_varianti):
     return TOP_SECTION + IMG_SECTION + HEADER_ROW + (num_varianti * VAR_ROW) + STRIP
 
 
-def impagina_dinamico(prodotti, conn, page_height=3400, col_width=1150, margin_top=60, row_gap=30):
+def impagina_dinamico(prodotti, conn, page_height=3300, col_width=1160, margin_top=80, row_gap=40):
     """
     Impagina i prodotti dinamicamente in base all'altezza reale dei box.
     Layout: 2 colonne, ordine di lettura standard (sinistra-destra, poi giù).
