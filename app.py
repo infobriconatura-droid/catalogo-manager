@@ -726,9 +726,14 @@ def import_posizioni(filepath, categoria):
 
 class BoxGenerator:
     """Generatore box con grafica professionale"""
-    
+
     def __init__(self):
         self.setup_fonts()
+        # Cache per immagini caricate (LRU con max 100 entries)
+        self._image_cache = {}
+        self._image_cache_max = 100
+        # Cache per font con size dinamici
+        self._font_cache = {}
         
     def setup_fonts(self):
         """Setup font cross-platform (Windows + Linux + Mac)"""
@@ -841,67 +846,102 @@ class BoxGenerator:
                 self.fonts[k] = default
     
     def load_image(self, filename, codice=None):
-        """Carica immagine da cartelle foto/logo - cerca anche per codice"""
+        """Carica immagine da cartelle foto/logo - con cache LRU"""
         if not filename and not codice:
             return None
 
+        # Chiave cache
+        cache_key = f"{filename}|{codice}"
+
+        # Check cache
+        if cache_key in self._image_cache:
+            # Ritorna una copia per evitare modifiche all'originale
+            return self._image_cache[cache_key].copy()
+
         # Prima cerca il nome esatto
+        img = None
         if filename:
             for folder in [FOTO_FOLDER, LOGO_FOLDER]:
                 path = folder / filename
                 if path.exists():
                     try:
-                        img = Image.open(path)
-                        return img.convert('RGBA')
+                        img = Image.open(path).convert('RGBA')
+                        break
                     except:
                         pass
 
-            # Se non trova, prova VARIAZIONI DI CASE comuni (veloce, senza iterare cartella)
-            name, ext = os.path.splitext(filename)
-            case_variants = [
-                filename.lower(),                    # tutto minuscolo
-                filename.upper(),                    # tutto maiuscolo
-                name + ext.lower(),                  # estensione minuscola
-                name + ext.upper(),                  # estensione maiuscola
-                name.upper() + ext.lower(),          # nome maiuscolo, ext minuscola
-            ]
-            for variant in case_variants:
-                if variant == filename:
-                    continue  # già provato
-                for folder in [FOTO_FOLDER, LOGO_FOLDER]:
-                    path = folder / variant
-                    if path.exists():
-                        try:
-                            img = Image.open(path)
-                            return img.convert('RGBA')
-                        except:
-                            pass
+            # Se non trova, prova VARIAZIONI DI CASE comuni
+            if img is None:
+                name, ext = os.path.splitext(filename)
+                case_variants = [
+                    filename.lower(),
+                    filename.upper(),
+                    name + ext.lower(),
+                    name + ext.upper(),
+                    name.upper() + ext.lower(),
+                ]
+                for variant in case_variants:
+                    if variant == filename:
+                        continue
+                    for folder in [FOTO_FOLDER, LOGO_FOLDER]:
+                        path = folder / variant
+                        if path.exists():
+                            try:
+                                img = Image.open(path).convert('RGBA')
+                                break
+                            except:
+                                pass
+                    if img:
+                        break
 
         # Se non trova e abbiamo il codice, cerca file che iniziano con il codice
-        if codice:
+        if img is None and codice:
             for folder in [FOTO_FOLDER, LOGO_FOLDER]:
                 if folder.exists():
                     for ext in ['.jpg', '.jpeg', '.png', '.JPG', '.JPEG', '.PNG', '.jfif']:
-                        # Cerca codice.ext o codice_*.ext
                         for pattern in [f"{codice}{ext}", f"{codice}_*{ext}", f"P{codice}*{ext}"]:
                             matches = list(folder.glob(pattern))
                             if matches:
                                 try:
-                                    img = Image.open(matches[0])
-                                    return img.convert('RGBA')
+                                    img = Image.open(matches[0]).convert('RGBA')
+                                    break
                                 except:
                                     pass
+                        if img:
+                            break
+                if img:
+                    break
+
+        # Salva in cache (LRU - rimuovi vecchi se supera limite)
+        if img is not None:
+            if len(self._image_cache) >= self._image_cache_max:
+                # Rimuovi primo elemento (più vecchio)
+                oldest_key = next(iter(self._image_cache))
+                del self._image_cache[oldest_key]
+            self._image_cache[cache_key] = img.copy()
+            return img
+
         return None
     
     def load_icona(self, filename):
-        """Carica icona dalla cartella icone"""
+        """Carica icona dalla cartella icone (con cache)"""
         if not filename:
             return None
+
+        cache_key = f"icona|{filename}"
+        if cache_key in self._image_cache:
+            return self._image_cache[cache_key].copy()
+
         path = ICONE_FOLDER / filename
         if path.exists():
             try:
-                img = Image.open(path)
-                return img.convert('RGBA')
+                img = Image.open(path).convert('RGBA')
+                # Salva in cache
+                if len(self._image_cache) >= self._image_cache_max:
+                    oldest_key = next(iter(self._image_cache))
+                    del self._image_cache[oldest_key]
+                self._image_cache[cache_key] = img.copy()
+                return img
             except:
                 pass
         return None
@@ -961,21 +1001,27 @@ class BoxGenerator:
             return ""
         return f"{s} €"
     
-    def _fit_font(self, draw, text, max_width, max_height, font_path, start_size=44, min_size=20):
-        """Trova il font size ottimale per far entrare il testo"""
-        for size in range(start_size, min_size - 1, -2):
+    def _get_font(self, font_path, size):
+        """Ottiene font da cache o lo crea"""
+        cache_key = f"{font_path}|{size}"
+        if cache_key not in self._font_cache:
             try:
-                font = ImageFont.truetype(font_path, size)
+                self._font_cache[cache_key] = ImageFont.truetype(font_path, size)
+            except:
+                self._font_cache[cache_key] = None
+        return self._font_cache[cache_key]
+
+    def _fit_font(self, draw, text, max_width, max_height, font_path, start_size=44, min_size=20):
+        """Trova il font size ottimale per far entrare il testo (con cache)"""
+        for size in range(start_size, min_size - 1, -2):
+            font = self._get_font(font_path, size)
+            if font:
                 bbox = draw.textbbox((0, 0), text, font=font)
                 if bbox[2] - bbox[0] <= max_width and bbox[3] - bbox[1] <= max_height:
                     return font
-            except:
-                pass
         # Fallback
-        try:
-            return ImageFont.truetype(font_path, min_size)
-        except:
-            return self.fonts.get('title', ImageFont.load_default())
+        font = self._get_font(font_path, min_size)
+        return font if font else self.fonts.get('title', ImageFont.load_default())
     
     def generate_tabella(self, prodotto, varianti):
         """
