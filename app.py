@@ -675,17 +675,20 @@ class BoxGenerator:
         if im is None:
             return None
 
-        # Applica scala
-        if scala and scala != 100:
-            scala_factor = scala / 100.0
-            max_w = int(max_w * scala_factor)
-            max_h = int(max_h * scala_factor)
-
         w, h = im.size
         if w <= 0 or h <= 0:
             return im
+
+        # Prima ridimensiona per entrare nel box
         scale = min(max_w / w, max_h / h)
         nw, nh = max(1, int(w * scale)), max(1, int(h * scale))
+
+        # Poi applica la scala utente (50-150%)
+        if scala and scala != 100:
+            scala_factor = scala / 100.0
+            nw = max(1, int(nw * scala_factor))
+            nh = max(1, int(nh * scala_factor))
+
         if (nw, nh) != (w, h):
             im = im.resize((nw, nh), Image.LANCZOS)
         return im
