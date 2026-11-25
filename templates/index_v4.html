@@ -1353,10 +1353,10 @@
             document.getElementById('boxTitle').textContent = p.titolo || 'TITOLO PRODOTTO';
             document.getElementById('boxDesc').textContent = p.descrizione || '';
 
-            // Logo
+            // Logo - usa campo "logo" e API /api/logo/
             const boxLogo = document.getElementById('boxLogo');
-            if (p.logo_brand) {
-                boxLogo.innerHTML = `<img src="/api/foto/${p.logo_brand}" style="max-height: 100%; max-width: 100%; object-fit: contain;">`;
+            if (p.logo) {
+                boxLogo.innerHTML = `<img src="/api/logo/${p.logo}" style="max-height: 100%; max-width: 100%; object-fit: contain;" onerror="this.style.display='none'">`;
             } else {
                 boxLogo.innerHTML = '';
             }
