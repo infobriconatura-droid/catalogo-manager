@@ -723,7 +723,37 @@
 
                 <!-- Dettaglio prodotto -->
                 <div class="product-detail" id="productDetail">
-                    <div class="detail-image" id="detailImage"></div>
+                    <!-- PREVIEW BOX IN ALTO -->
+                    <div class="detail-section" style="margin-bottom: 16px;">
+                        <div class="detail-section-title">🖨️ Preview Box Catalogo <span id="previewModeLabel" style="font-size:10px; color: var(--primary); margin-left:8px;"></span></div>
+                        <div class="box-preview-container">
+                            <div class="box-preview" id="boxPreview">
+                                <div class="box-header">
+                                    <div class="box-image" id="boxImage">📷</div>
+                                    <div class="box-text">
+                                        <div class="box-title" id="boxTitle">TITOLO PRODOTTO</div>
+                                        <div class="box-desc" id="boxDesc">Descrizione prodotto...</div>
+                                    </div>
+                                </div>
+                                <div class="box-table-wrapper">
+                                    <table class="box-table">
+                                        <thead>
+                                            <tr>
+                                                <th>CODICE</th>
+                                                <th>MODELLO</th>
+                                                <th>U.M.</th>
+                                                <th>M.V.</th>
+                                                <th>CF</th>
+                                                <th style="text-align:right">NETTO €</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="boxVarianti">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
                     <div class="detail-section">
                         <div class="detail-section-title">ℹ️ Informazioni</div>
@@ -804,37 +834,6 @@
                         </table>
                     </div>
 
-                    <!-- PREVIEW BOX CATALOGO -->
-                    <div class="detail-section">
-                        <div class="detail-section-title">🖨️ Preview Box Catalogo <span id="previewModeLabel" style="font-size:10px; color: var(--primary); margin-left:8px;"></span></div>
-                        <div class="box-preview-container">
-                            <div class="box-preview" id="boxPreview">
-                                <div class="box-header">
-                                    <div class="box-image" id="boxImage">📷</div>
-                                    <div class="box-text">
-                                        <div class="box-title" id="boxTitle">TITOLO PRODOTTO</div>
-                                        <div class="box-desc" id="boxDesc">Descrizione prodotto...</div>
-                                    </div>
-                                </div>
-                                <div class="box-table-wrapper">
-                                    <table class="box-table">
-                                        <thead>
-                                            <tr>
-                                                <th>CODICE</th>
-                                                <th>MODELLO</th>
-                                                <th>U.M.</th>
-                                                <th>M.V.</th>
-                                                <th>CF</th>
-                                                <th style="text-align:right">NETTO €</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="boxVarianti">
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
