@@ -1105,11 +1105,14 @@ class BoxGenerator:
 
         # Immagine prodotto CENTRATA e PIÙ GRANDE
         scala = prodotto.get("scala_immagine", 100) or 100
+        offset_x = prodotto.get("offset_x", 0) or 0
+        offset_y = prodotto.get("offset_y", 0) or 0
         prod = self.load_image(prodotto.get("immagine"), prodotto.get("codice_principale"))
         if prod:
             prod = self._contain(prod, 500, img_h - 20, scala)  # Più grande
-            px = (W - prod.size[0]) // 2  # Centrata
-            img.paste(prod, (px, img_y), prod)
+            px = (W - prod.size[0]) // 2 + offset_x * 3  # Centrata + offset
+            py = img_y + offset_y * 3
+            img.paste(prod, (px, py), prod)
         
         # Descrizione SOTTO la foto (centrata)
         desc = (prodotto.get("descrizione") or "").strip()
@@ -1227,11 +1230,13 @@ class BoxGenerator:
         # 1. ZONA IMMAGINE (Sinistra - 45%)
         # ==========================================
         scala = prodotto.get("scala_immagine", 100) or 100
+        offset_x = prodotto.get("offset_x", 0) or 0
+        offset_y = prodotto.get("offset_y", 0) or 0
         prod = self.load_image(prodotto.get("immagine"), prodotto.get("codice_principale"))
         if prod:
             prod = self._contain(prod, 800, 900, scala)
-            img_x = (850 - prod.size[0]) // 2 + 50
-            img_y = (H - prod.size[1]) // 2
+            img_x = (850 - prod.size[0]) // 2 + 50 + offset_x * 5
+            img_y = (H - prod.size[1]) // 2 + offset_y * 5
             img.paste(prod, (img_x, img_y), prod)
 
         # Linea separatrice verticale
@@ -2640,14 +2645,14 @@ def calcola_altezza_box(num_varianti):
     """
     Calcola altezza box in pixel basata sul numero di varianti.
     Layout corporate: header + righe varianti + descrizione + strip
-    Valori calibrati per stampa A4 leggibile (3-4 righe per colonna).
+    Valori calibrati per stampa A4 leggibile (2-3 box per colonna).
     """
-    TOP_SECTION = 160      # Titolo + logo
-    IMG_SECTION = 500      # Immagine + descrizione
-    HEADER_ROW = 55        # Header tabella
-    VAR_ROW = 45           # Riga per variante
-    STRIP = 20             # Striscia verde in basso
-    PADDING = 40           # Margini interni
+    TOP_SECTION = 200      # Titolo + logo
+    IMG_SECTION = 650      # Immagine + descrizione
+    HEADER_ROW = 70        # Header tabella
+    VAR_ROW = 55           # Riga per variante
+    STRIP = 25             # Striscia verde in basso
+    PADDING = 50           # Margini interni
 
     return TOP_SECTION + IMG_SECTION + HEADER_ROW + (num_varianti * VAR_ROW) + STRIP + PADDING
 
