@@ -2625,14 +2625,16 @@ def calcola_altezza_box(num_varianti):
     """
     Calcola altezza box in pixel basata sul numero di varianti.
     Layout corporate: header + righe varianti + descrizione + strip
+    Valori calibrati sul template reale del catalogo.
     """
-    TOP_SECTION = 100      # Titolo + logo
-    IMG_SECTION = 320 + 120  # Immagine + descrizione
-    HEADER_ROW = 50        # Header tabella
-    VAR_ROW = 50           # Riga per variante
-    STRIP = 14             # Striscia verde in basso
+    TOP_SECTION = 60       # Titolo + logo (compatti)
+    IMG_SECTION = 200      # Immagine + descrizione
+    HEADER_ROW = 25        # Header tabella
+    VAR_ROW = 18           # Riga per variante (font piccolo)
+    STRIP = 10             # Striscia verde in basso
+    PADDING = 20           # Margini interni
 
-    return TOP_SECTION + IMG_SECTION + HEADER_ROW + (num_varianti * VAR_ROW) + STRIP
+    return TOP_SECTION + IMG_SECTION + HEADER_ROW + (num_varianti * VAR_ROW) + STRIP + PADDING
 
 
 def impagina_dinamico(prodotti, conn, page_height=3400, col_width=1160, margin_top=60, row_gap=30):
