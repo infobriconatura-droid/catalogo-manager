@@ -652,7 +652,7 @@
             <div class="sidebar-section">
                 <div class="sidebar-title">⚡ Azioni Rapide</div>
                 <div class="quick-actions">
-                    <a href="/preview" class="quick-action">👁️ Preview Catalogo</a>
+                    <a href="/viewer" class="quick-action">👁️ Preview Catalogo</a>
                     <a href="#" class="quick-action" onclick="exportPDF()">📄 Genera PDF</a>
                     <a href="#" class="quick-action" onclick="exportInDesign()">📝 Script InDesign</a>
                     <a href="#" class="quick-action" onclick="showImportModal()">📊 Import CSV</a>
@@ -805,14 +805,14 @@
                 let url = `/api/prodotti?per_page=100`;
                 if (search) url += `&search=${encodeURIComponent(search)}`;
 
+                // Filtro per categoria
+                if (currentCategory && currentCategory !== 'Tutto') {
+                    url += `&categoria=${encodeURIComponent(currentCategory)}`;
+                }
+
                 const res = await fetch(url);
                 const data = await res.json();
                 products = data.prodotti || [];
-
-                // Filter by category if not "Tutto"
-                if (currentCategory !== 'Tutto') {
-                    // For now, show all - category filtering will be added
-                }
 
                 renderProducts();
                 updateCategoryInfo();
