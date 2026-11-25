@@ -821,8 +821,8 @@
                                     ❌ Rimuovi
                                 </button>
                             </div>
-                            <select id="logoSelect" onchange="selectLogo(this.value)" style="width: 100%; padding: 6px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 12px;">
-                                <option value="">-- Seleziona logo esistente --</option>
+                            <select id="logoSelect" onfocus="loadLogos()" onchange="selectLogo(this.value)" style="width: 100%; padding: 6px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 12px;">
+                                <option value="">-- Clicca per vedere loghi --</option>
                             </select>
                         </div>
 
@@ -883,7 +883,7 @@
         document.addEventListener('DOMContentLoaded', async () => {
             renderCategoryTabs();
             await loadProducts();
-            loadLogos(); // Carica lista loghi disponibili
+            // Loghi caricati on-demand quando si apre il dropdown
 
             // Controlla se c'è un prodotto da aprire dall'URL
             const urlParams = new URLSearchParams(window.location.search);
@@ -1148,15 +1148,20 @@
         }
 
         // === GESTIONE LOGO ===
+        let logosLoaded = false;
         async function loadLogos() {
+            if (logosLoaded) return; // Carica solo una volta
             try {
                 const res = await fetch('/api/logos');
                 const data = await res.json();
                 const select = document.getElementById('logoSelect');
-                select.innerHTML = '<option value="">-- Seleziona logo esistente --</option>';
+                const currentVal = currentProduct?.logo || '';
+                select.innerHTML = '<option value="">-- Nessun logo --</option>';
                 (data.logos || []).forEach(logo => {
-                    select.innerHTML += `<option value="${logo}">${logo}</option>`;
+                    const selected = logo === currentVal ? 'selected' : '';
+                    select.innerHTML += `<option value="${logo}" ${selected}>${logo}</option>`;
                 });
+                logosLoaded = true;
             } catch (err) {
                 console.error('Errore caricamento loghi:', err);
             }
