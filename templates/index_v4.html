@@ -1014,12 +1014,6 @@
             document.getElementById('editorEmpty').style.display = 'none';
             document.getElementById('productDetail').classList.add('active');
 
-            // Immagine
-            const imgContainer = document.getElementById('detailImage');
-            imgContainer.innerHTML = p.immagine
-                ? `<img src="/api/foto/${p.immagine}" onerror="this.src='/static/no-image.png'">`
-                : '<div style="color:#999; font-size:3rem">📷</div>';
-
             // Info
             document.getElementById('detailCodice').textContent = p.codice_principale;
             document.getElementById('detailPosizione').value = p.posizione || '';
