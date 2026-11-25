@@ -807,7 +807,7 @@
                 <div class="product-card ${currentProduct?.codice_principale === p.codice_principale ? 'selected' : ''}"
                      onclick="selectProduct('${p.codice_principale}')">
                     <div class="product-img">
-                        ${p.foto ? `<img src="/foto_prodotti/${p.foto}" onerror="this.outerHTML='<span class=no-img>📷</span>'">` : '<span class="no-img">📷</span>'}
+                        ${p.immagine ? `<img src="/foto_prodotti/${p.immagine}" onerror="this.outerHTML='<span class=no-img>📷</span>'">` : '<span class="no-img">📷</span>'}
                     </div>
                     <div class="product-info">
                         <span class="product-pos">Pos. ${p.posizione || '-'}</span>
@@ -876,8 +876,8 @@
 
             // Immagine
             const imgContainer = document.getElementById('detailImage');
-            imgContainer.innerHTML = p.foto
-                ? `<img src="/foto_prodotti/${p.foto}" onerror="this.src='/static/no-image.png'">`
+            imgContainer.innerHTML = p.immagine
+                ? `<img src="/foto_prodotti/${p.immagine}" onerror="this.src='/static/no-image.png'">`
                 : '<div style="color:#999; font-size:3rem">📷</div>';
 
             // Info
@@ -924,8 +924,8 @@
 
             // Immagine
             const boxImg = document.getElementById('boxImage');
-            boxImg.innerHTML = p.foto
-                ? `<img src="/foto_prodotti/${p.foto}" onerror="this.outerHTML='📷'">`
+            boxImg.innerHTML = p.immagine
+                ? `<img src="/foto_prodotti/${p.immagine}" onerror="this.outerHTML='📷'">`
                 : '📷';
 
             // Titolo e descrizione
