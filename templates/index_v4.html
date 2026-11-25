@@ -337,7 +337,20 @@
 
         .product-no-image {
             color: var(--text-muted);
-            font-size: 2rem;
+            font-size: 2.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e, #252540);
+            border-radius: 8px;
+        }
+
+        .product-no-image span {
+            font-size: 0.65rem;
+            margin-top: 4px;
         }
 
         .product-badge {
@@ -601,18 +614,156 @@
             border-radius: 6px;
             padding: 8px;
             font-size: 0.75rem;
-            max-height: 150px;
+            max-height: 250px;
             overflow-y: auto;
         }
 
         .variante-row {
             display: flex;
-            justify-content: space-between;
-            padding: 6px;
+            align-items: center;
+            padding: 8px 6px;
             border-bottom: 1px solid var(--border);
+            gap: 8px;
         }
 
         .variante-row:last-child { border-bottom: none; }
+
+        .variante-row:hover {
+            background: var(--bg-hover);
+        }
+
+        .variante-info {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 60px 1fr 70px;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .variante-info .codice {
+            font-weight: 600;
+            color: var(--accent-light);
+        }
+
+        .variante-info .modello {
+            color: var(--text);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .variante-info .prezzo {
+            text-align: right;
+            color: var(--green);
+        }
+
+        .variante-edit-btn {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.65rem;
+            transition: all 0.2s;
+        }
+
+        .variante-edit-btn:hover {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        /* Modal edit variante */
+        .variante-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .variante-modal-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            width: 400px;
+            max-width: 90vw;
+        }
+
+        .variante-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .variante-modal-header h3 {
+            font-size: 1rem;
+            color: var(--text);
+        }
+
+        .variante-modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        .variante-form-group {
+            margin-bottom: 12px;
+        }
+
+        .variante-form-group label {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .variante-form-group input {
+            width: 100%;
+            padding: 8px 10px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 0.85rem;
+        }
+
+        .variante-form-group input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .variante-modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .variante-modal-actions button {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            border: none;
+        }
+
+        .variante-btn-cancel {
+            background: var(--bg-surface);
+            color: var(--text);
+        }
+
+        .variante-btn-save {
+            background: var(--green);
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -904,8 +1055,8 @@
                      onclick="selectProduct(${p.id})">
                     <div class="product-image">
                         ${p.immagine ?
-                            `<img src="/api/foto/${p.immagine}" onerror="this.parentElement.innerHTML='<div class=product-no-image>📷</div>'">` :
-                            '<div class="product-no-image">📷</div>'}
+                            `<img src="/api/foto/${p.immagine}" onerror="this.parentElement.innerHTML='<div class=product-no-image>📷<span>No foto</span></div>'">` :
+                            '<div class="product-no-image">📷<span>No foto</span></div>'}
                         ${currentCategory && currentCategory !== 'Tutto' ?
                             (p.posizione ? `<span class="product-badge">Pos. ${p.posizione}</span>` : '<span class="product-badge warning">No Pos</span>')
                             : ''}
@@ -1036,9 +1187,12 @@
                 if (data.varianti?.length > 0) {
                     list.innerHTML = data.varianti.map(v => `
                         <div class="variante-row">
-                            <span>${v.codice || '-'}</span>
-                            <span>${v.modello?.substring(0, 30) || '-'}</span>
-                            <span>${v.listino ? v.listino + ' €' : '-'}</span>
+                            <div class="variante-info">
+                                <span class="codice">${v.codice || '-'}</span>
+                                <span class="modello">${v.modello || '-'}</span>
+                                <span class="prezzo">${v.listino ? v.listino + ' €' : '-'}</span>
+                            </div>
+                            <button class="variante-edit-btn" onclick="editVariante('${v.codice}', '${(v.modello || '').replace(/'/g, "\\'")}', '${v.um || ''}', '${v.mv || ''}', '${v.cf || ''}', '${v.listino || ''}')">✏️ Edit</button>
                         </div>
                     `).join('');
                 } else {
@@ -1046,6 +1200,86 @@
                 }
             } catch (err) {
                 console.error(err);
+            }
+        }
+
+        // Edit variante - apre modal
+        function editVariante(codice, modello, um, mv, cf, listino) {
+            const modal = document.createElement('div');
+            modal.className = 'variante-modal';
+            modal.id = 'varianteModal';
+            modal.innerHTML = `
+                <div class="variante-modal-content">
+                    <div class="variante-modal-header">
+                        <h3>✏️ Modifica Variante: ${codice}</h3>
+                        <button class="variante-modal-close" onclick="closeVarianteModal()">✕</button>
+                    </div>
+                    <div class="variante-form-group">
+                        <label>Modello</label>
+                        <input type="text" id="varModello" value="${modello}">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="variante-form-group">
+                            <label>U.M.</label>
+                            <input type="text" id="varUm" value="${um}">
+                        </div>
+                        <div class="variante-form-group">
+                            <label>M.V.</label>
+                            <input type="text" id="varMv" value="${mv}">
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="variante-form-group">
+                            <label>CF</label>
+                            <input type="text" id="varCf" value="${cf}">
+                        </div>
+                        <div class="variante-form-group">
+                            <label>Listino (€)</label>
+                            <input type="text" id="varListino" value="${listino}">
+                        </div>
+                    </div>
+                    <div class="variante-modal-actions">
+                        <button class="variante-btn-cancel" onclick="closeVarianteModal()">Annulla</button>
+                        <button class="variante-btn-save" onclick="saveVariante('${codice}')">💾 Salva</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        function closeVarianteModal() {
+            const modal = document.getElementById('varianteModal');
+            if (modal) modal.remove();
+        }
+
+        async function saveVariante(codice) {
+            const data = {
+                modello: document.getElementById('varModello').value,
+                um: document.getElementById('varUm').value,
+                mv: document.getElementById('varMv').value,
+                cf: document.getElementById('varCf').value,
+                listino: document.getElementById('varListino').value
+            };
+
+            try {
+                const res = await fetch(`/api/variante/${codice}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (res.ok) {
+                    closeVarianteModal();
+                    showToast('✅ Variante aggiornata!', 'success');
+                    // Ricarica varianti
+                    if (currentProduct) {
+                        loadVarianti(currentProduct.codice_principale);
+                    }
+                } else {
+                    showToast('❌ Errore nel salvataggio', 'error');
+                }
+            } catch (err) {
+                showToast('❌ Errore: ' + err.message, 'error');
             }
         }
 
