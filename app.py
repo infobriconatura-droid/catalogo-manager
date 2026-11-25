@@ -635,22 +635,6 @@ class BoxGenerator:
                       'table_header', 'table_cell']:
                 self.fonts[k] = default
     
-    def _build_file_cache(self):
-        """Costruisce cache lowercase->realpath per ricerca veloce"""
-        if hasattr(self, '_file_cache') and self._file_cache:
-            return  # Cache già costruita
-
-        self._file_cache = {}
-        for folder in [FOTO_FOLDER, LOGO_FOLDER]:
-            if folder.exists():
-                for f in folder.iterdir():
-                    if f.is_file():
-                        self._file_cache[f.name.lower()] = f
-
-    def _invalidate_cache(self):
-        """Invalida la cache (chiamare dopo upload nuove immagini)"""
-        self._file_cache = None
-
     def load_image(self, filename, codice=None):
         """Carica immagine da cartelle foto/logo - cerca anche per codice"""
         if not filename and not codice:
@@ -667,15 +651,26 @@ class BoxGenerator:
                     except:
                         pass
 
-            # Se non trova, prova ricerca CASE-INSENSITIVE con CACHE
-            self._build_file_cache()
-            filename_lower = filename.lower()
-            if filename_lower in self._file_cache:
-                try:
-                    img = Image.open(self._file_cache[filename_lower])
-                    return img.convert('RGBA')
-                except:
-                    pass
+            # Se non trova, prova VARIAZIONI DI CASE comuni (veloce, senza iterare cartella)
+            name, ext = os.path.splitext(filename)
+            case_variants = [
+                filename.lower(),                    # tutto minuscolo
+                filename.upper(),                    # tutto maiuscolo
+                name + ext.lower(),                  # estensione minuscola
+                name + ext.upper(),                  # estensione maiuscola
+                name.upper() + ext.lower(),          # nome maiuscolo, ext minuscola
+            ]
+            for variant in case_variants:
+                if variant == filename:
+                    continue  # già provato
+                for folder in [FOTO_FOLDER, LOGO_FOLDER]:
+                    path = folder / variant
+                    if path.exists():
+                        try:
+                            img = Image.open(path)
+                            return img.convert('RGBA')
+                        except:
+                            pass
 
         # Se non trova e abbiamo il codice, cerca file che iniziano con il codice
         if codice:
@@ -2156,8 +2151,6 @@ def api_upload_foto(prodotto_id):
     filepath = FOTO_FOLDER / filename
     file.save(str(filepath))
 
-    # Invalida cache immagini
-    box_generator._invalidate_cache()
 
     conn = get_db()
     c = conn.cursor()
@@ -2294,8 +2287,6 @@ def api_upload_logo(prodotto_id):
     filepath = LOGO_FOLDER / filename
     file.save(str(filepath))
 
-    # Invalida cache immagini
-    box_generator._invalidate_cache()
 
     conn = get_db()
     c = conn.cursor()
