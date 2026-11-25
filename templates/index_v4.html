@@ -753,6 +753,23 @@
                                 </div>
                             </div>
                         </div>
+                        <!-- CONTROLLI PREVIEW -->
+                        <div style="display: flex; gap: 20px; align-items: center; margin-top: 12px; padding: 10px; background: var(--bg-surface); border-radius: 6px; flex-wrap: wrap;">
+                            <!-- Scala Immagine -->
+                            <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 200px;">
+                                <span style="font-size: 11px; color: var(--text-muted); white-space: nowrap;">📐 Scala:</span>
+                                <input type="range" id="detailScala" min="50" max="150" value="100" style="flex: 1; min-width: 80px;" oninput="document.getElementById('scalaValue').textContent = this.value + '%'; updateBoxPreviewScale(this.value)" onchange="updateScala(this.value)">
+                                <span id="scalaValue" style="font-size: 11px; color: var(--text-muted); min-width: 35px;">100%</span>
+                            </div>
+                            <!-- Formato Box -->
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 11px; color: var(--text-muted); white-space: nowrap;">📐 Formato:</span>
+                                <select id="detailFormato" onchange="toggleDoppiaColonna(this.value === 'fullhd')" style="padding: 4px 8px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 11px;">
+                                    <option value="standard">Standard (1 col)</option>
+                                    <option value="fullhd">Full HD (2 col)</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="detail-section">
@@ -799,11 +816,6 @@
                                     🔄 Originale
                                 </button>
                             </div>
-                            <div style="display: flex; gap: 12px; align-items: center; width: 100%; margin-top: 4px;">
-                                <span style="font-size: 11px; color: var(--text-muted);">Scala:</span>
-                                <input type="range" id="detailScala" min="50" max="150" value="100" style="flex: 1;" onchange="updateScala(this.value)">
-                                <span id="scalaValue" style="font-size: 11px; color: var(--text-muted); min-width: 35px;">100%</span>
-                            </div>
                         </div>
 
                         <!-- GESTIONE LOGO BRAND -->
@@ -826,13 +838,6 @@
                             </select>
                         </div>
 
-                        <div class="detail-row" style="margin-top: 10px;">
-                            <span class="detail-label">📏 Doppia Colonna</span>
-                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                                <input type="checkbox" id="detailDoppiaColonna" onchange="toggleDoppiaColonna(this.checked)" style="width: 18px; height: 18px;">
-                                <span style="font-size: 12px; color: var(--text-muted);">Box largo (2 colonne)</span>
-                            </label>
-                        </div>
                     </div>
 
                     <div class="detail-section">
@@ -1021,10 +1026,10 @@
             document.getElementById('detailTitolo').value = p.titolo || '';
             document.getElementById('detailDescrizione').value = p.descrizione || '';
 
-            // Doppia colonna
-            const doppiaCheck = document.getElementById('detailDoppiaColonna');
-            doppiaCheck.checked = p.doppia_colonna == 1;
-            toggleDoppiaColonna(doppiaCheck.checked);
+            // Formato box (doppia colonna)
+            const formatoSelect = document.getElementById('detailFormato');
+            formatoSelect.value = p.doppia_colonna == 1 ? 'fullhd' : 'standard';
+            toggleDoppiaColonna(p.doppia_colonna == 1);
 
             // Scala immagine
             const scala = p.scala_immagine || 100;
@@ -1044,6 +1049,21 @@
             } else {
                 boxPreview.classList.remove('doppia-colonna');
                 modeLabel.textContent = '';
+            }
+            // Salva nel DB
+            if (currentProduct) {
+                currentProduct.doppia_colonna = isDouble ? 1 : 0;
+                saveField('doppia_colonna', currentProduct.doppia_colonna);
+            }
+        }
+
+        function updateBoxPreviewScale(value) {
+            // Aggiorna preview live della scala nell'immagine del box
+            const boxImg = document.getElementById('boxImage');
+            const img = boxImg.querySelector('img');
+            if (img) {
+                const scala = value / 100;
+                img.style.transform = `scale(${scala})`;
             }
         }
 
