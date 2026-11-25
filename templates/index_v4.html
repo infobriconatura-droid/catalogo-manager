@@ -757,19 +757,30 @@
                             </div>
                         </div>
                         <!-- CONTROLLI PREVIEW -->
-                        <div style="display: flex; gap: 20px; align-items: center; margin-top: 12px; padding: 10px; background: var(--bg-surface); border-radius: 6px; flex-wrap: wrap;">
-                            <!-- Scala Immagine -->
-                            <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 200px;">
-                                <span style="font-size: 11px; color: var(--text-muted); white-space: nowrap;">📐 Scala:</span>
-                                <input type="range" id="detailScala" min="50" max="150" value="100" style="flex: 1; min-width: 80px;" oninput="document.getElementById('scalaValue').textContent = this.value + '%'; updateBoxPreviewScale(this.value)" onchange="updateScala(this.value)">
-                                <span id="scalaValue" style="font-size: 11px; color: var(--text-muted); min-width: 35px;">100%</span>
+                        <div style="display: flex; gap: 12px; align-items: center; margin-top: 10px; padding: 8px; background: var(--bg-surface); border-radius: 6px; flex-wrap: wrap;">
+                            <!-- Scala -->
+                            <div style="display: flex; align-items: center; gap: 4px;">
+                                <span style="font-size: 10px; color: var(--text-muted);">Scala:</span>
+                                <input type="range" id="detailScala" min="50" max="150" value="100" style="width: 80px;" oninput="document.getElementById('scalaValue').textContent = this.value + '%'; updateBoxPreviewImage()" onchange="saveImageSettings()">
+                                <span id="scalaValue" style="font-size: 10px; color: var(--text-muted); width: 30px;">100%</span>
                             </div>
-                            <!-- Formato Box -->
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <span style="font-size: 11px; color: var(--text-muted); white-space: nowrap;">📐 Formato:</span>
-                                <select id="detailFormato" onchange="toggleDoppiaColonna(this.value === 'fullhd', true)" style="padding: 4px 8px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 11px;">
-                                    <option value="standard">Standard (1 col)</option>
-                                    <option value="fullhd">Full HD (2 col)</option>
+                            <!-- Offset X -->
+                            <div style="display: flex; align-items: center; gap: 4px;">
+                                <span style="font-size: 10px; color: var(--text-muted);">X:</span>
+                                <input type="range" id="detailOffsetX" min="-50" max="50" value="0" style="width: 60px;" oninput="document.getElementById('offsetXValue').textContent = this.value; updateBoxPreviewImage()" onchange="saveImageSettings()">
+                                <span id="offsetXValue" style="font-size: 10px; color: var(--text-muted); width: 20px;">0</span>
+                            </div>
+                            <!-- Offset Y -->
+                            <div style="display: flex; align-items: center; gap: 4px;">
+                                <span style="font-size: 10px; color: var(--text-muted);">Y:</span>
+                                <input type="range" id="detailOffsetY" min="-50" max="50" value="0" style="width: 60px;" oninput="document.getElementById('offsetYValue').textContent = this.value; updateBoxPreviewImage()" onchange="saveImageSettings()">
+                                <span id="offsetYValue" style="font-size: 10px; color: var(--text-muted); width: 20px;">0</span>
+                            </div>
+                            <!-- Formato -->
+                            <div style="display: flex; align-items: center; gap: 4px;">
+                                <select id="detailFormato" onchange="toggleDoppiaColonna(this.value === 'fullhd', true)" style="padding: 3px 6px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 10px;">
+                                    <option value="standard">1 col</option>
+                                    <option value="fullhd">2 col</option>
                                 </select>
                             </div>
                         </div>
@@ -1034,10 +1045,16 @@
             formatoSelect.value = p.doppia_colonna == 1 ? 'fullhd' : 'standard';
             toggleDoppiaColonna(p.doppia_colonna == 1);
 
-            // Scala immagine
+            // Scala e offset immagine
             const scala = p.scala_immagine || 100;
+            const offsetX = p.offset_x || 0;
+            const offsetY = p.offset_y || 0;
             document.getElementById('detailScala').value = scala;
             document.getElementById('scalaValue').textContent = scala + '%';
+            document.getElementById('detailOffsetX').value = offsetX;
+            document.getElementById('offsetXValue').textContent = offsetX;
+            document.getElementById('detailOffsetY').value = offsetY;
+            document.getElementById('offsetYValue').textContent = offsetY;
 
             // Logo
             updateLogoPreview();
@@ -1060,14 +1077,31 @@
             }
         }
 
-        function updateBoxPreviewScale(value) {
-            // Aggiorna preview live della scala nell'immagine del box
+        function updateBoxPreviewImage() {
+            // Aggiorna preview live con scala e offset
             const boxImg = document.getElementById('boxImage');
             const img = boxImg.querySelector('img');
             if (img) {
-                const scala = value / 100;
-                img.style.transform = `scale(${scala})`;
+                const scala = (document.getElementById('detailScala').value || 100) / 100;
+                const offsetX = document.getElementById('detailOffsetX').value || 0;
+                const offsetY = document.getElementById('detailOffsetY').value || 0;
+                img.style.transform = `scale(${scala}) translate(${offsetX}%, ${offsetY}%)`;
             }
+        }
+
+        async function saveImageSettings() {
+            if (!currentProduct) return;
+            const scala = parseInt(document.getElementById('detailScala').value) || 100;
+            const offsetX = parseInt(document.getElementById('detailOffsetX').value) || 0;
+            const offsetY = parseInt(document.getElementById('detailOffsetY').value) || 0;
+
+            currentProduct.scala_immagine = scala;
+            currentProduct.offset_x = offsetX;
+            currentProduct.offset_y = offsetY;
+
+            await saveField('scala_immagine', scala);
+            await saveField('offset_x', offsetX);
+            await saveField('offset_y', offsetY);
         }
 
         // === GESTIONE IMMAGINE ===
@@ -1289,12 +1323,14 @@
             const p = currentProduct;
             if (!p) return;
 
-            // Immagine con scala
+            // Immagine con scala e offset
             const boxImg = document.getElementById('boxImage');
             const scala = p.scala_immagine || 100;
-            const scalaStyle = scala !== 100 ? `transform: scale(${scala/100}); transform-origin: center;` : '';
+            const offsetX = p.offset_x || 0;
+            const offsetY = p.offset_y || 0;
+            const transformStyle = `transform: scale(${scala/100}) translate(${offsetX}%, ${offsetY}%); transform-origin: center;`;
             boxImg.innerHTML = p.immagine
-                ? `<img src="/api/foto/${p.immagine}" style="max-height: 100%; max-width: 100%; object-fit: contain; ${scalaStyle}" onerror="this.outerHTML='📷'">`
+                ? `<img src="/api/foto/${p.immagine}" style="max-height: 100%; max-width: 100%; object-fit: contain; ${transformStyle}" onerror="this.outerHTML='📷'">`
                 : '📷';
 
             // Titolo e descrizione

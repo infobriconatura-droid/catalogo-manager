@@ -270,6 +270,16 @@ def init_db():
     except:
         pass
 
+    # Campi offset immagine per posizionamento
+    try:
+        c.execute('ALTER TABLE prodotti ADD COLUMN offset_x INTEGER DEFAULT 0')
+    except:
+        pass
+    try:
+        c.execute('ALTER TABLE prodotti ADD COLUMN offset_y INTEGER DEFAULT 0')
+    except:
+        pass
+
     # Indici per velocizzare le query
     try:
         c.execute('CREATE INDEX IF NOT EXISTS idx_varianti_codice ON varianti(codice)')
@@ -2625,14 +2635,14 @@ def calcola_altezza_box(num_varianti):
     """
     Calcola altezza box in pixel basata sul numero di varianti.
     Layout corporate: header + righe varianti + descrizione + strip
-    Valori calibrati sul template reale del catalogo.
+    Valori calibrati per stampa A4 leggibile.
     """
-    TOP_SECTION = 60       # Titolo + logo (compatti)
-    IMG_SECTION = 200      # Immagine + descrizione
-    HEADER_ROW = 25        # Header tabella
-    VAR_ROW = 18           # Riga per variante (font piccolo)
-    STRIP = 10             # Striscia verde in basso
-    PADDING = 20           # Margini interni
+    TOP_SECTION = 80       # Titolo + logo
+    IMG_SECTION = 280      # Immagine + descrizione
+    HEADER_ROW = 35        # Header tabella
+    VAR_ROW = 28           # Riga per variante
+    STRIP = 12             # Striscia verde in basso
+    PADDING = 25           # Margini interni
 
     return TOP_SECTION + IMG_SECTION + HEADER_ROW + (num_varianti * VAR_ROW) + STRIP + PADDING
 
