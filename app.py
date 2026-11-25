@@ -2665,16 +2665,23 @@ def impagina_dinamico(prodotti, conn, page_height=3400, col_width=1160, margin_t
     """
     c = conn.cursor()
 
-    # Pre-calcola altezze per tutti i prodotti
+    # Pre-calcola altezze per tutti i prodotti CON UNA SOLA QUERY
+    prod_ids = [prod['id'] for prod in prodotti]
+    if prod_ids:
+        placeholders = ','.join('?' * len(prod_ids))
+        c.execute(f'''
+            SELECT prodotto_id, COUNT(*) FROM varianti
+            WHERE prodotto_id IN ({placeholders}) AND (escludi_stampa = 0 OR escludi_stampa IS NULL)
+            GROUP BY prodotto_id
+        ''', prod_ids)
+        var_counts = {row[0]: row[1] for row in c.fetchall()}
+    else:
+        var_counts = {}
+
     prod_heights = []
     for prod in prodotti:
-        c.execute('''
-            SELECT COUNT(*) FROM varianti
-            WHERE prodotto_id = ? AND (escludi_stampa = 0 OR escludi_stampa IS NULL)
-        ''', (prod['id'],))
-        num_var = c.fetchone()[0] or 1
+        num_var = var_counts.get(prod['id'], 1) or 1
         box_h = calcola_altezza_box(num_var)
-        # Niente scala - usa altezza diretta
         prod_heights.append((prod, box_h, num_var))
 
     pages = []
@@ -2893,14 +2900,29 @@ def api_catalog_page_dynamic(page_num):
 
     page_img = Image.new('RGB', (PAGE_W, PAGE_H), (255, 255, 255))
 
+    # Pre-carica TUTTE le varianti per i prodotti della pagina in UNA query
+    prod_ids = [prod['id'] for prod in page_products]
+    if prod_ids:
+        placeholders = ','.join('?' * len(prod_ids))
+        c.execute(f'''
+            SELECT * FROM varianti
+            WHERE prodotto_id IN ({placeholders}) AND (escludi_stampa = 0 OR escludi_stampa IS NULL)
+            ORDER BY prodotto_id, ordine
+        ''', prod_ids)
+        all_varianti = [dict(row) for row in c.fetchall()]
+        # Raggruppa per prodotto_id
+        varianti_map = {}
+        for v in all_varianti:
+            pid = v['prodotto_id']
+            if pid not in varianti_map:
+                varianti_map[pid] = []
+            varianti_map[pid].append(v)
+    else:
+        varianti_map = {}
+
     # Genera e posiziona ogni box
     for prod in page_products:
-        c.execute('''
-            SELECT * FROM varianti
-            WHERE prodotto_id = ? AND (escludi_stampa = 0 OR escludi_stampa IS NULL)
-            ORDER BY ordine
-        ''', (prod['id'],))
-        varianti = [dict(row) for row in c.fetchall()]
+        varianti = varianti_map.get(prod['id'], [])
 
         if varianti:
             box_img = box_generator.generate(prod, varianti, template)
@@ -3010,16 +3032,29 @@ def api_catalog_page_preview(page_num):
         conn.close()
         return jsonify({'error': 'Pagina non trovata'}), 404
 
+    # Pre-carica TUTTE le varianti per i prodotti della pagina
+    prod_ids = [prod['id'] for prod in page_products]
+    if prod_ids:
+        placeholders = ','.join('?' * len(prod_ids))
+        c.execute(f'''
+            SELECT * FROM varianti
+            WHERE prodotto_id IN ({placeholders}) AND (escludi_stampa = 0 OR escludi_stampa IS NULL)
+            ORDER BY prodotto_id, ordine
+        ''', prod_ids)
+        all_varianti = [dict(row) for row in c.fetchall()]
+        varianti_map = {}
+        for v in all_varianti:
+            pid = v['prodotto_id']
+            if pid not in varianti_map:
+                varianti_map[pid] = []
+            varianti_map[pid].append(v)
+    else:
+        varianti_map = {}
+
     # Genera i box per ogni prodotto
     boxes = []
     for prod in page_products:
-        c.execute('''
-            SELECT * FROM varianti
-            WHERE prodotto_id = ? AND (escludi_stampa = 0 OR escludi_stampa IS NULL)
-            ORDER BY ordine
-        ''', (prod['id'],))
-        varianti = [dict(row) for row in c.fetchall()]
-
+        varianti = varianti_map.get(prod['id'], [])
         if varianti:
             box_img = box_generator.generate(prod, varianti, template)
             boxes.append(box_img)
@@ -3101,6 +3136,25 @@ def api_generate_catalog_pdf():
     # Usa impaginazione dinamica
     pages = impagina_dinamico(all_products, conn)
 
+    # Pre-carica TUTTE le varianti per TUTTI i prodotti in UNA SOLA query
+    all_prod_ids = [prod['id'] for prod in all_products]
+    if all_prod_ids:
+        placeholders = ','.join('?' * len(all_prod_ids))
+        c.execute(f'''
+            SELECT * FROM varianti
+            WHERE prodotto_id IN ({placeholders}) AND (escludi_stampa = 0 OR escludi_stampa IS NULL)
+            ORDER BY prodotto_id, ordine
+        ''', all_prod_ids)
+        all_varianti = [dict(row) for row in c.fetchall()]
+        varianti_map = {}
+        for v in all_varianti:
+            pid = v['prodotto_id']
+            if pid not in varianti_map:
+                varianti_map[pid] = []
+            varianti_map[pid].append(v)
+    else:
+        varianti_map = {}
+
     # Dimensioni pagina A4 @ 300dpi
     PAGE_W = 2480
     PAGE_H = 3508
@@ -3117,12 +3171,7 @@ def api_generate_catalog_pdf():
 
         # Genera e posiziona ogni box
         for prod in page_products:
-            c.execute('''
-                SELECT * FROM varianti
-                WHERE prodotto_id = ? AND (escludi_stampa = 0 OR escludi_stampa IS NULL)
-                ORDER BY ordine
-            ''', (prod['id'],))
-            varianti = [dict(row) for row in c.fetchall()]
+            varianti = varianti_map.get(prod['id'], [])
 
             if varianti:
                 # Usa fullhd se doppia_colonna attivo
