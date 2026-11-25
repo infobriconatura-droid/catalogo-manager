@@ -2847,10 +2847,11 @@ def api_catalog_page_dynamic(page_num):
             x = MARGIN + col * (col_w + COL_GAP)
             y = prod.get('_y', MARGIN)
 
-            if box_scaled.mode == 'RGBA':
-                page_img.paste(box_scaled, (x, y), box_scaled)
-            else:
-                page_img.paste(box_scaled, (x, y))
+            if box_scaled:
+                if box_scaled.mode == 'RGBA':
+                    page_img.paste(box_scaled, (x, y), box_scaled)
+                else:
+                    page_img.paste(box_scaled, (x, y))
 
     conn.close()
 
@@ -2982,13 +2983,14 @@ def api_catalog_page_preview(page_num):
         # Ridimensiona box per adattarlo alla colonna
         box_scaled = box_generator._contain(box, col_w, 1600)
 
-        x = MARGIN + col * (col_w + COL_GAP)
-        y = MARGIN + row * (box_scaled.size[1] + ROW_GAP)
+        if box_scaled:
+            x = MARGIN + col * (col_w + COL_GAP)
+            y = MARGIN + row * (box_scaled.size[1] + ROW_GAP)
 
-        if box_scaled.mode == 'RGBA':
-            page_img.paste(box_scaled, (x, y), box_scaled)
-        else:
-            page_img.paste(box_scaled, (x, y))
+            if box_scaled.mode == 'RGBA':
+                page_img.paste(box_scaled, (x, y), box_scaled)
+            else:
+                page_img.paste(box_scaled, (x, y))
 
     # Converti in base64
     buffer = io.BytesIO()
@@ -3072,10 +3074,11 @@ def api_generate_catalog_pdf():
 
                 y = prod.get('_y', MARGIN)
 
-                if box_scaled.mode == 'RGBA':
-                    page_img.paste(box_scaled, (x, y), box_scaled)
-                else:
-                    page_img.paste(box_scaled, (x, y))
+                if box_scaled:
+                    if box_scaled.mode == 'RGBA':
+                        page_img.paste(box_scaled, (x, y), box_scaled)
+                    else:
+                        page_img.paste(box_scaled, (x, y))
 
         pages_images.append(page_img)
 
