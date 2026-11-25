@@ -114,10 +114,10 @@
             background: rgba(255,255,255,0.25);
         }
 
-        /* ===== MAIN LAYOUT - 2 colonne ===== */
+        /* ===== MAIN LAYOUT - 2 colonne 50/50 ===== */
         .main {
             display: grid;
-            grid-template-columns: 1fr 480px;
+            grid-template-columns: 1fr 1fr;
             height: calc(100vh - 56px);
         }
 
@@ -440,7 +440,7 @@
         }
 
         textarea.detail-input {
-            min-height: 80px;
+            min-height: 150px;
             resize: vertical;
         }
 
@@ -822,7 +822,7 @@
                      onclick="selectProduct('${p.codice_principale}')">
                     <div class="product-img">
                         ${p.immagine
-                            ? `<img src="/foto_prodotti/${p.immagine}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"><div class="no-img" style="display:none">📷<br><small>${p.codice_principale}</small></div>`
+                            ? `<img src="/api/foto/${p.immagine}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"><div class="no-img" style="display:none">📷<br><small>${p.codice_principale}</small></div>`
                             : `<span class="no-img">📷<br><small>${p.codice_principale}</small></span>`}
                     </div>
                     <div class="product-info">
@@ -893,7 +893,7 @@
             // Immagine
             const imgContainer = document.getElementById('detailImage');
             imgContainer.innerHTML = p.immagine
-                ? `<img src="/foto_prodotti/${p.immagine}" onerror="this.src='/static/no-image.png'">`
+                ? `<img src="/api/foto/${p.immagine}" onerror="this.src='/static/no-image.png'">`
                 : '<div style="color:#999; font-size:3rem">📷</div>';
 
             // Info
@@ -942,7 +942,7 @@
             // Immagine
             const boxImg = document.getElementById('boxImage');
             boxImg.innerHTML = p.immagine
-                ? `<img src="/foto_prodotti/${p.immagine}" onerror="this.outerHTML='📷'">`
+                ? `<img src="/api/foto/${p.immagine}" onerror="this.outerHTML='📷'">`
                 : '📷';
 
             // Titolo e descrizione
