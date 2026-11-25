@@ -2212,26 +2212,31 @@ def api_reset_image():
     return jsonify({'success': True, 'immagine_originale': immagine_originale})
 
 
-@app.route('/api/save-scala', methods=['POST'])
-def api_save_scala():
-    """Salva la scala dell'immagine"""
+@app.route('/api/save-image-settings', methods=['POST'])
+def api_save_image_settings():
+    """Salva scala e offset dell'immagine"""
     data = request.json
     codice = data.get('codice')
     scala = data.get('scala', 100)
+    offset_x = data.get('offset_x', 0)
+    offset_y = data.get('offset_y', 0)
 
     if not codice:
         return jsonify({'error': 'Codice prodotto mancante'}), 400
 
-    # Limita scala tra 50 e 150
+    # Limita valori
     scala = max(50, min(150, int(scala)))
+    offset_x = max(-50, min(50, int(offset_x)))
+    offset_y = max(-50, min(50, int(offset_y)))
 
     conn = get_db()
     c = conn.cursor()
-    c.execute('UPDATE prodotti SET scala_immagine = ? WHERE codice_principale = ?', (scala, codice))
+    c.execute('''UPDATE prodotti SET scala_immagine = ?, offset_x = ?, offset_y = ?
+                 WHERE codice_principale = ?''', (scala, offset_x, offset_y, codice))
     conn.commit()
     conn.close()
 
-    return jsonify({'success': True, 'scala': scala})
+    return jsonify({'success': True, 'scala': scala, 'offset_x': offset_x, 'offset_y': offset_y})
 
 
 @app.route('/api/upload_logo/<int:prodotto_id>', methods=['POST'])

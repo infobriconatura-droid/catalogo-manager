@@ -1099,11 +1099,23 @@
             currentProduct.offset_x = offsetX;
             currentProduct.offset_y = offsetY;
 
-            await saveField('scala_immagine', scala);
-            await saveField('offset_x', offsetX);
-            await saveField('offset_y', offsetY);
-
-            showToast('Immagine salvata', 'success');
+            try {
+                const res = await fetch('/api/save-image-settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        codice: currentProduct.codice_principale,
+                        scala: scala,
+                        offset_x: offsetX,
+                        offset_y: offsetY
+                    })
+                });
+                if (res.ok) {
+                    showToast('Salvato', 'success');
+                }
+            } catch (err) {
+                showToast('Errore', 'error');
+            }
         }
 
         // === GESTIONE IMMAGINE ===
@@ -1473,7 +1485,7 @@
                 descrizione: document.getElementById('detailDescrizione').value,
                 posizione: document.getElementById('detailPosizione').value,
                 categoria: document.getElementById('detailCategoria').value,
-                doppia_colonna: document.getElementById('detailDoppiaColonna').checked ? 1 : 0
+                doppia_colonna: document.getElementById('detailFormato').value === 'fullhd' ? 1 : 0
             };
 
             try {
