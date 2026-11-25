@@ -547,13 +547,57 @@
                 const products = pageInfo.products;
                 productPositions = products;
 
-                // Costruisci griglia prodotti cliccabili
+                // Trova posizione iniziale pagina (prima posizione dei prodotti)
+                const firstPos = products.length > 0 ? (products[0].posizione || '-') : '-';
+                const lastPos = products.length > 0 ? (products[products.length-1].posizione || '-') : '-';
+
+                // Costruisci pagina completa con header e footer
                 const wrapper = document.getElementById('pageWrapper');
                 wrapper.innerHTML = '';
 
+                // Container pagina A4
+                const pageContainer = document.createElement('div');
+                pageContainer.className = 'catalog-page';
+                pageContainer.style.cssText = `
+                    width: 800px;
+                    min-height: 1130px;
+                    background: white;
+                    display: flex;
+                    flex-direction: column;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                    border-radius: 4px;
+                    overflow: hidden;
+                `;
+
+                // HEADER - Striscia categoria
+                const header = document.createElement('div');
+                header.className = 'page-header';
+                header.style.cssText = `
+                    background: linear-gradient(135deg, #1b4332, #2d6a4f);
+                    color: white;
+                    padding: 12px 20px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    font-family: Arial, sans-serif;
+                `;
+                header.innerHTML = `
+                    <div style="font-weight: bold; font-size: 1.1rem;">${categoria.replace(/_/g, ' ')}</div>
+                    <div style="font-size: 0.9rem;">Pos. ${firstPos} - ${lastPos}</div>
+                `;
+                pageContainer.appendChild(header);
+
+                // GRID prodotti
                 const grid = document.createElement('div');
                 grid.className = 'products-grid cols-2';
-                grid.style.width = '800px'; // Larghezza fissa per simulare pagina
+                grid.style.cssText = `
+                    flex: 1;
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 10px;
+                    padding: 15px;
+                    background: white;
+                `;
 
                 // Carica ogni box prodotto
                 for (const prod of products) {
@@ -591,7 +635,29 @@
                     grid.appendChild(box);
                 }
 
-                wrapper.appendChild(grid);
+                pageContainer.appendChild(grid);
+
+                // FOOTER - Numero pagina
+                const footer = document.createElement('div');
+                footer.className = 'page-footer';
+                footer.style.cssText = `
+                    background: #f0f0f0;
+                    color: #333;
+                    padding: 10px 20px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    font-family: Arial, sans-serif;
+                    font-size: 0.85rem;
+                    border-top: 2px solid #2d6a4f;
+                `;
+                footer.innerHTML = `
+                    <div>PUGLIESE GROUP - Catalogo ${new Date().getFullYear()}</div>
+                    <div style="font-weight: bold;">Pagina ${pageNum} di ${totalPages}</div>
+                `;
+                pageContainer.appendChild(footer);
+
+                wrapper.appendChild(pageContainer);
                 wrapper.style.transform = `scale(${currentZoom})`;
                 wrapper.style.transformOrigin = 'top center';
 

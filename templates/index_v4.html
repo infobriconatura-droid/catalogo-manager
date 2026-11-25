@@ -781,9 +781,17 @@
         ];
 
         // Init
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             renderCategoryTabs();
-            loadProducts();
+            await loadProducts();
+
+            // Controlla se c'è un prodotto da aprire dall'URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const editCodice = urlParams.get('edit');
+            if (editCodice) {
+                // Apri direttamente il prodotto
+                selectProduct(editCodice);
+            }
         });
 
         function renderCategoryTabs() {
