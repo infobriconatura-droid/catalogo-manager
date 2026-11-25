@@ -133,13 +133,37 @@ def api_cache_status():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/cache/test')
+def api_cache_test():
+    """Test salvataggio cache"""
+    from PIL import Image
+    try:
+        # Prova a creare e salvare un'immagine
+        img = Image.new('RGBA', (100, 100), (255, 0, 0, 255))
+        test_path = BOX_CACHE_FOLDER / "test_save.png"
+        img.save(test_path, 'PNG')
+        exists = test_path.exists()
+        size = test_path.stat().st_size if exists else 0
+        # Pulisci
+        if exists:
+            test_path.unlink()
+        return jsonify({
+            'success': True,
+            'folder': str(BOX_CACHE_FOLDER),
+            'writable': True,
+            'test_size': size
+        })
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
+
 def invalidate_product_cache(prodotto_id):
-    """Invalida la cache per un prodotto specifico (rimuove tutti i box che lo contengono)"""
-    # Non possiamo sapere quali file di cache contengono questo prodotto
-    # perché l'hash è basato sui dati, non sull'ID
-    # Quindi quando un prodotto viene modificato, la prossima generazione
-    # avrà un hash diverso e creerà un nuovo file cache
-    # La vecchia cache rimarrà ma non verrà più usata
+    """Invalida la cache per un prodotto specifico"""
     pass
 
 
