@@ -679,7 +679,8 @@
 
         function openProductEditor(prodId, codice) {
             // Apri in nuova tab per non perdere il posto nel catalogo
-            window.open(`/?edit=${prodId}`, '_blank');
+            // Usa il codice_principale, non l'ID numerico
+            window.open(`/?edit=${codice}`, '_blank');
             showToast(`Apertura prodotto ${codice}...`);
         }
 
