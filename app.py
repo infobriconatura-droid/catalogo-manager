@@ -1454,18 +1454,18 @@ def api_prodotti():
     })
 
 
-@app.route('/api/prodotto/<int:id>')
-def api_prodotto(id):
+@app.route('/api/prodotto/<codice>')
+def api_prodotto(codice):
     conn = get_db()
     c = conn.cursor()
-    
-    # Include posizione con LEFT JOIN
+
+    # Cerca per codice_principale o per id numerico
     c.execute('''
-        SELECT p.*, pos.posizione 
+        SELECT p.*, pos.posizione
         FROM prodotti p
         LEFT JOIN posizioni pos ON p.codice_principale = pos.codice
-        WHERE p.id = ?
-    ''', (id,))
+        WHERE p.codice_principale = ? OR p.id = ?
+    ''', (codice, codice))
     prodotto = c.fetchone()
     
     if not prodotto:
@@ -1485,20 +1485,22 @@ def api_prodotto(id):
     return jsonify(prodotto)
 
 
-@app.route('/api/prodotto/<int:id>', methods=['PUT'])
-def api_update_prodotto(id):
+@app.route('/api/prodotto/<codice>', methods=['PUT'])
+def api_update_prodotto(codice):
     data = request.json
     utente = data.get('utente', 'web')
 
     conn = get_db()
     c = conn.cursor()
 
-    # Ottieni valori precedenti per il log
-    c.execute('SELECT * FROM prodotti WHERE id = ?', (id,))
+    # Ottieni valori precedenti per il log (cerca per codice_principale o id)
+    c.execute('SELECT * FROM prodotti WHERE codice_principale = ? OR id = ?', (codice, codice))
     prodotto_old = c.fetchone()
     if not prodotto_old:
         conn.close()
         return jsonify({'error': 'Prodotto non trovato'}), 404
+
+    id = prodotto_old['id']  # Usa l'id numerico per gli update
 
     prodotto_old = dict(prodotto_old)
     codice_principale = prodotto_old['codice_principale']
