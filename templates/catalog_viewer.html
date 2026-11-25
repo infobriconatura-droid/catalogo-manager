@@ -782,6 +782,11 @@
             btn.textContent = '⏳ Generazione...';
 
             try {
+                showToast('⏳ Generazione PDF in corso... può richiedere qualche minuto');
+
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minuti timeout
+
                 const res = await fetch('/api/catalog/pdf', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -789,8 +794,18 @@
                         categoria: categoria,
                         items_per_page: ITEMS_PER_PAGE,
                         template: 'corporate'
-                    })
+                    }),
+                    signal: controller.signal
                 });
+
+                clearTimeout(timeoutId);
+
+                if (!res.ok) {
+                    const text = await res.text();
+                    console.error('Errore server:', res.status, text);
+                    showToast(`Errore server: ${res.status}`, true);
+                    return;
+                }
 
                 const data = await res.json();
 
@@ -799,11 +814,16 @@
                     return;
                 }
 
-                showToast(`PDF generato! ${data.pages} pagine`);
+                showToast(`✅ PDF generato! ${data.pages} pagine`);
                 window.location.href = data.download_url;
 
             } catch (err) {
-                showToast('Errore generazione PDF', true);
+                console.error('Errore generazione PDF:', err);
+                if (err.name === 'AbortError') {
+                    showToast('Timeout - la generazione sta richiedendo troppo tempo', true);
+                } else {
+                    showToast('Errore generazione PDF: ' + err.message, true);
+                }
             } finally {
                 btn.disabled = false;
                 btn.textContent = '📄 Genera PDF';
