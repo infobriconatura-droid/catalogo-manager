@@ -1491,18 +1491,20 @@ def api_prodotto(codice):
 
     # Cerca per codice_principale o per id numerico
     c.execute('''
-        SELECT p.*, pos.posizione, pos.categoria
+        SELECT p.*, pos.posizione AS posizione, pos.categoria AS pos_categoria
         FROM prodotti p
         LEFT JOIN posizioni pos ON p.codice_principale = pos.codice
         WHERE p.codice_principale = ? OR p.id = ?
     ''', (codice, codice))
-    prodotto = c.fetchone()
-    
-    if not prodotto:
+    row = c.fetchone()
+
+    if not row:
         conn.close()
         return jsonify({'error': 'Non trovato'}), 404
 
-    prodotto = dict(prodotto)
+    prodotto = dict(row)
+    # Aggiungi categoria dalla tabella posizioni
+    prodotto['categoria'] = prodotto.pop('pos_categoria', None)
     prodotto_id = prodotto['id']
 
     c.execute('SELECT * FROM varianti WHERE prodotto_id = ? ORDER BY ordine', (prodotto_id,))
@@ -1595,11 +1597,31 @@ def api_update_prodotto(codice):
         new_posizione = posizione if posizione is not None else pos_old_val
         new_categoria = categoria if categoria is not None else cat_old_val
 
-        if new_posizione or new_categoria:
+        if new_posizione and new_categoria:
+            # Verifica se la posizione è già occupata nella stessa categoria
+            c.execute('''
+                SELECT codice FROM posizioni
+                WHERE categoria = ? AND posizione = ? AND codice != ?
+            ''', (new_categoria, new_posizione, codice_principale))
+            conflitto = c.fetchone()
+
+            if conflitto:
+                # Sposta tutti i prodotti dalla posizione target in giù di 1
+                c.execute('''
+                    UPDATE posizioni
+                    SET posizione = posizione + 1
+                    WHERE categoria = ? AND posizione >= ? AND codice != ?
+                    ORDER BY posizione DESC
+                ''', (new_categoria, new_posizione, codice_principale))
+
             # Inserisci o aggiorna
             c.execute('INSERT OR REPLACE INTO posizioni (codice, posizione, categoria) VALUES (?, ?, ?)',
                      (codice_principale, new_posizione, new_categoria))
-        elif not new_posizione and not new_categoria:
+        elif new_posizione or new_categoria:
+            # Solo uno dei due - inserisci comunque
+            c.execute('INSERT OR REPLACE INTO posizioni (codice, posizione, categoria) VALUES (?, ?, ?)',
+                     (codice_principale, new_posizione, new_categoria))
+        else:
             # Rimuovi se entrambi vuoti
             c.execute('DELETE FROM posizioni WHERE codice = ?', (codice_principale,))
 
