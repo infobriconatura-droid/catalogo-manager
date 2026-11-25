@@ -1500,16 +1500,22 @@ class BoxGenerator:
 
     def generate(self, prodotto, varianti, template='corporate', use_cache=True):
         """Genera box con template specificato, usando cache se disponibile"""
-        if use_cache:
-            cache_key = self._get_cache_key(prodotto, varianti, template)
-            cache_path = BOX_CACHE_FOLDER / f"{cache_key}.png"
+        prod_id = prodotto.get('id') if hasattr(prodotto, 'get') else prodotto['id'] if 'id' in prodotto.keys() else '?'
 
-            # Se esiste in cache, carica
-            if cache_path.exists():
-                try:
-                    return Image.open(cache_path).convert('RGBA')
-                except:
-                    pass  # Se fallisce, rigenera
+        if use_cache:
+            try:
+                cache_key = self._get_cache_key(prodotto, varianti, template)
+                cache_path = BOX_CACHE_FOLDER / f"{cache_key}.png"
+
+                # Se esiste in cache, carica
+                if cache_path.exists():
+                    try:
+                        return Image.open(cache_path).convert('RGBA')
+                    except:
+                        pass  # Se fallisce, rigenera
+            except Exception as e:
+                print(f"[CACHE] Errore cache_key per prod {prod_id}: {e}")
+                use_cache = False  # Disabilita cache per questo box
 
         # Genera il box
         if template == 'fullhd':
