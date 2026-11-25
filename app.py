@@ -162,6 +162,51 @@ def api_cache_test():
         }), 500
 
 
+@app.route('/api/cache/test-box/<int:prodotto_id>')
+def api_cache_test_box(prodotto_id):
+    """Test cache per un prodotto specifico"""
+    try:
+        conn = get_db()
+        c = conn.cursor()
+        c.execute('SELECT * FROM prodotti WHERE id = ?', (prodotto_id,))
+        row = c.fetchone()
+        if not row:
+            conn.close()
+            return jsonify({'error': 'Prodotto non trovato'}), 404
+
+        prodotto = dict(row)
+        c.execute('SELECT * FROM varianti WHERE prodotto_id = ? AND (escludi_stampa = 0 OR escludi_stampa IS NULL) ORDER BY ordine', (prodotto_id,))
+        varianti = [dict(r) for r in c.fetchall()]
+        conn.close()
+
+        if not varianti:
+            return jsonify({'error': 'Nessuna variante'}), 404
+
+        # Test cache key
+        cache_key = box_generator._get_cache_key(prodotto, varianti, 'corporate')
+        cache_path = BOX_CACHE_FOLDER / f"{cache_key}.png"
+        was_cached = cache_path.exists()
+
+        # Genera box
+        box_img = box_generator.generate(prodotto, varianti, 'corporate')
+
+        is_cached = cache_path.exists()
+        cache_size = cache_path.stat().st_size if is_cached else 0
+
+        return jsonify({
+            'prodotto': prodotto['titolo'][:50],
+            'varianti': len(varianti),
+            'cache_key': cache_key,
+            'was_cached': was_cached,
+            'is_cached': is_cached,
+            'cache_size': cache_size,
+            'box_size': f"{box_img.size[0]}x{box_img.size[1]}" if box_img else None
+        })
+    except Exception as e:
+        import traceback
+        return jsonify({'error': str(e), 'traceback': traceback.format_exc()}), 500
+
+
 def invalidate_product_cache(prodotto_id):
     """Invalida la cache per un prodotto specifico"""
     pass
