@@ -756,6 +756,26 @@
                             <span class="detail-label">Descrizione</span>
                             <textarea class="detail-input" id="detailDescrizione" oninput="document.getElementById('boxDesc').textContent = this.value"></textarea>
                         </div>
+
+                        <!-- GESTIONE IMMAGINE -->
+                        <div class="detail-row" style="margin-top: 10px; flex-direction: column; align-items: flex-start; gap: 8px;">
+                            <span class="detail-label">📷 Immagine</span>
+                            <div style="display: flex; gap: 8px; align-items: center; width: 100%;">
+                                <input type="file" id="imageUpload" accept="image/*" style="display: none;" onchange="uploadImage(this)">
+                                <button onclick="document.getElementById('imageUpload').click()" style="padding: 6px 12px; background: var(--accent); border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 12px;">
+                                    📤 Carica Nuova
+                                </button>
+                                <button onclick="resetImage()" style="padding: 6px 12px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 4px; color: var(--text); cursor: pointer; font-size: 12px;">
+                                    🔄 Originale
+                                </button>
+                            </div>
+                            <div style="display: flex; gap: 12px; align-items: center; width: 100%; margin-top: 4px;">
+                                <span style="font-size: 11px; color: var(--text-muted);">Scala:</span>
+                                <input type="range" id="detailScala" min="50" max="150" value="100" style="flex: 1;" onchange="updateScala(this.value)">
+                                <span id="scalaValue" style="font-size: 11px; color: var(--text-muted); min-width: 35px;">100%</span>
+                            </div>
+                        </div>
+
                         <div class="detail-row" style="margin-top: 10px;">
                             <span class="detail-label">📏 Doppia Colonna</span>
                             <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
@@ -990,6 +1010,11 @@
             const doppiaCheck = document.getElementById('detailDoppiaColonna');
             doppiaCheck.checked = p.doppia_colonna == 1;
             toggleDoppiaColonna(doppiaCheck.checked);
+
+            // Scala immagine
+            const scala = p.scala_immagine || 100;
+            document.getElementById('detailScala').value = scala;
+            document.getElementById('scalaValue').textContent = scala + '%';
         }
 
         function toggleDoppiaColonna(isDouble) {
@@ -1001,6 +1026,100 @@
             } else {
                 boxPreview.classList.remove('doppia-colonna');
                 modeLabel.textContent = '';
+            }
+        }
+
+        // === GESTIONE IMMAGINE ===
+        async function uploadImage(input) {
+            if (!currentProduct || !input.files[0]) return;
+
+            const file = input.files[0];
+            const formData = new FormData();
+            formData.append('image', file);
+            formData.append('codice', currentProduct.codice_principale);
+
+            try {
+                const res = await fetch('/api/upload-image', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success) {
+                    currentProduct.immagine_custom = data.filename;
+                    currentProduct.immagine = data.filename;
+                    updateBoxPreview();
+                    updateEditorImage();
+                    alert('✅ Immagine caricata!');
+                } else {
+                    alert('❌ Errore: ' + data.error);
+                }
+            } catch (err) {
+                alert('❌ Errore upload: ' + err.message);
+            }
+            input.value = '';
+        }
+
+        async function resetImage() {
+            if (!currentProduct) return;
+
+            try {
+                const res = await fetch('/api/reset-image', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({codice: currentProduct.codice_principale})
+                });
+                const data = await res.json();
+                if (data.success) {
+                    currentProduct.immagine_custom = null;
+                    currentProduct.immagine = data.immagine_originale;
+                    currentProduct.scala_immagine = 100;
+                    document.getElementById('detailScala').value = 100;
+                    document.getElementById('scalaValue').textContent = '100%';
+                    updateBoxPreview();
+                    updateEditorImage();
+                    alert('✅ Immagine ripristinata!');
+                }
+            } catch (err) {
+                alert('❌ Errore: ' + err.message);
+            }
+        }
+
+        function updateScala(value) {
+            document.getElementById('scalaValue').textContent = value + '%';
+            if (currentProduct) {
+                currentProduct.scala_immagine = parseInt(value);
+                // Applica scala al preview
+                const img = document.querySelector('#boxImage img');
+                if (img) {
+                    img.style.transform = `scale(${value/100})`;
+                }
+                // Salva automaticamente
+                saveScala(value);
+            }
+        }
+
+        async function saveScala(value) {
+            if (!currentProduct) return;
+            try {
+                await fetch('/api/save-scala', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        codice: currentProduct.codice_principale,
+                        scala: parseInt(value)
+                    })
+                });
+            } catch (err) {
+                console.error('Errore salvataggio scala:', err);
+            }
+        }
+
+        function updateEditorImage() {
+            const imgContainer = document.getElementById('productImage');
+            if (imgContainer && currentProduct) {
+                imgContainer.innerHTML = currentProduct.immagine
+                    ? `<img src="/api/foto/${currentProduct.immagine}" onerror="this.src='/static/no-image.png'">`
+                    : '<div style="font-size:48px">📷</div>';
             }
         }
 

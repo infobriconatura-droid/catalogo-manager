@@ -15,6 +15,7 @@ CATALOGO MANAGER v4.1
 """
 
 import os
+import time
 import sqlite3
 import pandas as pd
 import json
@@ -254,6 +255,18 @@ def init_db():
     # Campo doppia_colonna per box che occupano 2 colonne
     try:
         c.execute('ALTER TABLE prodotti ADD COLUMN doppia_colonna INTEGER DEFAULT 0')
+    except:
+        pass
+
+    # Campo immagine_custom per immagini sostitutive
+    try:
+        c.execute('ALTER TABLE prodotti ADD COLUMN immagine_custom TEXT')
+    except:
+        pass
+
+    # Campo scala_immagine per proporzioni (50-150%)
+    try:
+        c.execute('ALTER TABLE prodotti ADD COLUMN scala_immagine INTEGER DEFAULT 100')
     except:
         pass
 
@@ -657,10 +670,17 @@ class BoxGenerator:
                 pass
         return None
     
-    def _contain(self, im, max_w, max_h):
-        """Resize mantenendo proporzioni con LANCZOS"""
+    def _contain(self, im, max_w, max_h, scala=100):
+        """Resize mantenendo proporzioni con LANCZOS. scala è una percentuale (50-150)"""
         if im is None:
             return None
+
+        # Applica scala
+        if scala and scala != 100:
+            scala_factor = scala / 100.0
+            max_w = int(max_w * scala_factor)
+            max_h = int(max_h * scala_factor)
+
         w, h = im.size
         if w <= 0 or h <= 0:
             return im
@@ -789,11 +809,12 @@ class BoxGenerator:
             img.paste(logo, (lx, ly), logo)
         
         y = PAD_TOP + title_h + top_gap
-        
+
         # --- Immagine prodotto centrata ---
+        scala = prodotto.get("scala_immagine", 100) or 100
         prod = self.load_image(prodotto.get("immagine"), prodotto.get("codice_principale"))
         if prod:
-            prod = self._contain(prod, W - 2 * PAD_X - 80, img_area_h)
+            prod = self._contain(prod, W - 2 * PAD_X - 80, img_area_h, scala)
             px = (W - prod.size[0]) // 2
             py = y + (img_area_h - prod.size[1]) // 2
             img.paste(prod, (px, py), prod)
@@ -880,11 +901,12 @@ class BoxGenerator:
         
         img = Image.new("RGB", (W, H), BG)
         draw = ImageDraw.Draw(img)
-        
+
         # Immagine prodotto (sinistra)
+        scala = prodotto.get("scala_immagine", 100) or 100
         prod = self.load_image(prodotto.get("immagine"), prodotto.get("codice_principale"))
         if prod:
-            prod = self._contain(prod, 450, 420)
+            prod = self._contain(prod, 450, 420, scala)
             px = 50
             py = 40 + (420 - prod.size[1]) // 2
             img.paste(prod, (px, py), prod)
@@ -1067,11 +1089,12 @@ class BoxGenerator:
         # 2. IMMAGINE CENTRATA + DESCRIZIONE SOTTO
         # ==========================================
         img_y = top_section
-        
+
         # Immagine prodotto CENTRATA e PIÙ GRANDE
+        scala = prodotto.get("scala_immagine", 100) or 100
         prod = self.load_image(prodotto.get("immagine"), prodotto.get("codice_principale"))
         if prod:
-            prod = self._contain(prod, 500, img_h - 20)  # Più grande
+            prod = self._contain(prod, 500, img_h - 20, scala)  # Più grande
             px = (W - prod.size[0]) // 2  # Centrata
             img.paste(prod, (px, img_y), prod)
         
@@ -1190,13 +1213,14 @@ class BoxGenerator:
         # ==========================================
         # 1. ZONA IMMAGINE (Sinistra - 45%)
         # ==========================================
+        scala = prodotto.get("scala_immagine", 100) or 100
         prod = self.load_image(prodotto.get("immagine"), prodotto.get("codice_principale"))
         if prod:
-            prod = self._contain(prod, 800, 900)
+            prod = self._contain(prod, 800, 900, scala)
             img_x = (850 - prod.size[0]) // 2 + 50
             img_y = (H - prod.size[1]) // 2
             img.paste(prod, (img_x, img_y), prod)
-        
+
         # Linea separatrice verticale
         draw.line([900, 100, 900, H-100], fill=LINE_LIGHT, width=2)
         
@@ -2082,8 +2106,119 @@ def api_upload_foto(prodotto_id):
     c.execute('UPDATE prodotti SET immagine = ? WHERE id = ?', (filename, prodotto_id))
     conn.commit()
     conn.close()
-    
+
     return jsonify({'success': True, 'filename': filename})
+
+
+# === API per gestione immagini custom e scala ===
+
+@app.route('/api/upload-image', methods=['POST'])
+def api_upload_image():
+    """Upload immagine personalizzata per un prodotto"""
+    if 'image' not in request.files:
+        return jsonify({'error': 'Nessun file'}), 400
+
+    codice = request.form.get('codice')
+    if not codice:
+        return jsonify({'error': 'Codice prodotto mancante'}), 400
+
+    file = request.files['image']
+    if not file.filename:
+        return jsonify({'error': 'File non valido'}), 400
+
+    # Genera nome file univoco
+    ext = Path(file.filename).suffix.lower() or '.jpg'
+    filename = f"custom_{codice}_{int(time.time())}{ext}"
+    filepath = FOTO_FOLDER / filename
+
+    try:
+        # Salva l'immagine
+        img = Image.open(file)
+        img = img.convert('RGB')
+        img.save(str(filepath), 'JPEG', quality=90)
+
+        # Aggiorna database
+        conn = get_db()
+        c = conn.cursor()
+        c.execute('''
+            UPDATE prodotti
+            SET immagine_custom = ?, immagine = ?
+            WHERE codice_principale = ?
+        ''', (filename, filename, codice))
+        conn.commit()
+        conn.close()
+
+        return jsonify({'success': True, 'filename': filename})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/reset-image', methods=['POST'])
+def api_reset_image():
+    """Ripristina immagine originale del prodotto"""
+    data = request.json
+    codice = data.get('codice')
+
+    if not codice:
+        return jsonify({'error': 'Codice prodotto mancante'}), 400
+
+    conn = get_db()
+    c = conn.cursor()
+
+    # Trova l'immagine originale (quella senza custom_)
+    c.execute('SELECT immagine, immagine_custom FROM prodotti WHERE codice_principale = ?', (codice,))
+    row = c.fetchone()
+
+    if not row:
+        conn.close()
+        return jsonify({'error': 'Prodotto non trovato'}), 404
+
+    # Cerca l'immagine originale del codice
+    immagine_originale = None
+    for ext in ['.jpg', '.jpeg', '.png', '.JPG', '.JPEG', '.PNG', '.jfif']:
+        for pattern in [f"{codice}{ext}", f"P{codice}*{ext}"]:
+            matches = list(FOTO_FOLDER.glob(pattern))
+            # Escludi le custom
+            matches = [m for m in matches if not m.name.startswith('custom_')]
+            if matches:
+                immagine_originale = matches[0].name
+                break
+        if immagine_originale:
+            break
+
+    # Reset
+    c.execute('''
+        UPDATE prodotti
+        SET immagine_custom = NULL, immagine = ?, scala_immagine = 100
+        WHERE codice_principale = ?
+    ''', (immagine_originale, codice))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({'success': True, 'immagine_originale': immagine_originale})
+
+
+@app.route('/api/save-scala', methods=['POST'])
+def api_save_scala():
+    """Salva la scala dell'immagine"""
+    data = request.json
+    codice = data.get('codice')
+    scala = data.get('scala', 100)
+
+    if not codice:
+        return jsonify({'error': 'Codice prodotto mancante'}), 400
+
+    # Limita scala tra 50 e 150
+    scala = max(50, min(150, int(scala)))
+
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('UPDATE prodotti SET scala_immagine = ? WHERE codice_principale = ?', (scala, codice))
+    conn.commit()
+    conn.close()
+
+    return jsonify({'success': True, 'scala': scala})
 
 
 @app.route('/api/upload_logo/<int:prodotto_id>', methods=['POST'])
