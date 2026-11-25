@@ -117,6 +117,22 @@ def api_clear_cache():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/cache/status')
+def api_cache_status():
+    """Mostra stato della cache"""
+    try:
+        files = list(BOX_CACHE_FOLDER.glob('*.png'))
+        total_size = sum(f.stat().st_size for f in files)
+        return jsonify({
+            'folder': str(BOX_CACHE_FOLDER),
+            'exists': BOX_CACHE_FOLDER.exists(),
+            'files': len(files),
+            'total_size_mb': round(total_size / 1024 / 1024, 2)
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 def invalidate_product_cache(prodotto_id):
     """Invalida la cache per un prodotto specifico (rimuove tutti i box che lo contengono)"""
     # Non possiamo sapere quali file di cache contengono questo prodotto
