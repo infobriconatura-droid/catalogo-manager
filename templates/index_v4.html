@@ -726,28 +726,31 @@
                     <!-- PREVIEW BOX IN ALTO -->
                     <div class="detail-section" style="margin-bottom: 16px;">
                         <div class="detail-section-title">🖨️ Preview Box Catalogo <span id="previewModeLabel" style="font-size:10px; color: var(--primary); margin-left:8px;"></span></div>
-                        <div class="box-preview-container">
-                            <div class="box-preview" id="boxPreview">
-                                <div class="box-header">
-                                    <div class="box-image" id="boxImage">📷</div>
-                                    <div class="box-text">
-                                        <div class="box-title" id="boxTitle">TITOLO PRODOTTO</div>
-                                        <div class="box-desc" id="boxDesc">Descrizione prodotto...</div>
-                                    </div>
+                        <div class="box-preview-container" style="background: white; padding: 0; overflow: hidden;">
+                            <div class="box-preview" id="boxPreview" style="background: white; color: #000; padding: 8px; font-family: Arial, sans-serif;">
+                                <!-- Header: Titolo + Logo -->
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+                                    <div class="box-title" id="boxTitle" style="font-weight: bold; font-size: 11px; color: #000; text-decoration: underline; flex: 1;">TITOLO PRODOTTO</div>
+                                    <div class="box-logo" id="boxLogo" style="width: 50px; height: 25px;"></div>
                                 </div>
-                                <div class="box-table-wrapper">
-                                    <table class="box-table">
+                                <!-- Immagine centrata -->
+                                <div class="box-image" id="boxImage" style="display: flex; justify-content: center; align-items: center; height: 80px; margin-bottom: 4px; overflow: hidden;">📷</div>
+                                <!-- Descrizione -->
+                                <div class="box-desc" id="boxDesc" style="font-size: 7px; color: #333; line-height: 1.2; margin-bottom: 6px; max-height: 28px; overflow: hidden;">Descrizione prodotto...</div>
+                                <!-- Tabella Varianti -->
+                                <div class="box-table-wrapper" style="overflow-x: auto;">
+                                    <table class="box-table" style="width: 100%; border-collapse: collapse; font-size: 7px;">
                                         <thead>
-                                            <tr>
-                                                <th>CODICE</th>
-                                                <th>MODELLO</th>
-                                                <th>U.M.</th>
-                                                <th>M.V.</th>
-                                                <th>CF</th>
-                                                <th style="text-align:right">NETTO €</th>
+                                            <tr style="background: #2d5a27; color: white;">
+                                                <th style="padding: 2px 3px; text-align: left;">CODICE</th>
+                                                <th style="padding: 2px 3px; text-align: left;">MODELLO</th>
+                                                <th style="padding: 2px 3px; text-align: center;">U.M.</th>
+                                                <th style="padding: 2px 3px; text-align: center;">MV</th>
+                                                <th style="padding: 2px 3px; text-align: center;">CF</th>
+                                                <th style="padding: 2px 3px; text-align: right;">NETTO</th>
                                             </tr>
                                         </thead>
-                                        <tbody id="boxVarianti">
+                                        <tbody id="boxVarianti" style="color: #000;">
                                         </tbody>
                                     </table>
                                 </div>
@@ -764,7 +767,7 @@
                             <!-- Formato Box -->
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <span style="font-size: 11px; color: var(--text-muted); white-space: nowrap;">📐 Formato:</span>
-                                <select id="detailFormato" onchange="toggleDoppiaColonna(this.value === 'fullhd')" style="padding: 4px 8px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 11px;">
+                                <select id="detailFormato" onchange="toggleDoppiaColonna(this.value === 'fullhd', true)" style="padding: 4px 8px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 11px;">
                                     <option value="standard">Standard (1 col)</option>
                                     <option value="fullhd">Full HD (2 col)</option>
                                 </select>
@@ -1040,7 +1043,7 @@
             updateLogoPreview();
         }
 
-        function toggleDoppiaColonna(isDouble) {
+        function toggleDoppiaColonna(isDouble, save = false) {
             const boxPreview = document.getElementById('boxPreview');
             const modeLabel = document.getElementById('previewModeLabel');
             if (isDouble) {
@@ -1050,8 +1053,8 @@
                 boxPreview.classList.remove('doppia-colonna');
                 modeLabel.textContent = '';
             }
-            // Salva nel DB
-            if (currentProduct) {
+            // Salva nel DB solo se richiesto
+            if (save && currentProduct) {
                 currentProduct.doppia_colonna = isDouble ? 1 : 0;
                 saveField('doppia_colonna', currentProduct.doppia_colonna);
             }
@@ -1291,16 +1294,27 @@
             const scala = p.scala_immagine || 100;
             const scalaStyle = scala !== 100 ? `transform: scale(${scala/100}); transform-origin: center;` : '';
             boxImg.innerHTML = p.immagine
-                ? `<img src="/api/foto/${p.immagine}" style="${scalaStyle}" onerror="this.outerHTML='📷'">`
+                ? `<img src="/api/foto/${p.immagine}" style="max-height: 100%; max-width: 100%; object-fit: contain; ${scalaStyle}" onerror="this.outerHTML='📷'">`
                 : '📷';
 
             // Titolo e descrizione
             document.getElementById('boxTitle').textContent = p.titolo || 'TITOLO PRODOTTO';
             document.getElementById('boxDesc').textContent = p.descrizione || '';
 
+            // Logo
+            const boxLogo = document.getElementById('boxLogo');
+            if (p.logo_brand) {
+                boxLogo.innerHTML = `<img src="/api/foto/${p.logo_brand}" style="max-height: 100%; max-width: 100%; object-fit: contain;">`;
+            } else {
+                boxLogo.innerHTML = '';
+            }
+
             // Varianti (prendi dai campi input se disponibili, altrimenti usa varianti passate)
             const boxVarianti = document.getElementById('boxVarianti');
             const varRows = document.querySelectorAll('#variantiBody tr');
+
+            const rowStyle = 'border-bottom: 1px solid #ddd;';
+            const cellStyle = 'padding: 1px 3px;';
 
             if (varRows.length > 0) {
                 // Leggi dai campi input
@@ -1313,25 +1327,25 @@
                     const cf = cells[4].querySelector('input')?.value || '';
                     const listino = cells[5].querySelector('input')?.value || '';
 
-                    return `<tr>
-                        <td>${codice}</td>
-                        <td>${modello}</td>
-                        <td>${um}</td>
-                        <td>${mv}</td>
-                        <td>${cf}</td>
-                        <td class="price">${listino ? '€ ' + listino : ''}</td>
+                    return `<tr style="${rowStyle}">
+                        <td style="${cellStyle}">${codice}</td>
+                        <td style="${cellStyle}">${modello}</td>
+                        <td style="${cellStyle} text-align:center;">${um}</td>
+                        <td style="${cellStyle} text-align:center;">${mv}</td>
+                        <td style="${cellStyle} text-align:center;">${cf}</td>
+                        <td style="${cellStyle} text-align:right;">${listino ? listino + ' €' : ''}</td>
                     </tr>`;
                 }).join('');
             } else if (varianti) {
                 // Usa varianti passate
                 boxVarianti.innerHTML = varianti.filter(v => !v.escludi_stampa).map(v => `
-                    <tr>
-                        <td>${v.codice}</td>
-                        <td>${v.modello || ''}</td>
-                        <td>${v.um || ''}</td>
-                        <td>${v.mv || ''}</td>
-                        <td>${v.cf || ''}</td>
-                        <td class="price">${v.listino ? '€ ' + v.listino : ''}</td>
+                    <tr style="${rowStyle}">
+                        <td style="${cellStyle}">${v.codice}</td>
+                        <td style="${cellStyle}">${v.modello || ''}</td>
+                        <td style="${cellStyle} text-align:center;">${v.um || ''}</td>
+                        <td style="${cellStyle} text-align:center;">${v.mv || ''}</td>
+                        <td style="${cellStyle} text-align:center;">${v.cf || ''}</td>
+                        <td style="${cellStyle} text-align:right;">${v.listino ? v.listino + ' €' : ''}</td>
                     </tr>
                 `).join('');
             }
