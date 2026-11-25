@@ -1641,11 +1641,75 @@ def api_update_variante(codice):
 
 @app.route('/api/variante/<codice>', methods=['DELETE'])
 def api_delete_variante(codice):
+    """Elimina una variante. Se è la principale, la seconda diventa principale."""
     conn = get_db()
     c = conn.cursor()
+
+    # Trova il prodotto a cui appartiene questa variante
+    c.execute('SELECT prodotto_id FROM varianti WHERE codice = ?', (codice,))
+    row = c.fetchone()
+    if not row:
+        conn.close()
+        return jsonify({'error': 'Variante non trovata'}), 404
+
+    prodotto_id = row[0]
+
+    # Verifica se questa variante è il codice_principale del prodotto
+    c.execute('SELECT codice_principale FROM prodotti WHERE id = ?', (prodotto_id,))
+    prod_row = c.fetchone()
+
+    if prod_row and prod_row[0] == codice:
+        # Questa è la variante principale, trova la prossima
+        c.execute('''
+            SELECT codice FROM varianti
+            WHERE prodotto_id = ? AND codice != ?
+            ORDER BY codice ASC LIMIT 1
+        ''', (prodotto_id, codice))
+        next_var = c.fetchone()
+
+        if next_var:
+            # Aggiorna il codice_principale al prossimo codice
+            c.execute('UPDATE prodotti SET codice_principale = ? WHERE id = ?',
+                     (next_var[0], prodotto_id))
+        else:
+            # Non ci sono altre varianti, elimina tutto il prodotto
+            c.execute('DELETE FROM varianti WHERE prodotto_id = ?', (prodotto_id,))
+            c.execute('DELETE FROM task WHERE prodotto_id = ?', (prodotto_id,))
+            c.execute('DELETE FROM prodotti WHERE id = ?', (prodotto_id,))
+            conn.commit()
+            conn.close()
+            return jsonify({'success': True, 'product_deleted': True})
+
+    # Elimina la variante
     c.execute('DELETE FROM varianti WHERE codice = ?', (codice,))
     conn.commit()
     conn.close()
+    return jsonify({'success': True})
+
+
+@app.route('/api/prodotto_by_codice/<codice>', methods=['DELETE'])
+def api_delete_prodotto_by_codice(codice):
+    """Elimina completamente un prodotto e tutte le sue varianti tramite codice_principale"""
+    conn = get_db()
+    c = conn.cursor()
+
+    # Trova l'id del prodotto
+    c.execute('SELECT id FROM prodotti WHERE codice_principale = ?', (codice,))
+    row = c.fetchone()
+    if not row:
+        conn.close()
+        return jsonify({'error': 'Prodotto non trovato'}), 404
+
+    prodotto_id = row[0]
+
+    # Elimina tutto
+    c.execute('DELETE FROM varianti WHERE prodotto_id = ?', (prodotto_id,))
+    c.execute('DELETE FROM task WHERE prodotto_id = ?', (prodotto_id,))
+    c.execute('DELETE FROM posizioni WHERE codice = ?', (codice,))
+    c.execute('DELETE FROM prodotti WHERE id = ?', (prodotto_id,))
+    conn.commit()
+    conn.close()
+
     return jsonify({'success': True})
 
 

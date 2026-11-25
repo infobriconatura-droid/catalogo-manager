@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catalogo Manager v4 <!-- 1795601795 --></title>
+    <title>Catalogo Manager v4 <!-- 1795608303 --></title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -339,6 +339,15 @@
             background: var(--accent-light);
         }
 
+        .btn-danger {
+            background: var(--red);
+            color: #fff;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
         .btn-secondary {
             background: var(--bg-hover);
             color: var(--text);
@@ -515,6 +524,11 @@
             background: var(--bg);
         }
 
+        .var-delete:hover {
+            background: var(--red);
+            opacity: 1;
+        }
+
         /* ===== BOX PREVIEW ===== */
         .box-preview-container {
             background: #fff;
@@ -659,6 +673,7 @@
             <div class="editor-header">
                 <span class="editor-title">📝 Editor Prodotto</span>
                 <div class="editor-actions">
+                    <button class="btn btn-danger" onclick="deleteArticolo()" title="Elimina completamente l'articolo">🗑️ Elimina</button>
                     <button class="btn btn-primary" onclick="saveProdotto()">💾 Salva</button>
                 </div>
             </div>
@@ -920,9 +935,12 @@
                         <td><input class="var-input" value="${v.mv || ''}" style="width:40px" onblur="saveVariante('${v.codice}', 'mv', this.value); updateBoxPreview()"></td>
                         <td><input class="var-input" value="${v.cf || ''}" style="width:40px" onblur="saveVariante('${v.codice}', 'cf', this.value); updateBoxPreview()"></td>
                         <td><input class="var-input var-listino" value="${v.listino || ''}" style="width:60px; text-align:right" onblur="saveVariante('${v.codice}', 'listino', this.value); updateBoxPreview()"></td>
-                        <td>
+                        <td style="display:flex; gap:4px;">
                             <button class="var-btn" onclick="toggleStampa('${v.codice}')" title="Escludi/Includi da stampa">
                                 ${v.escludi_stampa ? '🚫' : '✅'}
+                            </button>
+                            <button class="var-btn var-delete" onclick="deleteVariante('${v.codice}')" title="Elimina variante">
+                                🗑️
                             </button>
                         </td>
                     </tr>
@@ -1006,6 +1024,61 @@
                 if (currentProduct) loadVarianti(currentProduct.codice_principale);
             } catch (err) {
                 showToast('Errore', 'error');
+            }
+        }
+
+        async function deleteVariante(codice) {
+            if (!confirm(`Eliminare definitivamente la variante ${codice}?\n\nSe è la variante principale, la successiva diventerà principale.`)) return;
+
+            try {
+                const res = await fetch(`/api/variante/${codice}`, { method: 'DELETE' });
+                const data = await res.json();
+
+                if (data.product_deleted) {
+                    // Il prodotto è stato eliminato perché non c'erano altre varianti
+                    showToast('🗑️ Prodotto eliminato (nessuna variante rimasta)', 'info');
+                    currentProduct = null;
+                    document.getElementById('productDetail').classList.remove('active');
+                    document.getElementById('editorEmpty').style.display = 'flex';
+                    loadProducts();
+                } else {
+                    showToast('🗑️ Variante eliminata', 'success');
+                    // Ricarica il prodotto (potrebbe avere nuovo codice_principale)
+                    if (currentProduct) {
+                        const pRes = await fetch(`/api/prodotto/${currentProduct.codice_principale}`);
+                        if (pRes.ok) {
+                            currentProduct = await pRes.json();
+                            renderProductDetail();
+                            loadVarianti(currentProduct.codice_principale);
+                        } else {
+                            // Il codice_principale è cambiato, ricarica tutto
+                            loadProducts();
+                        }
+                    }
+                }
+            } catch (err) {
+                showToast('Errore eliminazione', 'error');
+            }
+        }
+
+        async function deleteArticolo() {
+            if (!currentProduct) return;
+
+            if (!confirm(`⚠️ ATTENZIONE!\n\nEliminare definitivamente l'articolo ${currentProduct.codice_principale}?\n\nQuesta azione eliminerà il prodotto e TUTTE le sue varianti.\n\nQuesta operazione NON può essere annullata!`)) return;
+
+            try {
+                const res = await fetch(`/api/prodotto_by_codice/${currentProduct.codice_principale}`, { method: 'DELETE' });
+                if (res.ok) {
+                    showToast('🗑️ Articolo eliminato completamente', 'success');
+                    currentProduct = null;
+                    document.getElementById('productDetail').classList.remove('active');
+                    document.getElementById('editorEmpty').style.display = 'flex';
+                    loadProducts();
+                } else {
+                    throw new Error();
+                }
+            } catch (err) {
+                showToast('Errore eliminazione articolo', 'error');
             }
         }
 
