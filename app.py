@@ -209,35 +209,27 @@ def api_cache_test_box(prodotto_id):
 
 @app.route('/api/cache/test-page/<int:page_num>')
 def api_cache_test_page(page_num):
-    """Test cache durante generazione pagina - simula esattamente cosa succede"""
-    categoria = request.args.get('categoria', 'SIGILLANTI E ADESIVI')
+    """Test cache con i primi N prodotti (senza filtro categoria)"""
     template = request.args.get('template', 'corporate')
+    limit = int(request.args.get('limit', 10))
 
     try:
         conn = get_db()
         c = conn.cursor()
 
-        # Stesso codice della generazione pagina
+        # Prendi i primi N prodotti con varianti
         c.execute('''
-            SELECT p.*, pos.posizione
+            SELECT DISTINCT p.*
             FROM prodotti p
-            INNER JOIN posizioni pos ON p.codice_principale = pos.codice
-            WHERE pos.categoria = ?
-            ORDER BY pos.posizione
-        ''', (categoria,))
-        all_products = [dict(row) for row in c.fetchall()]
+            INNER JOIN varianti v ON p.id = v.prodotto_id
+            WHERE v.escludi_stampa = 0 OR v.escludi_stampa IS NULL
+            LIMIT ?
+        ''', (limit,))
+        page_products = [dict(row) for row in c.fetchall()]
 
-        if not all_products:
+        if not page_products:
             conn.close()
             return jsonify({'error': 'Nessun prodotto trovato'}), 404
-
-        pages = impagina_dinamico(all_products, conn)
-
-        if page_num < 1 or page_num > len(pages):
-            conn.close()
-            return jsonify({'error': 'Pagina non trovata'}), 404
-
-        page_products = pages[page_num - 1]
 
         # Carica varianti
         prod_ids = [prod['id'] for prod in page_products]
