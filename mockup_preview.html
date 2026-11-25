@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Mockup Preview Box - Catalogo Pugliese</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a2e;
+            padding: 20px;
+            display: flex;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+        .section {
+            background: #2d2d44;
+            padding: 20px;
+            border-radius: 12px;
+        }
+        .section h2 {
+            color: #4ade80;
+            margin-top: 0;
+            font-size: 14px;
+        }
+
+        /* BOX STANDARD - 1 colonna */
+        .box-standard {
+            width: 280px;
+            background: white;
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+            color: #333;
+        }
+        .box-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 8px 10px;
+            border-bottom: 2px solid #2d5a27;
+        }
+        .box-title {
+            font-weight: bold;
+            font-size: 11px;
+            color: #000;
+            text-transform: uppercase;
+            flex: 1;
+        }
+        .box-logo {
+            width: 50px;
+            height: 25px;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            color: #666;
+        }
+        .box-image {
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            background: white;
+        }
+        .box-image img {
+            max-height: 90px;
+            max-width: 100%;
+            object-fit: contain;
+        }
+        .box-desc {
+            font-size: 8px;
+            color: #555;
+            text-align: center;
+            padding: 5px 10px;
+            line-height: 1.3;
+            font-style: italic;
+        }
+        .box-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 8px;
+        }
+        .box-table th {
+            background: #2d5a27;
+            color: white;
+            padding: 4px 3px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .box-table th:first-child,
+        .box-table td:first-child {
+            text-align: left;
+            padding-left: 6px;
+        }
+        .box-table th:last-child,
+        .box-table td:last-child {
+            text-align: right;
+            padding-right: 6px;
+        }
+        .box-table td {
+            padding: 3px;
+            text-align: center;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .box-table tr:nth-child(even) {
+            background: #f8f8f8;
+        }
+        .box-table .codice {
+            color: #2d5a27;
+            font-weight: bold;
+        }
+        .box-strip {
+            height: 4px;
+            background: linear-gradient(90deg, #2d5a27, #3d7a37);
+        }
+
+        /* BOX FULLHD - 2 colonne (formato Hyundai) */
+        .box-fullhd {
+            width: 580px;
+            background: white;
+            display: flex;
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+            color: #333;
+        }
+        .box-fullhd .left {
+            width: 45%;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-right: 2px solid #2d5a27;
+        }
+        .box-fullhd .left img {
+            max-width: 90%;
+            max-height: 150px;
+            object-fit: contain;
+        }
+        .box-fullhd .right {
+            width: 55%;
+            padding: 15px;
+        }
+        .box-fullhd .right .title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        .box-fullhd .right .title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #000;
+            text-transform: uppercase;
+        }
+        .box-fullhd .right .desc {
+            font-size: 9px;
+            color: #555;
+            line-height: 1.4;
+            margin-bottom: 15px;
+        }
+
+        .controls-preview {
+            margin-top: 15px;
+            padding: 10px;
+            background: #3d3d55;
+            border-radius: 8px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .control-group label {
+            color: #aaa;
+            font-size: 10px;
+        }
+        .control-group input[type="range"] {
+            width: 60px;
+        }
+        .control-group span {
+            color: #4ade80;
+            font-size: 10px;
+            width: 30px;
+        }
+    </style>
+</head>
+<body>
+    <!-- FORMATO STANDARD 1 COLONNA -->
+    <div class="section">
+        <h2>📦 Preview Box Standard (1 colonna)</h2>
+        <div class="box-standard">
+            <div class="box-header">
+                <div class="box-title">TUBO POLIETILENE BASSA DENSITA' MINI ROTOLO</div>
+                <div class="box-logo">LOGO</div>
+            </div>
+            <div class="box-image">
+                <img src="https://via.placeholder.com/120x80/333/fff?text=Tubo" alt="Prodotto">
+            </div>
+            <div class="box-desc">
+                Il Tubo Bassa Densità È Prodotto Utilizzando Resine Selezionate, Altamente Resistenti Agli Agenti Chimici E Atmosferici.
+            </div>
+            <table class="box-table">
+                <thead>
+                    <tr>
+                        <th>CODICE</th>
+                        <th>MODELLO</th>
+                        <th>U.M.</th>
+                        <th>MV</th>
+                        <th>CF</th>
+                        <th>NETTO</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td class="codice">11013</td><td>Ø16 - PN 6</td><td>MT</td><td>100</td><td>100</td><td>17,64 €</td></tr>
+                    <tr><td class="codice">8571</td><td>Ø16 - PN 6</td><td>MT</td><td>200</td><td>200</td><td>0,14 €</td></tr>
+                    <tr><td class="codice">8572</td><td>Ø20 - PN 6</td><td>MT</td><td>100</td><td>100</td><td>40,00 €</td></tr>
+                    <tr><td class="codice">8573</td><td>Ø20 - PN 6</td><td>MT</td><td>200</td><td>200</td><td>0,18 €</td></tr>
+                    <tr><td class="codice">11342</td><td>Ø20 - PN 6</td><td>MT</td><td>300</td><td>300</td><td></td></tr>
+                </tbody>
+            </table>
+            <div class="box-strip"></div>
+        </div>
+
+        <div class="controls-preview">
+            <div class="control-group">
+                <label>Scala:</label>
+                <input type="range" min="50" max="150" value="100">
+                <span>100%</span>
+            </div>
+            <div class="control-group">
+                <label>X:</label>
+                <input type="range" min="-50" max="50" value="0">
+                <span>0</span>
+            </div>
+            <div class="control-group">
+                <label>Y:</label>
+                <input type="range" min="-50" max="50" value="0">
+                <span>0</span>
+            </div>
+            <select style="padding: 4px; font-size: 10px;">
+                <option>1 col</option>
+                <option>2 col</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- FORMATO FULLHD 2 COLONNE (Hyundai style) -->
+    <div class="section">
+        <h2>📦 Preview Box FullHD (2 colonne - stile Hyundai)</h2>
+        <div class="box-fullhd">
+            <div class="left">
+                <img src="https://via.placeholder.com/180x140/1a5f2a/fff?text=Rasaerba" alt="Prodotto">
+            </div>
+            <div class="right">
+                <div class="title-row">
+                    <div class="title">RASAERBA ELETTRICO</div>
+                    <div class="box-logo">HYUNDAI</div>
+                </div>
+                <div class="desc">
+                    Modello 65460/67460 - materiale scocca resina antiurto - 3 altezze di taglio - rumorosità massima 96 dba - capacità cont. Erba 50 lt (tessuto) - giri al minuto 3500 - larghezza di taglio 360 mm - altezza di taglio min/max 25/65
+                </div>
+                <table class="box-table">
+                    <thead>
+                        <tr>
+                            <th>CODICE</th>
+                            <th>MODELLO</th>
+                            <th>U.M.</th>
+                            <th>MV</th>
+                            <th>CF</th>
+                            <th>LISTINO</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="codice">6183</td><td>1600 W - 230V/50Hz</td><td>PZ</td><td>1</td><td>1</td><td>200,23 €</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="box-strip" style="width: 580px;"></div>
+
+        <div class="controls-preview">
+            <div class="control-group">
+                <label>Scala:</label>
+                <input type="range" min="50" max="150" value="100">
+                <span>100%</span>
+            </div>
+            <div class="control-group">
+                <label>X:</label>
+                <input type="range" min="-50" max="50" value="0">
+                <span>0</span>
+            </div>
+            <div class="control-group">
+                <label>Y:</label>
+                <input type="range" min="-50" max="50" value="0">
+                <span>0</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
