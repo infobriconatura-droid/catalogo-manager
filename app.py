@@ -651,6 +651,18 @@ class BoxGenerator:
                     except:
                         pass
 
+            # Se non trova, prova ricerca CASE-INSENSITIVE
+            filename_lower = filename.lower()
+            for folder in [FOTO_FOLDER, LOGO_FOLDER]:
+                if folder.exists():
+                    for f in folder.iterdir():
+                        if f.name.lower() == filename_lower:
+                            try:
+                                img = Image.open(f)
+                                return img.convert('RGBA')
+                            except:
+                                pass
+
         # Se non trova e abbiamo il codice, cerca file che iniziano con il codice
         if codice:
             for folder in [FOTO_FOLDER, LOGO_FOLDER]:
