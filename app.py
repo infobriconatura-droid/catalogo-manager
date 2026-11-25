@@ -1618,10 +1618,20 @@ def api_update_variante(codice):
     data = request.json
     conn = get_db()
     c = conn.cursor()
-    c.execute('''
-        UPDATE varianti SET modello = ?, um = ?, mv = ?, cf = ?, listino = ? WHERE codice = ?
-    ''', (data.get('modello'), data.get('um'), data.get('mv'), data.get('cf'), data.get('listino'), codice))
-    conn.commit()
+
+    # Supporta aggiornamenti parziali - aggiorna solo i campi forniti
+    updates = []
+    params = []
+    for field in ['modello', 'um', 'mv', 'cf', 'listino']:
+        if field in data:
+            updates.append(f"{field} = ?")
+            params.append(data[field])
+
+    if updates:
+        params.append(codice)
+        c.execute(f"UPDATE varianti SET {', '.join(updates)} WHERE codice = ?", params)
+        conn.commit()
+
     conn.close()
     return jsonify({'success': True})
 

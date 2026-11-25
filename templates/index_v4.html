@@ -130,7 +130,7 @@
         /* ===== MAIN LAYOUT ===== */
         .main {
             display: grid;
-            grid-template-columns: 200px 1fr 580px;
+            grid-template-columns: 180px 1fr 720px;
             height: calc(100vh - 52px);
         }
 
@@ -320,13 +320,13 @@
         }
 
         .product-image {
-            height: 140px;
+            height: 180px;
             background: var(--bg-surface);
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
-            padding: 8px;
+            padding: 12px;
         }
 
         .product-image img {
@@ -612,22 +612,37 @@
 
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Varianti */
+        /* Varianti - Tabella inline editabile */
         .varianti-list {
             background: var(--bg);
             border-radius: 6px;
-            padding: 8px;
             font-size: 0.75rem;
-            max-height: 250px;
+            max-height: 400px;
             overflow-y: auto;
         }
 
-        .variante-row {
-            display: flex;
-            align-items: center;
+        .varianti-header {
+            display: grid;
+            grid-template-columns: 70px 1fr 50px 50px 60px 80px 32px;
+            gap: 4px;
             padding: 8px 6px;
+            background: var(--bg-surface);
+            border-bottom: 2px solid var(--border);
+            font-weight: 600;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            position: sticky;
+            top: 0;
+        }
+
+        .variante-row {
+            display: grid;
+            grid-template-columns: 70px 1fr 50px 50px 60px 80px 32px;
+            gap: 4px;
+            padding: 4px 6px;
             border-bottom: 1px solid var(--border);
-            gap: 8px;
+            align-items: center;
         }
 
         .variante-row:last-child { border-bottom: none; }
@@ -636,63 +651,62 @@
             background: var(--bg-hover);
         }
 
-        .variante-info {
-            flex: 1;
-            display: grid;
-            grid-template-columns: 60px 1fr 70px;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .variante-info .codice {
+        .variante-row .codice {
             font-weight: 600;
             color: var(--accent-light);
+            font-size: 0.7rem;
         }
 
-        .variante-info .modello {
+        .variante-input {
+            background: var(--bg-surface);
+            border: 1px solid transparent;
             color: var(--text);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            padding: 4px 6px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            width: 100%;
+            transition: all 0.2s;
         }
 
-        .variante-info .prezzo {
+        .variante-input:hover {
+            border-color: var(--border);
+        }
+
+        .variante-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: var(--bg-card);
+        }
+
+        .variante-input.modified {
+            border-color: var(--yellow);
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        .variante-input.prezzo {
             text-align: right;
             color: var(--green);
         }
 
-        .variante-edit-btn {
-            background: var(--bg-surface);
-            border: 1px solid var(--border);
-            color: var(--text-muted);
-            padding: 4px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.65rem;
-            transition: all 0.2s;
-        }
-
-        .variante-edit-btn:hover {
-            background: var(--accent);
-            color: white;
-            border-color: var(--accent);
-        }
-
         .variante-delete-btn {
-            background: var(--bg-surface);
-            border: 1px solid var(--border);
+            background: transparent;
+            border: none;
             color: var(--text-muted);
-            padding: 4px 8px;
+            padding: 4px;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 0.65rem;
+            font-size: 0.7rem;
             transition: all 0.2s;
+            opacity: 0.5;
+        }
+
+        .variante-row:hover .variante-delete-btn {
+            opacity: 1;
         }
 
         .variante-delete-btn:hover {
             background: var(--red);
             color: white;
-            border-color: var(--red);
         }
 
         /* Modal edit variante */
@@ -796,7 +810,7 @@
 
         <nav class="nav-tabs">
             <button class="nav-tab active" data-tab="prodotti">📋 Prodotti</button>
-            <button class="nav-tab" data-tab="preview" onclick="window.location='/preview'">👁️ Preview</button>
+            <button class="nav-tab" data-tab="preview" onclick="window.location='/viewer'">👁️ Preview</button>
             <button class="nav-tab" data-tab="export">📤 Export</button>
         </nav>
 
@@ -1198,7 +1212,7 @@
             });
         }
 
-        // Load varianti
+        // Load varianti - tabella inline editabile
         async function loadVarianti(codice) {
             try {
                 const res = await fetch(`/api/varianti/${codice}`);
@@ -1206,22 +1220,58 @@
                 const list = document.getElementById('variantiList');
 
                 if (data.varianti?.length > 0) {
-                    list.innerHTML = data.varianti.map(v => `
-                        <div class="variante-row">
-                            <div class="variante-info">
-                                <span class="codice">${v.codice || '-'}</span>
-                                <span class="modello">${v.modello || '-'}</span>
-                                <span class="prezzo">${v.listino ? v.listino + ' €' : '-'}</span>
-                            </div>
-                            <button class="variante-edit-btn" onclick="editVariante('${v.codice}', '${(v.modello || '').replace(/'/g, "\\'")}', '${v.um || ''}', '${v.mv || ''}', '${v.cf || ''}', '${v.listino || ''}')">✏️</button>
-                            <button class="variante-delete-btn" onclick="deleteVariante('${v.codice}')">🗑️</button>
+                    list.innerHTML = `
+                        <div class="varianti-header">
+                            <span>Codice</span>
+                            <span>Modello</span>
+                            <span>U.M.</span>
+                            <span>M.V.</span>
+                            <span>CF</span>
+                            <span>Listino €</span>
+                            <span></span>
                         </div>
-                    `).join('');
+                        ${data.varianti.map(v => `
+                        <div class="variante-row" data-codice="${v.codice}">
+                            <span class="codice">${v.codice || '-'}</span>
+                            <input type="text" class="variante-input" data-field="modello" value="${(v.modello || '').replace(/"/g, '&quot;')}" onchange="markVarianteModified(this)" onblur="saveVarianteField('${v.codice}', 'modello', this.value)">
+                            <input type="text" class="variante-input" data-field="um" value="${v.um || ''}" onchange="markVarianteModified(this)" onblur="saveVarianteField('${v.codice}', 'um', this.value)">
+                            <input type="text" class="variante-input" data-field="mv" value="${v.mv || ''}" onchange="markVarianteModified(this)" onblur="saveVarianteField('${v.codice}', 'mv', this.value)">
+                            <input type="text" class="variante-input" data-field="cf" value="${v.cf || ''}" onchange="markVarianteModified(this)" onblur="saveVarianteField('${v.codice}', 'cf', this.value)">
+                            <input type="text" class="variante-input prezzo" data-field="listino" value="${v.listino || ''}" onchange="markVarianteModified(this)" onblur="saveVarianteField('${v.codice}', 'listino', this.value)">
+                            <button class="variante-delete-btn" onclick="deleteVariante('${v.codice}')" title="Elimina">🗑️</button>
+                        </div>
+                    `).join('')}
+                    `;
                 } else {
                     list.innerHTML = '<div style="text-align: center; padding: 10px; color: var(--text-muted);">Nessuna variante</div>';
                 }
             } catch (err) {
                 console.error(err);
+            }
+        }
+
+        // Mark input as modified
+        function markVarianteModified(input) {
+            input.classList.add('modified');
+        }
+
+        // Save single field on blur
+        async function saveVarianteField(codice, field, value) {
+            const input = document.querySelector(`.variante-row[data-codice="${codice}"] input[data-field="${field}"]`);
+            try {
+                const res = await fetch(`/api/variante/${codice}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ [field]: value })
+                });
+                if (res.ok) {
+                    input.classList.remove('modified');
+                    input.style.borderColor = 'var(--green)';
+                    setTimeout(() => { input.style.borderColor = ''; }, 1000);
+                }
+            } catch (err) {
+                console.error(err);
+                input.style.borderColor = 'var(--red)';
             }
         }
 
@@ -1408,7 +1458,7 @@
         // Export functions
         function exportPDF() {
             showToast('📄 Vai alla pagina Preview per generare il PDF');
-            setTimeout(() => window.location = '/preview', 1000);
+            setTimeout(() => window.location = '/viewer', 1000);
         }
 
         function exportInDesign() {
