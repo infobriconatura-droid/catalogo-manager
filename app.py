@@ -1033,19 +1033,29 @@ class BoxGenerator:
             img.paste(logo, (W - logo.size[0] - pad, y_start + 5), logo)
             logo_w = logo.size[0] + 20
 
-        # Titolo PIÙ EVIDENTE (dopo badge)
+        # Titolo PIÙ EVIDENTE (dopo badge) - va a capo se troppo lungo
         title_text = (prodotto.get("titolo") or "").upper()
         title_x = pad + badge_offset  # Sposta a destra per fare spazio al badge
         max_title_w = W - logo_w - pad * 2 - badge_offset
+
+        # Usa font fisso 40px e manda a capo se necessario (max 2 righe)
         try:
-            f_title = self._fit_font(draw, title_text, max_title_w, 70, self.font_paths['bold'], start_size=44, min_size=28)
+            f_title = ImageFont.truetype(self.font_paths['bold'], 40)
         except:
-            pass
-        draw.text((title_x, y_start), title_text, font=f_title, fill=TEXT_MAIN)
+            f_title = self.fonts.get('title', ImageFont.load_default())
+
+        title_lines = self._wrap_text(draw, title_text, f_title, max_title_w)[:2]  # Max 2 righe
+        title_y = y_start
+        for line in title_lines:
+            draw.text((title_x, title_y), line, font=f_title, fill=TEXT_MAIN)
+            title_y += 45  # Interlinea
         
-        # Linea sotto titolo per evidenziarlo
-        title_bbox = draw.textbbox((title_x, y_start), title_text, font=f_title)
-        draw.line([title_x, title_bbox[3] + 5, title_bbox[2] + 10, title_bbox[3] + 5], fill=GREEN_DARK, width=3)
+        # Linea sotto titolo per evidenziarlo (sotto l'ultima riga)
+        if title_lines:
+            last_line = title_lines[-1]
+            last_line_y = y_start + (len(title_lines) - 1) * 45
+            last_bbox = draw.textbbox((title_x, last_line_y), last_line, font=f_title)
+            draw.line([title_x, last_bbox[3] + 5, last_bbox[2] + 10, last_bbox[3] + 5], fill=GREEN_DARK, width=3)
         
         # ==========================================
         # 2. IMMAGINE CENTRATA + DESCRIZIONE SOTTO
@@ -1689,6 +1699,35 @@ def api_add_variante():
     return jsonify({'success': True})
 
 
+@app.route('/api/varianti/<codice>')
+def api_varianti(codice):
+    """Ritorna le varianti di un prodotto dato il codice principale"""
+    conn = get_db()
+    c = conn.cursor()
+
+    # Prima trova l'ID del prodotto
+    c.execute('SELECT id FROM prodotti WHERE codice_principale = ?', (codice,))
+    row = c.fetchone()
+
+    if not row:
+        conn.close()
+        return jsonify({'varianti': [], 'error': 'Prodotto non trovato'})
+
+    prodotto_id = row['id']
+
+    # Prendi le varianti
+    c.execute('''
+        SELECT * FROM varianti
+        WHERE prodotto_id = ?
+        ORDER BY ordine, codice
+    ''', (prodotto_id,))
+
+    varianti = [dict(row) for row in c.fetchall()]
+    conn.close()
+
+    return jsonify({'varianti': varianti, 'count': len(varianti)})
+
+
 @app.route('/api/prodotto/<int:prodotto_id>/ordine_varianti', methods=['POST'])
 def api_ordine_varianti(prodotto_id):
     """Aggiorna ordine delle varianti tramite drag & drop"""
@@ -2248,7 +2287,7 @@ def calcola_altezza_box(num_varianti):
     return TOP_SECTION + IMG_SECTION + HEADER_ROW + (num_varianti * VAR_ROW) + STRIP
 
 
-def impagina_dinamico(prodotti, conn, page_height=3300, col_width=1160, margin_top=80, row_gap=40):
+def impagina_dinamico(prodotti, conn, page_height=3400, col_width=1160, margin_top=60, row_gap=30):
     """
     Impagina i prodotti dinamicamente in base all'altezza reale dei box.
     Layout: 2 colonne, ordine di lettura standard (sinistra-destra, poi giù).
@@ -2633,11 +2672,10 @@ def api_catalog_page_preview(page_num):
 @app.route('/api/catalog/pdf', methods=['POST'])
 def api_generate_catalog_pdf():
     """
-    Genera il PDF completo del catalogo.
+    Genera il PDF completo del catalogo con impaginazione DINAMICA.
     """
     data = request.json or {}
     categoria = data.get('categoria', 'default')
-    items_per_page = data.get('items_per_page', 4)
     template = data.get('template', 'corporate')
 
     conn = get_db()
@@ -2658,24 +2696,24 @@ def api_generate_catalog_pdf():
         conn.close()
         return jsonify({'error': 'Nessun prodotto trovato'}), 404
 
+    # Usa impaginazione dinamica
+    pages = impagina_dinamico(all_products, conn)
+
     # Dimensioni pagina A4 @ 300dpi
     PAGE_W = 2480
     PAGE_H = 3508
     MARGIN = 60
     COL_GAP = 40
-    ROW_GAP = 30
     col_w = (PAGE_W - 2 * MARGIN - COL_GAP) // 2
 
     pages_images = []
 
     # Genera tutte le pagine
-    for page_num in range((len(all_products) + items_per_page - 1) // items_per_page):
-        start_idx = page_num * items_per_page
-        end_idx = start_idx + items_per_page
-        page_products = all_products[start_idx:end_idx]
+    for page_num, page_products in enumerate(pages):
+        # Crea pagina A4
+        page_img = Image.new('RGB', (PAGE_W, PAGE_H), (255, 255, 255))
 
-        # Genera i box
-        boxes = []
+        # Genera e posiziona ogni box
         for prod in page_products:
             c.execute('''
                 SELECT * FROM varianti
@@ -2686,28 +2724,19 @@ def api_generate_catalog_pdf():
 
             if varianti:
                 box_img = box_generator.generate(prod, varianti, template)
-                boxes.append(box_img)
 
-        if not boxes:
-            continue
+                # Ridimensiona per colonna
+                box_scaled = box_generator._contain(box_img, col_w, prod.get('_h', 1600))
 
-        # Crea pagina A4
-        page_img = Image.new('RGB', (PAGE_W, PAGE_H), (255, 255, 255))
+                # Posiziona usando coordinate calcolate da impagina_dinamico
+                col = prod.get('_col', 0)
+                x = MARGIN + col * (col_w + COL_GAP)
+                y = prod.get('_y', MARGIN)
 
-        # Posiziona i box
-        for idx, box in enumerate(boxes):
-            col = idx % 2
-            row = idx // 2
-
-            box_scaled = box_generator._contain(box, col_w, 1600)
-
-            x = MARGIN + col * (col_w + COL_GAP)
-            y = MARGIN + row * (box_scaled.size[1] + ROW_GAP)
-
-            if box_scaled.mode == 'RGBA':
-                page_img.paste(box_scaled, (x, y), box_scaled)
-            else:
-                page_img.paste(box_scaled, (x, y))
+                if box_scaled.mode == 'RGBA':
+                    page_img.paste(box_scaled, (x, y), box_scaled)
+                else:
+                    page_img.paste(box_scaled, (x, y))
 
         pages_images.append(page_img)
 
