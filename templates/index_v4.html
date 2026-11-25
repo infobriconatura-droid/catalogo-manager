@@ -906,7 +906,8 @@
         async function loadVarianti(codice) {
             try {
                 const res = await fetch(`/api/varianti/${codice}`);
-                const varianti = await res.json();
+                const data = await res.json();
+                const varianti = data.varianti || [];
 
                 document.getElementById('variantiCount').textContent = varianti.length;
 
