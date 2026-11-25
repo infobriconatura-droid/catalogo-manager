@@ -1471,13 +1471,14 @@ def api_prodotto(codice):
     if not prodotto:
         conn.close()
         return jsonify({'error': 'Non trovato'}), 404
-    
+
     prodotto = dict(prodotto)
-    
-    c.execute('SELECT * FROM varianti WHERE prodotto_id = ? ORDER BY ordine', (id,))
+    prodotto_id = prodotto['id']
+
+    c.execute('SELECT * FROM varianti WHERE prodotto_id = ? ORDER BY ordine', (prodotto_id,))
     prodotto['varianti'] = [dict(row) for row in c.fetchall()]
-    
-    c.execute('SELECT * FROM task WHERE prodotto_id = ? ORDER BY completato, data_creazione DESC', (id,))
+
+    c.execute('SELECT * FROM task WHERE prodotto_id = ? ORDER BY completato, data_creazione DESC', (prodotto_id,))
     prodotto['task'] = [dict(row) for row in c.fetchall()]
     
     conn.close()
