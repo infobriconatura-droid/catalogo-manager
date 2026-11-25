@@ -2688,76 +2688,52 @@ def impagina_dinamico(prodotti, conn, page_height=3400, col_width=1160, margin_t
     current_page = []
     col1_y = margin_top
     col2_y = margin_top
-    next_col = 0  # 0 = sinistra, 1 = destra
 
     i = 0
     while i < len(prod_heights):
-        prod, box_h_scaled, num_var = prod_heights[i]
+        prod, box_h, num_var = prod_heights[i]
 
-        if next_col == 0:
-            # Prova colonna sinistra
-            if col1_y + box_h_scaled <= page_height:
-                prod['_col'] = 0
-                prod['_y'] = col1_y
-                prod['_h'] = box_h_scaled
-                prod['_num_var'] = num_var
-                current_page.append(prod)
-                col1_y += box_h_scaled + row_gap
-                next_col = 1  # prossimo va a destra
-                i += 1
+        # Scegli la colonna con PIÙ SPAZIO DISPONIBILE (bilanciamento)
+        # Se sono uguali, usa la sinistra (ordine lettura)
+        fits_col0 = col1_y + box_h <= page_height
+        fits_col1 = col2_y + box_h <= page_height
+
+        if fits_col0 and fits_col1:
+            # Entrambe hanno spazio - scegli quella con più spazio (y più basso)
+            if col1_y <= col2_y:
+                chosen_col = 0
             else:
-                # Colonna sinistra piena, verifica se destra ha spazio
-                if col2_y + box_h_scaled <= page_height:
-                    # Prova a mettere in colonna destra
-                    prod['_col'] = 1
-                    prod['_y'] = col2_y
-                    prod['_h'] = box_h_scaled
-                    prod['_num_var'] = num_var
-                    current_page.append(prod)
-                    col2_y += box_h_scaled + row_gap
-                    next_col = 0  # prossimo torna a sinistra (nuova riga)
-                    i += 1
-                else:
-                    # Entrambe piene - nuova pagina
-                    if current_page:
-                        pages.append(current_page)
-                    current_page = []
-                    col1_y = margin_top
-                    col2_y = margin_top
-                    next_col = 0
-                    # Non incremento i, riprovo nella nuova pagina
+                chosen_col = 1
+        elif fits_col0:
+            chosen_col = 0
+        elif fits_col1:
+            chosen_col = 1
         else:
-            # Prova colonna destra
-            if col2_y + box_h_scaled <= page_height:
-                prod['_col'] = 1
-                prod['_y'] = col2_y
-                prod['_h'] = box_h_scaled
-                prod['_num_var'] = num_var
-                current_page.append(prod)
-                col2_y += box_h_scaled + row_gap
-                next_col = 0  # prossimo va a sinistra (nuova riga)
-                i += 1
-            else:
-                # Colonna destra piena, verifica se sinistra ha spazio
-                if col1_y + box_h_scaled <= page_height:
-                    # Prova a mettere in colonna sinistra
-                    prod['_col'] = 0
-                    prod['_y'] = col1_y
-                    prod['_h'] = box_h_scaled
-                    prod['_num_var'] = num_var
-                    current_page.append(prod)
-                    col1_y += box_h_scaled + row_gap
-                    next_col = 1
-                    i += 1
-                else:
-                    # Entrambe piene - nuova pagina
-                    if current_page:
-                        pages.append(current_page)
-                    current_page = []
-                    col1_y = margin_top
-                    col2_y = margin_top
-                    next_col = 0
-                    # Non incremento i, riprovo nella nuova pagina
+            # Nessuna colonna ha spazio - nuova pagina
+            if current_page:
+                pages.append(current_page)
+            current_page = []
+            col1_y = margin_top
+            col2_y = margin_top
+            continue  # Riprova con la nuova pagina
+
+        # Posiziona il prodotto nella colonna scelta
+        if chosen_col == 0:
+            prod['_col'] = 0
+            prod['_y'] = col1_y
+            prod['_h'] = box_h
+            prod['_num_var'] = num_var
+            current_page.append(prod)
+            col1_y += box_h + row_gap
+        else:
+            prod['_col'] = 1
+            prod['_y'] = col2_y
+            prod['_h'] = box_h
+            prod['_num_var'] = num_var
+            current_page.append(prod)
+            col2_y += box_h + row_gap
+
+        i += 1
 
     # Ultima pagina
     if current_page:
