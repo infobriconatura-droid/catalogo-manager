@@ -901,6 +901,15 @@
                     </div>
                 </div>
 
+                <!-- Doppia Colonna Toggle -->
+                <div class="scale-control" style="margin-top: 12px;">
+                    <label class="toggle-row" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+                        <span class="scale-label">📏 Doppia Colonna (box largo)</span>
+                        <input type="checkbox" id="doppiaColonnaToggle" ${p.doppia_colonna ? 'checked' : ''}
+                               style="width: 20px; height: 20px; cursor: pointer;">
+                    </label>
+                </div>
+
                 <!-- Form Fields -->
                 <div class="form-section">
                     <div class="form-section-title">📝 Informazioni</div>
@@ -1014,7 +1023,8 @@
                 titolo: document.getElementById('editTitle').value,
                 descrizione: document.getElementById('editDesc').value,
                 posizione: document.getElementById('editPosition').value,
-                scala_foto: document.getElementById('scaleSlider').value
+                scala_foto: document.getElementById('scaleSlider').value,
+                doppia_colonna: document.getElementById('doppiaColonnaToggle').checked ? 1 : 0
             };
 
             try {

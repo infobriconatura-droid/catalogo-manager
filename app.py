@@ -251,6 +251,12 @@ def init_db():
     except:
         pass
 
+    # Campo doppia_colonna per box che occupano 2 colonne
+    try:
+        c.execute('ALTER TABLE prodotti ADD COLUMN doppia_colonna INTEGER DEFAULT 0')
+    except:
+        pass
+
     # Indici per velocizzare le query
     try:
         c.execute('CREATE INDEX IF NOT EXISTS idx_varianti_codice ON varianti(codice)')
@@ -1533,7 +1539,7 @@ def api_update_prodotto(codice):
     # Campi da aggiornare con log
     campi_log = ['titolo', 'descrizione', 'immagine', 'logo', 'icona1', 'icona2',
                  'icona3', 'icona4', 'template', 'scala_foto', 'stato',
-                 'verificato_catalogo', 'catalogo']
+                 'verificato_catalogo', 'catalogo', 'doppia_colonna']
 
     for campo in campi_log:
         if campo in data and data[campo] is not None:
@@ -1542,7 +1548,7 @@ def api_update_prodotto(codice):
             if str(valore_nuovo) != str(valore_old) if valore_old else valore_nuovo:
                 log_modifica(conn, id, codice_principale, campo, valore_old, valore_nuovo, utente)
 
-    # Update base fields (inclusi nuovi campi v4: stato, verificato_catalogo, catalogo)
+    # Update base fields (inclusi nuovi campi v4: stato, verificato_catalogo, catalogo, doppia_colonna)
     c.execute('''
         UPDATE prodotti
         SET titolo = COALESCE(?, titolo),
@@ -1558,12 +1564,14 @@ def api_update_prodotto(codice):
             stato = COALESCE(?, stato),
             verificato_catalogo = COALESCE(?, verificato_catalogo),
             catalogo = COALESCE(?, catalogo),
+            doppia_colonna = COALESCE(?, doppia_colonna),
             data_modifica = CURRENT_TIMESTAMP
         WHERE id = ?
     ''', (data.get('titolo'), data.get('descrizione'), data.get('immagine'),
           data.get('logo'), data.get('icona1'), data.get('icona2'), data.get('icona3'), data.get('icona4'),
           data.get('template'), data.get('scala_foto'),
-          data.get('stato'), data.get('verificato_catalogo'), data.get('catalogo'), id))
+          data.get('stato'), data.get('verificato_catalogo'), data.get('catalogo'),
+          data.get('doppia_colonna'), id))
 
     # Gestisci posizione e categoria
     posizione = data.get('posizione')
