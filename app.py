@@ -20,6 +20,7 @@ import sqlite3
 import pandas as pd
 import json
 import re
+import hashlib
 from datetime import datetime
 from pathlib import Path
 from flask import Flask, render_template, request, jsonify, send_file, send_from_directory
@@ -38,8 +39,9 @@ ICONE_FOLDER = BASE_DIR / "icone"
 OUTPUT_FOLDER = BASE_DIR / "output_box"
 EXPORT_FOLDER = BASE_DIR / "export_catalogo"
 BACKUP_FOLDER = BASE_DIR / "backups"
+BOX_CACHE_FOLDER = BASE_DIR / "box_cache"
 
-for folder in [UPLOAD_FOLDER, FOTO_FOLDER, LOGO_FOLDER, ICONE_FOLDER, OUTPUT_FOLDER, EXPORT_FOLDER, BACKUP_FOLDER]:
+for folder in [UPLOAD_FOLDER, FOTO_FOLDER, LOGO_FOLDER, ICONE_FOLDER, OUTPUT_FOLDER, EXPORT_FOLDER, BACKUP_FOLDER, BOX_CACHE_FOLDER]:
     folder.mkdir(exist_ok=True)
 
 app = Flask(__name__, template_folder=str(BASE_DIR / "templates"))
@@ -96,6 +98,33 @@ def api_reload():
             return jsonify({'success': False, 'error': 'File WSGI non trovato', 'wsgi': wsgi_path})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/cache/clear', methods=['POST'])
+def api_clear_cache():
+    """Pulisce la cache dei box"""
+    token = request.headers.get('X-Deploy-Token') or request.json.get('token') if request.is_json else None
+    if token != DEPLOY_TOKEN:
+        return jsonify({'error': 'Token non valido'}), 403
+
+    try:
+        count = 0
+        for f in BOX_CACHE_FOLDER.glob('*.png'):
+            f.unlink()
+            count += 1
+        return jsonify({'success': True, 'deleted': count})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+def invalidate_product_cache(prodotto_id):
+    """Invalida la cache per un prodotto specifico (rimuove tutti i box che lo contengono)"""
+    # Non possiamo sapere quali file di cache contengono questo prodotto
+    # perché l'hash è basato sui dati, non sull'ID
+    # Quindi quando un prodotto viene modificato, la prossima generazione
+    # avrà un hash diverso e creerà un nuovo file cache
+    # La vecchia cache rimarrà ma non verrà più usata
+    pass
 
 
 # ============================================
@@ -1353,12 +1382,58 @@ class BoxGenerator:
         
         return img
     
-    def generate(self, prodotto, varianti, template='corporate'):
-        """Genera box con template specificato"""
+    def _get_cache_key(self, prodotto, varianti, template):
+        """Genera hash unico per cache del box"""
+        # Dati che influenzano il rendering del box
+        cache_data = {
+            'template': template,
+            'titolo': prodotto.get('titolo'),
+            'descrizione': prodotto.get('descrizione'),
+            'codice_principale': prodotto.get('codice_principale'),
+            'foto': prodotto.get('foto'),
+            'logo': prodotto.get('logo'),
+            'scala_foto': prodotto.get('scala_foto', 100),
+            'offset_x': prodotto.get('offset_x', 0),
+            'offset_y': prodotto.get('offset_y', 0),
+            'icona1': prodotto.get('icona1'),
+            'icona2': prodotto.get('icona2'),
+            'icona3': prodotto.get('icona3'),
+            'icona4': prodotto.get('icona4'),
+            'varianti': [(v.get('codice'), v.get('descrizione'), v.get('confezione'),
+                         v.get('listino'), v.get('ordine')) for v in varianti]
+        }
+        cache_str = json.dumps(cache_data, sort_keys=True)
+        return hashlib.md5(cache_str.encode()).hexdigest()
+
+    def generate(self, prodotto, varianti, template='corporate', use_cache=True):
+        """Genera box con template specificato, usando cache se disponibile"""
+        if use_cache:
+            cache_key = self._get_cache_key(prodotto, varianti, template)
+            cache_path = BOX_CACHE_FOLDER / f"{cache_key}.png"
+
+            # Se esiste in cache, carica
+            if cache_path.exists():
+                try:
+                    return Image.open(cache_path).convert('RGBA')
+                except:
+                    pass  # Se fallisce, rigenera
+
+        # Genera il box
         if template == 'fullhd':
-            return self.generate_fullhd(prodotto, varianti)
+            box_img = self.generate_fullhd(prodotto, varianti)
         else:
-            return self.generate_corporate(prodotto, varianti)
+            box_img = self.generate_corporate(prodotto, varianti)
+
+        # Salva in cache
+        if use_cache and box_img:
+            try:
+                cache_key = self._get_cache_key(prodotto, varianti, template)
+                cache_path = BOX_CACHE_FOLDER / f"{cache_key}.png"
+                box_img.save(cache_path, 'PNG')
+            except:
+                pass  # Se fallisce il salvataggio, continua comunque
+
+        return box_img
     
     def to_base64(self, img):
         buffer = io.BytesIO()
