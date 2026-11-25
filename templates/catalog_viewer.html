@@ -430,6 +430,18 @@
             await loadCategories();
             setupKeyboardShortcuts();
             setupMouseWheel();
+
+            // Controlla se c'è una categoria nell'URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlCategoria = urlParams.get('categoria');
+            if (urlCategoria && urlCategoria !== 'default') {
+                const select = document.getElementById('categoriaSelect');
+                select.value = urlCategoria;
+                if (select.value === urlCategoria) {
+                    categoria = urlCategoria;
+                    loadCatalog();
+                }
+            }
         }
 
         async function loadCategories() {
