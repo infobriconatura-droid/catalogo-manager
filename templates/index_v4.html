@@ -545,10 +545,40 @@
             transition: all 0.3s ease;
         }
 
+        /* Full HD / Doppia Colonna - Layout orizzontale */
         .box-preview.doppia-colonna {
-            transform: scale(1.3);
-            transform-origin: top left;
-            margin-bottom: 60px;
+            display: flex;
+            flex-direction: row;
+            min-height: 180px;
+        }
+
+        .box-preview.doppia-colonna .box-header {
+            flex-direction: column;
+            width: 45%;
+            border-right: 1px solid #ddd;
+            padding-right: 12px;
+            margin-right: 12px;
+            margin-bottom: 0;
+        }
+
+        .box-preview.doppia-colonna .box-image {
+            width: 100%;
+            height: 140px;
+            margin-bottom: 8px;
+        }
+
+        .box-preview.doppia-colonna .box-text {
+            text-align: center;
+        }
+
+        .box-preview.doppia-colonna .box-table-wrapper {
+            width: 55%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .box-preview.doppia-colonna .box-table {
+            font-size: 10px;
         }
 
         .box-header {
@@ -756,7 +786,7 @@
 
                     <!-- PREVIEW BOX CATALOGO -->
                     <div class="detail-section">
-                        <div class="detail-section-title">🖨️ Preview Box Catalogo</div>
+                        <div class="detail-section-title">🖨️ Preview Box Catalogo <span id="previewModeLabel" style="font-size:10px; color: var(--primary); margin-left:8px;"></span></div>
                         <div class="box-preview-container">
                             <div class="box-preview" id="boxPreview">
                                 <div class="box-header">
@@ -766,20 +796,22 @@
                                         <div class="box-desc" id="boxDesc">Descrizione prodotto...</div>
                                     </div>
                                 </div>
-                                <table class="box-table">
-                                    <thead>
-                                        <tr>
-                                            <th>CODICE</th>
-                                            <th>MODELLO</th>
-                                            <th>U.M.</th>
-                                            <th>M.V.</th>
-                                            <th>CF</th>
-                                            <th style="text-align:right">LISTINO €</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="boxVarianti">
-                                    </tbody>
-                                </table>
+                                <div class="box-table-wrapper">
+                                    <table class="box-table">
+                                        <thead>
+                                            <tr>
+                                                <th>CODICE</th>
+                                                <th>MODELLO</th>
+                                                <th>U.M.</th>
+                                                <th>M.V.</th>
+                                                <th>CF</th>
+                                                <th style="text-align:right">NETTO €</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="boxVarianti">
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -962,10 +994,13 @@
 
         function toggleDoppiaColonna(isDouble) {
             const boxPreview = document.getElementById('boxPreview');
+            const modeLabel = document.getElementById('previewModeLabel');
             if (isDouble) {
                 boxPreview.classList.add('doppia-colonna');
+                modeLabel.textContent = '(FULL HD - 2 colonne)';
             } else {
                 boxPreview.classList.remove('doppia-colonna');
+                modeLabel.textContent = '';
             }
         }
 

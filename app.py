@@ -2922,14 +2922,19 @@ def api_generate_catalog_pdf():
             varianti = [dict(row) for row in c.fetchall()]
 
             if varianti:
-                box_img = box_generator.generate(prod, varianti, template)
+                # Usa fullhd se doppia_colonna attivo
+                prod_template = 'fullhd' if prod.get('doppia_colonna') == 1 else template
+                box_img = box_generator.generate(prod, varianti, prod_template)
 
-                # Ridimensiona per colonna
-                box_scaled = box_generator._contain(box_img, col_w, prod.get('_h', 1600))
+                # Se doppia colonna, usa tutta la larghezza
+                if prod.get('doppia_colonna') == 1:
+                    box_scaled = box_generator._contain(box_img, col_w * 2 + COL_GAP, prod.get('_h', 1200))
+                    x = MARGIN
+                else:
+                    box_scaled = box_generator._contain(box_img, col_w, prod.get('_h', 1600))
+                    col = prod.get('_col', 0)
+                    x = MARGIN + col * (col_w + COL_GAP)
 
-                # Posiziona usando coordinate calcolate da impagina_dinamico
-                col = prod.get('_col', 0)
-                x = MARGIN + col * (col_w + COL_GAP)
                 y = prod.get('_y', MARGIN)
 
                 if box_scaled.mode == 'RGBA':
