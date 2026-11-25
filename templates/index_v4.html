@@ -1092,6 +1092,7 @@
                 const img = document.querySelector('#boxImage img');
                 if (img) {
                     img.style.transform = `scale(${value/100})`;
+                    img.style.transformOrigin = 'center';
                 }
                 // Salva automaticamente
                 saveScala(value);
@@ -1162,10 +1163,12 @@
             const p = currentProduct;
             if (!p) return;
 
-            // Immagine
+            // Immagine con scala
             const boxImg = document.getElementById('boxImage');
+            const scala = p.scala_immagine || 100;
+            const scalaStyle = scala !== 100 ? `transform: scale(${scala/100}); transform-origin: center;` : '';
             boxImg.innerHTML = p.immagine
-                ? `<img src="/api/foto/${p.immagine}" onerror="this.outerHTML='📷'">`
+                ? `<img src="/api/foto/${p.immagine}" style="${scalaStyle}" onerror="this.outerHTML='📷'">`
                 : '📷';
 
             // Titolo e descrizione
