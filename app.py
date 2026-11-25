@@ -1981,7 +1981,19 @@ def api_toggle_controllato(prodotto_id):
 
 @app.route('/api/foto/<filename>')
 def api_foto(filename):
-    return send_from_directory(str(FOTO_FOLDER), filename)
+    # Cerca il file esatto
+    filepath = FOTO_FOLDER / filename
+    if filepath.exists():
+        return send_from_directory(str(FOTO_FOLDER), filename)
+
+    # Cerca con case-insensitive
+    filename_lower = filename.lower()
+    for f in FOTO_FOLDER.iterdir():
+        if f.name.lower() == filename_lower:
+            return send_from_directory(str(FOTO_FOLDER), f.name)
+
+    # Non trovato
+    return '', 404
 
 
 @app.route('/api/logo/<filename>')
