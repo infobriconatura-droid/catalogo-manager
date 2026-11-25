@@ -3,390 +3,292 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📦 Catalogo Manager v4.0</title>
+    <title>Catalogo Manager v4</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
-            --bg: #0a0a12;
-            --bg-card: #12121f;
-            --bg-surface: #1a1a2e;
-            --bg-hover: #252540;
-            --accent: #2d6a4f;
-            --accent-light: #40916c;
-            --green: #10b981;
+            --bg: #0f172a;
+            --bg-card: #1e293b;
+            --bg-surface: #334155;
+            --bg-hover: #475569;
+            --accent: #3b82f6;
+            --accent-light: #60a5fa;
+            --green: #22c55e;
             --red: #ef4444;
-            --yellow: #f59e0b;
-            --orange: #f97316;
-            --blue: #3b82f6;
-            --text: #e2e8f0;
-            --text-muted: #64748b;
-            --border: #2a3f5f;
-            --shadow: rgba(0,0,0,0.3);
+            --yellow: #eab308;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #334155;
         }
 
         body {
-            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            font-family: 'Segoe UI', system-ui, sans-serif;
             background: var(--bg);
             color: var(--text);
-            min-height: 100vh;
+            height: 100vh;
+            overflow: hidden;
         }
 
         /* ===== HEADER ===== */
         .header {
-            background: linear-gradient(135deg, #1b4332, #2d6a4f);
-            padding: 10px 20px;
+            background: linear-gradient(135deg, #1e3a5f, #2563eb);
+            padding: 12px 24px;
             display: flex;
             align-items: center;
-            gap: 16px;
-            box-shadow: 0 4px 20px var(--shadow);
-            position: sticky;
-            top: 0;
-            z-index: 100;
+            gap: 24px;
         }
 
         .logo {
             display: flex;
             align-items: center;
-            gap: 10px;
-        }
-
-        .logo-icon {
-            width: 32px;
-            height: 32px;
-            background: rgba(255,255,255,0.15);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-        }
-
-        .logo h1 {
-            font-size: 1rem;
-            font-weight: 600;
-        }
-
-        .logo span {
-            font-size: 0.65rem;
-            background: rgba(255,255,255,0.2);
-            padding: 2px 6px;
-            border-radius: 8px;
-            margin-left: 6px;
-        }
-
-        .nav-tabs {
-            display: flex;
-            gap: 4px;
-            margin-left: 20px;
-        }
-
-        .nav-tab {
-            padding: 6px 14px;
-            background: transparent;
-            border: none;
-            color: rgba(255,255,255,0.7);
-            cursor: pointer;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            transition: all 0.2s;
-        }
-
-        .nav-tab:hover {
-            background: rgba(255,255,255,0.1);
-            color: #fff;
-        }
-
-        .nav-tab.active {
-            background: rgba(255,255,255,0.2);
-            color: #fff;
-            font-weight: 500;
-        }
-
-        .header-stats {
-            display: flex;
             gap: 12px;
-            margin-left: auto;
-        }
-
-        .header-stat {
-            text-align: center;
-            padding: 4px 10px;
-            background: rgba(0,0,0,0.2);
-            border-radius: 6px;
-        }
-
-        .header-stat-value {
-            font-size: 1rem;
+            font-size: 1.25rem;
             font-weight: 700;
         }
 
-        .header-stat-label {
-            font-size: 0.6rem;
-            opacity: 0.7;
-            text-transform: uppercase;
+        .logo-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 500;
         }
 
-        /* ===== MAIN LAYOUT ===== */
+        /* Categorie nell'header */
+        .cat-tabs {
+            display: flex;
+            gap: 4px;
+            flex: 1;
+            overflow-x: auto;
+        }
+
+        .cat-tab {
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: rgba(255,255,255,0.8);
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .cat-tab:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .cat-tab.active {
+            background: #fff;
+            color: #1e3a5f;
+            font-weight: 600;
+        }
+
+        .cat-tab .count {
+            font-size: 0.7rem;
+            opacity: 0.7;
+            margin-left: 4px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .header-btn {
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.15);
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .header-btn:hover {
+            background: rgba(255,255,255,0.25);
+        }
+
+        /* ===== MAIN LAYOUT - 2 colonne ===== */
         .main {
             display: grid;
-            grid-template-columns: 180px 1fr 720px;
-            height: calc(100vh - 52px);
+            grid-template-columns: 1fr 480px;
+            height: calc(100vh - 56px);
         }
 
-        /* ===== SIDEBAR ===== */
-        .sidebar {
-            background: var(--bg-card);
-            border-right: 1px solid var(--border);
+        /* ===== PANNELLO PRODOTTI ===== */
+        .products-panel {
             display: flex;
             flex-direction: column;
-            overflow-y: auto;
+            overflow: hidden;
         }
 
-        .sidebar-section {
-            padding: 12px;
+        .products-toolbar {
+            padding: 12px 16px;
+            background: var(--bg-card);
             border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
-        .sidebar-title {
-            font-size: 0.65rem;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            margin-bottom: 10px;
-            letter-spacing: 0.5px;
+        .search-box {
+            flex: 1;
+            max-width: 400px;
+            position: relative;
         }
 
-        .category-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 6px;
-        }
-
-        .category-card {
-            background: var(--bg-surface);
+        .search-box input {
+            width: 100%;
+            padding: 10px 16px 10px 40px;
+            background: var(--bg);
             border: 1px solid var(--border);
             border-radius: 8px;
-            padding: 10px 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-align: center;
+            color: var(--text);
+            font-size: 0.9rem;
         }
 
-        .category-card:hover {
-            background: var(--bg-hover);
-            border-color: var(--accent);
-            transform: translateY(-1px);
+        .search-box::before {
+            content: "🔍";
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
         }
 
-        .category-card.active {
-            background: var(--accent);
-            border-color: var(--accent);
+        .toolbar-info {
+            color: var(--text-muted);
+            font-size: 0.85rem;
         }
 
-        .category-icon { font-size: 20px; margin-bottom: 4px; }
-        .category-name { font-size: 0.7rem; font-weight: 500; margin-bottom: 2px; }
-        .category-count { font-size: 0.6rem; color: var(--text-muted); }
-        .category-card.active .category-count { color: rgba(255,255,255,0.8); }
-
-        .quick-actions { display: flex; flex-direction: column; gap: 4px; }
-
-        .quick-action {
+        .pagination {
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 8px 10px;
-            background: var(--bg-surface);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 0.75rem;
-            color: var(--text);
-            text-decoration: none;
-        }
-
-        .quick-action:hover {
-            background: var(--bg-hover);
-            border-color: var(--accent);
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 4px;
-            background: var(--bg);
-            border-radius: 2px;
-            overflow: hidden;
-            margin-top: 6px;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--accent), var(--accent-light));
-            border-radius: 2px;
-        }
-
-        /* ===== CONTENT ===== */
-        .content {
-            background: var(--bg);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .content-header {
-            padding: 12px 16px;
-            background: var(--bg-card);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .content-title { font-size: 1rem; font-weight: 600; }
-        .content-subtitle { font-size: 0.75rem; color: var(--text-muted); }
-
-        .search-filters {
-            display: flex;
-            gap: 10px;
             margin-left: auto;
         }
 
-        .search-input {
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 6px 10px;
-            color: var(--text);
-            width: 200px;
-            font-size: 0.8rem;
-        }
-
-        .search-input:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-
-        .view-toggles {
-            display: flex;
-            background: var(--bg);
-            border-radius: 6px;
-            padding: 3px;
-            border: 1px solid var(--border);
-        }
-
-        .view-toggle {
-            padding: 5px 10px;
-            background: transparent;
+        .pagination button {
+            padding: 6px 12px;
+            background: var(--bg-surface);
             border: none;
-            color: var(--text-muted);
+            color: var(--text);
             cursor: pointer;
-            border-radius: 4px;
-            font-size: 0.75rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
         }
 
-        .view-toggle.active {
-            background: var(--accent);
-            color: #fff;
+        .pagination button:hover {
+            background: var(--bg-hover);
         }
 
-        .product-grid {
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination span {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        /* ===== GRIGLIA PRODOTTI ===== */
+        .products-grid {
             flex: 1;
             overflow-y: auto;
-            padding: 12px 16px;
+            padding: 16px;
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            gap: 12px;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
             align-content: start;
         }
 
         .product-card {
             background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 10px;
+            border-radius: 12px;
             overflow: hidden;
             cursor: pointer;
             transition: all 0.2s;
+            border: 2px solid transparent;
         }
 
         .product-card:hover {
-            border-color: var(--accent);
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px var(--shadow);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
         }
 
         .product-card.selected {
-            border-color: var(--green);
-            border-width: 2px;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
         }
 
-        .product-image {
-            height: 180px;
-            background: var(--bg-surface);
+        .product-img {
+            height: 160px;
+            background: #fff;
             display: flex;
             align-items: center;
             justify-content: center;
-            position: relative;
-            padding: 12px;
+            padding: 8px;
         }
 
-        .product-image img {
+        .product-img img {
             max-width: 100%;
             max-height: 100%;
             object-fit: contain;
         }
 
-        .product-no-image {
-            color: var(--text-muted);
-            font-size: 2.5rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #1a1a2e, #252540);
-            border-radius: 8px;
+        .product-img .no-img {
+            color: #ccc;
+            font-size: 3rem;
         }
 
-        .product-no-image span {
-            font-size: 0.65rem;
+        .product-info {
+            padding: 12px;
+        }
+
+        .product-pos {
+            display: inline-block;
+            background: var(--accent);
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .product-title {
+            font-size: 0.85rem;
+            font-weight: 500;
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .product-code {
+            font-size: 0.75rem;
+            color: var(--text-muted);
             margin-top: 4px;
         }
 
-        .product-badge {
-            position: absolute;
-            top: 6px;
-            right: 6px;
-            background: var(--accent);
-            color: #fff;
-            font-size: 0.6rem;
-            padding: 2px 6px;
-            border-radius: 8px;
-        }
-
-        .product-badge.warning { background: var(--orange); }
-
-        .product-info {
-            padding: 10px;
-            background: var(--bg-card);
-            color: var(--text);
-        }
-        .product-code { font-size: 0.65rem; color: var(--accent-light); font-weight: 600; margin-bottom: 3px; }
-        .product-name { font-size: 0.75rem; font-weight: 500; line-height: 1.3; height: 2.6em; overflow: hidden; margin-bottom: 6px; color: var(--text); }
-        .product-meta { display: flex; justify-content: space-between; align-items: center; }
-        .product-price { font-size: 0.8rem; font-weight: 700; color: var(--green); }
-        .product-position { font-size: 0.65rem; color: var(--text-muted); background: var(--bg); padding: 2px 5px; border-radius: 3px; }
-
-        /* ===== DETAIL PANEL ===== */
-        .detail-panel {
+        /* ===== PANNELLO EDITOR ===== */
+        .editor-panel {
             background: var(--bg-card);
             border-left: 1px solid var(--border);
             display: flex;
             flex-direction: column;
+            overflow: hidden;
         }
 
-        .detail-header {
-            padding: 12px;
+        .editor-header {
+            padding: 16px;
             background: var(--bg-surface);
             border-bottom: 1px solid var(--border);
             display: flex;
@@ -394,1080 +296,570 @@
             justify-content: space-between;
         }
 
-        .detail-title { font-size: 0.85rem; font-weight: 600; }
-        .detail-actions { display: flex; gap: 6px; }
-
-        .detail-content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 12px;
+        .editor-title {
+            font-size: 1.1rem;
+            font-weight: 600;
         }
 
-        .preview-image {
-            background: var(--bg);
-            border-radius: 10px;
+        .editor-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-light);
+        }
+
+        .btn-secondary {
+            background: var(--bg-hover);
+            color: var(--text);
+        }
+
+        .editor-content {
+            flex: 1;
+            overflow-y: auto;
             padding: 16px;
-            margin-bottom: 12px;
-            text-align: center;
-            min-height: 150px;
+        }
+
+        .editor-empty {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            height: 100%;
+            color: var(--text-muted);
+            text-align: center;
+            padding: 32px;
         }
 
-        .preview-image img {
-            max-width: 100%;
-            max-height: 150px;
-            object-fit: contain;
+        .editor-empty-icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+            opacity: 0.5;
         }
 
-        /* Scale Control */
-        .scale-control {
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 12px;
+        /* ===== DETTAGLIO PRODOTTO ===== */
+        .product-detail {
+            display: none;
         }
 
-        .scale-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 10px;
+        .product-detail.active {
+            display: block;
         }
 
-        .scale-label { font-size: 0.75rem; font-weight: 500; }
-        .scale-value { font-size: 1rem; font-weight: 700; color: var(--accent-light); }
-
-        .scale-slider {
-            width: 100%;
-            height: 6px;
-            background: var(--bg-surface);
-            border-radius: 3px;
-            appearance: none;
-            cursor: pointer;
-        }
-
-        .scale-slider::-webkit-slider-thumb {
-            appearance: none;
-            width: 16px;
-            height: 16px;
-            background: var(--accent);
-            border-radius: 50%;
-            cursor: pointer;
-        }
-
-        .scale-presets {
-            display: flex;
-            gap: 4px;
-            margin-top: 8px;
-        }
-
-        .scale-preset {
-            flex: 1;
-            padding: 4px;
-            background: var(--bg-surface);
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            color: var(--text);
-            cursor: pointer;
-            font-size: 0.7rem;
+        .detail-image {
+            background: #fff;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
             text-align: center;
         }
 
-        .scale-preset:hover { background: var(--bg-hover); border-color: var(--accent); }
-        .scale-preset.active { background: var(--accent); border-color: var(--accent); }
-
-        /* Position Control */
-        .position-control {
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 12px;
+        .detail-image img {
+            max-width: 100%;
+            max-height: 200px;
+            object-fit: contain;
         }
 
-        .position-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .position-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 6px;
-        }
-
-        .position-slot {
-            aspect-ratio: 1;
+        .detail-section {
             background: var(--bg-surface);
-            border: 2px dashed var(--border);
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            cursor: pointer;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
         }
 
-        .position-slot:hover { border-color: var(--accent); background: var(--bg-hover); }
-        .position-slot.occupied { border-style: solid; }
-        .position-slot.current { border-color: var(--green); background: rgba(16, 185, 129, 0.1); color: var(--green); }
+        .detail-section-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--accent-light);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
 
-        /* Form */
-        .form-section { margin-bottom: 16px; }
-        .form-section-title { font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; letter-spacing: 0.5px; }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-        .form-group { margin-bottom: 10px; }
-        .form-group.full { grid-column: span 2; }
-        .form-label { display: block; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 4px; }
+        .detail-row {
+            display: grid;
+            grid-template-columns: 100px 1fr;
+            gap: 8px;
+            margin-bottom: 8px;
+            align-items: center;
+        }
 
-        .form-input {
+        .detail-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .detail-value {
+            font-size: 0.9rem;
+        }
+
+        .detail-input {
             width: 100%;
+            padding: 8px 12px;
             background: var(--bg);
             border: 1px solid var(--border);
             border-radius: 6px;
-            padding: 8px 10px;
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+
+        .detail-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        textarea.detail-input {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        /* ===== TABELLA VARIANTI ===== */
+        .varianti-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+        }
+
+        .varianti-table th {
+            text-align: left;
+            padding: 8px;
+            background: var(--bg);
+            font-weight: 600;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .varianti-table td {
+            padding: 6px 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .varianti-table tr:hover {
+            background: var(--bg-hover);
+        }
+
+        .var-input {
+            width: 100%;
+            padding: 4px 6px;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 4px;
             color: var(--text);
             font-size: 0.8rem;
         }
 
-        .form-input:focus { outline: none; border-color: var(--accent); }
-        .form-input:disabled { opacity: 0.5; }
-
-        /* Buttons */
-        .btn {
-            padding: 8px 14px;
-            border: none;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
+        .var-input:hover {
+            background: var(--bg);
         }
 
-        .btn-primary { background: var(--accent); color: #fff; }
-        .btn-primary:hover { background: var(--accent-light); }
-        .btn-secondary { background: var(--bg-surface); color: var(--text); border: 1px solid var(--border); }
-        .btn-secondary:hover { background: var(--bg-hover); }
-        .btn-danger { background: var(--red); color: #fff; }
-        .btn-icon { width: 28px; height: 28px; padding: 0; }
+        .var-input:focus {
+            outline: none;
+            background: var(--bg);
+            border-color: var(--accent);
+        }
 
-        .status-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 4px; }
-        .status-dot.green { background: var(--green); }
-        .status-dot.orange { background: var(--orange); }
+        .var-listino {
+            text-align: right;
+            font-weight: 600;
+            color: var(--green);
+        }
 
-        /* Toast */
+        .var-actions {
+            display: flex;
+            gap: 4px;
+        }
+
+        .var-btn {
+            padding: 4px 8px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            opacity: 0.7;
+        }
+
+        .var-btn:hover {
+            opacity: 1;
+            background: var(--bg);
+        }
+
+        /* ===== TOAST ===== */
         .toast {
             position: fixed;
             bottom: 20px;
             right: 20px;
+            padding: 12px 20px;
             background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 12px 16px;
-            box-shadow: 0 8px 30px var(--shadow);
-            display: none;
-            align-items: center;
-            gap: 10px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
             z-index: 1000;
+            animation: slideIn 0.3s ease;
         }
-
-        .toast.show { display: flex; animation: slideIn 0.3s ease; }
-        .toast.error { border-color: var(--red); }
-        .toast.success { border-color: var(--green); }
 
         @keyframes slideIn {
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
         }
 
-        /* Loading */
-        .loading {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 40px;
-            color: var(--text-muted);
-        }
-
-        .spinner {
-            width: 30px;
-            height: 30px;
-            border: 3px solid var(--border);
-            border-top-color: var(--accent);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-right: 12px;
-        }
-
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* Varianti - Tabella inline editabile */
-        .varianti-list {
-            background: var(--bg);
-            border-radius: 6px;
-            font-size: 0.75rem;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-
-        .varianti-header {
-            display: grid;
-            grid-template-columns: 70px 1fr 50px 50px 60px 80px 32px;
-            gap: 4px;
-            padding: 8px 6px;
-            background: var(--bg-surface);
-            border-bottom: 2px solid var(--border);
-            font-weight: 600;
-            font-size: 0.65rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            position: sticky;
-            top: 0;
-        }
-
-        .variante-row {
-            display: grid;
-            grid-template-columns: 70px 1fr 50px 50px 60px 80px 32px;
-            gap: 4px;
-            padding: 4px 6px;
-            border-bottom: 1px solid var(--border);
-            align-items: center;
-        }
-
-        .variante-row:last-child { border-bottom: none; }
-
-        .variante-row:hover {
-            background: var(--bg-hover);
-        }
-
-        .variante-row .codice {
-            font-weight: 600;
-            color: var(--accent-light);
-            font-size: 0.7rem;
-        }
-
-        .variante-input {
-            background: var(--bg-surface);
-            border: 1px solid transparent;
-            color: var(--text);
-            padding: 4px 6px;
-            border-radius: 4px;
-            font-size: 0.7rem;
-            width: 100%;
-            transition: all 0.2s;
-        }
-
-        .variante-input:hover {
-            border-color: var(--border);
-        }
-
-        .variante-input:focus {
-            outline: none;
-            border-color: var(--accent);
-            background: var(--bg-card);
-        }
-
-        .variante-input.modified {
-            border-color: var(--yellow);
-            background: rgba(245, 158, 11, 0.1);
-        }
-
-        .variante-input.prezzo {
-            text-align: right;
-            color: var(--green);
-        }
-
-        .variante-delete-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            padding: 4px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.7rem;
-            transition: all 0.2s;
-            opacity: 0.5;
-        }
-
-        .variante-row:hover .variante-delete-btn {
-            opacity: 1;
-        }
-
-        .variante-delete-btn:hover {
-            background: var(--red);
-            color: white;
-        }
-
-        /* Modal edit variante */
-        .variante-modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-
-        .variante-modal-content {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 20px;
-            width: 400px;
-            max-width: 90vw;
-        }
-
-        .variante-modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-        }
-
-        .variante-modal-header h3 {
-            font-size: 1rem;
-            color: var(--text);
-        }
-
-        .variante-modal-close {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-size: 1.2rem;
-            cursor: pointer;
-        }
-
-        .variante-form-group {
-            margin-bottom: 12px;
-        }
-
-        .variante-form-group label {
-            display: block;
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            margin-bottom: 4px;
-        }
-
-        .variante-form-group input {
-            width: 100%;
-            padding: 8px 10px;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: var(--text);
-            font-size: 0.85rem;
-        }
-
-        .variante-form-group input:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-
-        .variante-modal-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 8px;
-            margin-top: 16px;
-        }
-
-        .variante-modal-actions button {
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            cursor: pointer;
-            border: none;
-        }
-
-        .variante-btn-cancel {
-            background: var(--bg-surface);
-            color: var(--text);
-        }
-
-        .variante-btn-save {
-            background: var(--green);
-            color: white;
-        }
+        .toast.success { border-left: 4px solid var(--green); }
+        .toast.error { border-left: 4px solid var(--red); }
     </style>
 </head>
 <body>
-    <div class="header">
+    <!-- HEADER -->
+    <header class="header">
         <div class="logo">
-            <div class="logo-icon">📦</div>
-            <h1>Catalogo Manager <span>v4.0</span></h1>
+            📦 Catalogo Manager <span class="logo-badge">v4</span>
         </div>
 
-        <nav class="nav-tabs">
-            <button class="nav-tab active" data-tab="prodotti">📋 Prodotti</button>
-            <button class="nav-tab" data-tab="preview" onclick="window.location='/viewer'">👁️ Preview</button>
-            <button class="nav-tab" data-tab="export">📤 Export</button>
-        </nav>
-
-        <div class="header-stats">
-            <div class="header-stat">
-                <div class="header-stat-value" id="totalProducts">-</div>
-                <div class="header-stat-label">Prodotti</div>
-            </div>
-            <div class="header-stat">
-                <div class="header-stat-value" id="totalCategories">-</div>
-                <div class="header-stat-label">Categorie</div>
-            </div>
+        <div class="cat-tabs" id="catTabs">
+            <!-- Popolato da JS -->
         </div>
-    </div>
 
-    <div class="main">
-        <!-- SIDEBAR -->
-        <div class="sidebar">
-            <div class="sidebar-section">
-                <div class="sidebar-title">📁 Categorie</div>
-                <div class="category-grid" id="categoryGrid">
-                    <div class="loading"><div class="spinner"></div></div>
+        <div class="header-actions">
+            <button class="header-btn" onclick="window.location='/viewer'">👁️ Preview</button>
+            <button class="header-btn" onclick="exportPDF()">📄 PDF</button>
+        </div>
+    </header>
+
+    <!-- MAIN -->
+    <main class="main">
+        <!-- Pannello Prodotti -->
+        <div class="products-panel">
+            <div class="products-toolbar">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Cerca prodotto..." onkeyup="debounceSearch()">
                 </div>
+                <span class="toolbar-info" id="toolbarInfo">Caricamento...</span>
+                <div class="pagination" id="pagination"></div>
             </div>
-
-            <div class="sidebar-section">
-                <div class="sidebar-title">⚡ Azioni Rapide</div>
-                <div class="quick-actions">
-                    <a href="/viewer" class="quick-action">👁️ Preview Catalogo</a>
-                    <a href="#" class="quick-action" onclick="exportPDF()">📄 Genera PDF</a>
-                    <a href="#" class="quick-action" onclick="exportInDesign()">📝 Script InDesign</a>
-                    <a href="#" class="quick-action" onclick="showImportModal()">📊 Import CSV</a>
-                </div>
-            </div>
-
-            <div class="sidebar-section">
-                <div class="sidebar-title">📈 Statistiche</div>
-                <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px;">
-                    <span class="status-dot green"></span> Con foto: <span id="withPhoto">-</span>
-                </div>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="photoProgress" style="width: 0%;"></div>
-                </div>
-                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 10px; margin-bottom: 6px;">
-                    <span class="status-dot orange"></span> Senza foto: <span id="withoutPhoto">-</span>
-                </div>
+            <div class="products-grid" id="productsGrid">
+                <!-- Popolato da JS -->
             </div>
         </div>
 
-        <!-- CONTENT -->
-        <div class="content">
-            <div class="content-header">
-                <div>
-                    <div class="content-title" id="currentCategoryName">Tutti i Prodotti</div>
-                    <div class="content-subtitle" id="currentCategoryCount">Caricamento...</div>
+        <!-- Pannello Editor -->
+        <div class="editor-panel">
+            <div class="editor-header">
+                <span class="editor-title">📝 Editor Prodotto</span>
+                <div class="editor-actions">
+                    <button class="btn btn-primary" onclick="saveProdotto()">💾 Salva</button>
+                </div>
+            </div>
+            <div class="editor-content">
+                <!-- Stato vuoto -->
+                <div class="editor-empty" id="editorEmpty">
+                    <div class="editor-empty-icon">📦</div>
+                    <p>Seleziona un prodotto dalla lista<br>per modificarlo</p>
                 </div>
 
-                <div class="search-filters">
-                    <input type="text" class="search-input" id="searchInput" placeholder="🔍 Cerca codice o nome...">
+                <!-- Dettaglio prodotto -->
+                <div class="product-detail" id="productDetail">
+                    <div class="detail-image" id="detailImage"></div>
 
-                    <div class="view-toggles">
-                        <button class="view-toggle active" data-view="grid">📦</button>
-                        <button class="view-toggle" data-view="list">📋</button>
+                    <div class="detail-section">
+                        <div class="detail-section-title">ℹ️ Informazioni</div>
+                        <div class="detail-row">
+                            <span class="detail-label">Codice</span>
+                            <span class="detail-value" id="detailCodice"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Posizione</span>
+                            <input type="number" class="detail-input" id="detailPosizione" style="width: 80px;">
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Titolo</span>
+                            <input type="text" class="detail-input" id="detailTitolo">
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Descrizione</span>
+                            <textarea class="detail-input" id="detailDescrizione"></textarea>
+                        </div>
                     </div>
 
-                    <div class="pagination-controls" style="display: flex; align-items: center; gap: 8px; margin-left: 16px;">
-                        <button id="prevPageBtn" onclick="goToPage(currentPage - 1)" class="btn btn-sm" style="padding: 4px 10px;">◀ Prec</button>
-                        <span id="paginationInfo" style="font-size: 0.8rem; color: var(--text-muted);">Pag. 1 di 1</span>
-                        <button id="nextPageBtn" onclick="goToPage(currentPage + 1)" class="btn btn-sm" style="padding: 4px 10px;">Succ ▶</button>
+                    <div class="detail-section">
+                        <div class="detail-section-title">📦 Varianti (<span id="variantiCount">0</span>)</div>
+                        <table class="varianti-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:70px">Codice</th>
+                                    <th>Modello</th>
+                                    <th style="width:50px">UM</th>
+                                    <th style="width:50px">MV</th>
+                                    <th style="width:50px">CF</th>
+                                    <th style="width:70px">Listino €</th>
+                                    <th style="width:40px"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="variantiBody">
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
-
-            <div class="product-grid" id="productGrid">
-                <div class="loading"><div class="spinner"></div> Caricamento prodotti...</div>
-            </div>
         </div>
-
-        <!-- DETAIL PANEL -->
-        <div class="detail-panel">
-            <div class="detail-header">
-                <div class="detail-title">✏️ Editor Prodotto</div>
-                <div class="detail-actions">
-                    <button class="btn btn-icon btn-secondary" onclick="deleteProduct()" title="Elimina">🗑️</button>
-                    <button class="btn btn-primary" onclick="saveProduct()">💾 Salva</button>
-                </div>
-            </div>
-
-            <div class="detail-content" id="detailContent">
-                <div style="text-align: center; padding: 40px; color: var(--text-muted);">
-                    <div style="font-size: 3rem; margin-bottom: 10px;">👆</div>
-                    <p>Seleziona un prodotto dalla griglia</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="toast" id="toast"></div>
+    </main>
 
     <script>
         // State
-        let currentCategory = 'Tutto';
+        let currentCategory = 'AGRICOLTURA';
+        let currentPage = 1;
         let currentProduct = null;
-        let products = [];
-        let categories = [];
+        let searchTimeout = null;
+        const perPage = 50;
 
-        // Icons per categoria
-        const categoryIcons = {
-            'Tutto': '📦',
-            'Agricoltura': '🌱',
-            'Brico': '🔧',
-            'Idraulica': '🚰',
-            'Vino Olio Macello': '🍷',
-            'Pet e Zootecnia': '🐾',
-            'Fumisteria': '🔥',
-            'Elettricita': '⚡',
-            'None': '❓'
-        };
+        const categories = [
+            { id: 'Tutto', label: 'Tutto' },
+            { id: 'AGRICOLTURA', label: 'Agricoltura' },
+            { id: 'VINO_OLIO_MACELLO', label: 'Vino/Olio' },
+            { id: 'PET_ZOOTECNIA', label: 'Pet/Zoo' },
+            { id: 'BRICO', label: 'Brico' },
+            { id: 'IDRAULICA', label: 'Idraulica' },
+            { id: 'FUMISTERIA', label: 'Fumisteria' },
+            { id: 'ELETTRICITA', label: 'Elettricità' }
+        ];
 
         // Init
-        document.addEventListener('DOMContentLoaded', async () => {
-            loadCategories();
-            await loadProducts();
-
-            // Search
-            document.getElementById('searchInput').addEventListener('input', debounce(filterProducts, 300));
-
-            // Check URL param for direct edit
-            const urlParams = new URLSearchParams(window.location.search);
-            const editId = urlParams.get('edit');
-            if (editId) {
-                // Cerca il prodotto e selezionalo
-                const prodToEdit = products.find(p => p.id == editId);
-                if (prodToEdit) {
-                    selectProduct(prodToEdit.id);
-                    // Scroll to it
-                    setTimeout(() => {
-                        const card = document.querySelector(`.product-card.selected`);
-                        if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }, 100);
-                } else {
-                    // Prodotto non nella lista corrente, caricalo direttamente
-                    try {
-                        const res = await fetch(`/api/prodotto/${editId}`);
-                        if (res.ok) {
-                            const data = await res.json();
-                            currentProduct = data.prodotto;
-                            renderDetail();
-                        }
-                    } catch (err) {
-                        console.error('Prodotto non trovato:', editId);
-                    }
-                }
-            }
+        document.addEventListener('DOMContentLoaded', () => {
+            renderCategoryTabs();
+            loadProducts();
         });
 
-        // Debounce
-        function debounce(func, wait) {
-            let timeout;
-            return function(...args) {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => func.apply(this, args), wait);
-            };
-        }
-
-        // Load categories
-        async function loadCategories() {
-            try {
-                const res = await fetch('/api/catalog/categories');
-                const data = await res.json();
-                categories = data.categories || [];
-
-                // Add "Tutto" at start
-                if (!categories.find(c => c.categoria === 'Tutto')) {
-                    categories.unshift({ categoria: 'Tutto', count: categories.reduce((a, c) => a + c.count, 0) });
-                }
-
-                renderCategories();
-                updateStats();
-            } catch (err) {
-                console.error('Error loading categories:', err);
-            }
-        }
-
-        // Render categories
-        function renderCategories() {
-            const grid = document.getElementById('categoryGrid');
-            grid.innerHTML = categories.map(cat => `
-                <div class="category-card ${cat.categoria === currentCategory ? 'active' : ''}"
-                     onclick="selectCategory('${cat.categoria}')">
-                    <div class="category-icon">${categoryIcons[cat.categoria] || '📁'}</div>
-                    <div class="category-name">${cat.categoria || 'Senza cat.'}</div>
-                    <div class="category-count">${cat.count} prod.</div>
-                </div>
+        function renderCategoryTabs() {
+            const container = document.getElementById('catTabs');
+            container.innerHTML = categories.map(cat => `
+                <button class="cat-tab ${cat.id === currentCategory ? 'active' : ''}"
+                        onclick="selectCategory('${cat.id}')">
+                    ${cat.label}
+                </button>
             `).join('');
-
-            document.getElementById('totalCategories').textContent = categories.length;
         }
 
-        // Select category
-        function selectCategory(cat) {
-            currentCategory = cat;
-            renderCategories();
+        function selectCategory(catId) {
+            currentCategory = catId;
+            currentPage = 1;
+            renderCategoryTabs();
             loadProducts();
         }
 
-        // Paginazione
-        let currentPage = 1;
-        let totalPages = 1;
-        const perPage = 100;
+        async function loadProducts() {
+            const grid = document.getElementById('productsGrid');
+            const search = document.getElementById('searchInput').value;
 
-        // Load products
-        async function loadProducts(search = '', page = 1) {
-            const grid = document.getElementById('productGrid');
-            grid.innerHTML = '<div class="loading"><div class="spinner"></div> Caricamento...</div>';
+            grid.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted)">Caricamento...</div>';
 
             try {
-                let url = `/api/prodotti?per_page=${perPage}&page=${page}`;
+                let url = `/api/prodotti?categoria=${currentCategory}&page=${currentPage}&per_page=${perPage}`;
                 if (search) url += `&search=${encodeURIComponent(search)}`;
-
-                // Filtro per categoria
-                if (currentCategory && currentCategory !== 'Tutto') {
-                    url += `&categoria=${encodeURIComponent(currentCategory)}`;
-                }
 
                 const res = await fetch(url);
                 const data = await res.json();
-                products = data.prodotti || [];
-                currentPage = data.page || 1;
-                totalPages = data.pages || 1;
 
-                renderProducts();
-                updateCategoryInfo();
-                updatePagination();
+                renderProducts(data.prodotti || []);
+                updateToolbarInfo(data);
+                renderPagination(data);
             } catch (err) {
-                grid.innerHTML = '<div class="loading">Errore nel caricamento</div>';
+                grid.innerHTML = '<div style="color:var(--red); padding:40px;">Errore caricamento</div>';
             }
         }
 
-        // Update pagination display
-        function updatePagination() {
-            const info = document.getElementById('paginationInfo');
-            if (info) {
-                info.textContent = `Pag. ${currentPage} di ${totalPages}`;
-            }
-            const prevBtn = document.getElementById('prevPageBtn');
-            const nextBtn = document.getElementById('nextPageBtn');
-            if (prevBtn) prevBtn.disabled = currentPage <= 1;
-            if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
-        }
+        function renderProducts(products) {
+            const grid = document.getElementById('productsGrid');
 
-        // Go to page
-        function goToPage(page) {
-            if (page >= 1 && page <= totalPages) {
-                const search = document.getElementById('searchInput').value;
-                loadProducts(search, page);
-            }
-        }
-
-        // Filter products
-        function filterProducts() {
-            const search = document.getElementById('searchInput').value;
-            loadProducts(search);
-        }
-
-        // Render products
-        function renderProducts() {
-            const grid = document.getElementById('productGrid');
-
-            if (products.length === 0) {
-                grid.innerHTML = '<div class="loading">Nessun prodotto trovato</div>';
+            if (!products.length) {
+                grid.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted)">Nessun prodotto trovato</div>';
                 return;
             }
 
             grid.innerHTML = products.map(p => `
-                <div class="product-card ${currentProduct?.id === p.id ? 'selected' : ''}"
-                     onclick="selectProduct(${p.id})">
-                    <div class="product-image">
-                        ${p.immagine ?
-                            `<img src="/api/foto/${p.immagine}" onerror="this.parentElement.innerHTML='<div class=product-no-image>📷<span>No foto</span></div>'">` :
-                            '<div class="product-no-image">📷<span>No foto</span></div>'}
-                        ${currentCategory && currentCategory !== 'Tutto' ?
-                            (p.posizione ? `<span class="product-badge">Pos. ${p.posizione}</span>` : '<span class="product-badge warning">No Pos</span>')
-                            : ''}
+                <div class="product-card ${currentProduct?.codice_principale === p.codice_principale ? 'selected' : ''}"
+                     onclick="selectProduct('${p.codice_principale}')">
+                    <div class="product-img">
+                        ${p.foto ? `<img src="/foto_prodotti/${p.foto}" onerror="this.outerHTML='<span class=no-img>📷</span>'">` : '<span class="no-img">📷</span>'}
                     </div>
                     <div class="product-info">
-                        <div class="product-code">ART. ${p.codice_principale}</div>
-                        <div class="product-name">${p.titolo || p.descrizione?.substring(0, 50) || 'Senza titolo'}</div>
-                        <div class="product-meta">
-                            <span class="product-price">${p.prezzo_catalogo ? '€' + p.prezzo_catalogo : '-'}</span>
-                            <span class="product-position">${p.num_varianti || 0} var.</span>
-                        </div>
+                        <span class="product-pos">Pos. ${p.posizione || '-'}</span>
+                        <div class="product-title">${p.titolo || 'Senza titolo'}</div>
+                        <div class="product-code">Cod. ${p.codice_principale}</div>
                     </div>
                 </div>
             `).join('');
         }
 
-        // Select product
-        async function selectProduct(id) {
-            currentProduct = products.find(p => p.id === id);
-            renderProducts();
-            renderDetail();
+        function updateToolbarInfo(data) {
+            const info = document.getElementById('toolbarInfo');
+            info.textContent = `${data.total || 0} prodotti`;
         }
 
-        // Render detail panel
-        function renderDetail() {
-            if (!currentProduct) return;
+        function renderPagination(data) {
+            const container = document.getElementById('pagination');
+            const totalPages = Math.ceil((data.total || 0) / perPage);
 
-            const p = currentProduct;
-            const content = document.getElementById('detailContent');
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
 
-            content.innerHTML = `
-                <!-- Preview Image -->
-                <div class="preview-image">
-                    ${p.immagine ?
-                        `<img src="/api/foto/${p.immagine}" onerror="this.src='/api/foto/no-image.png'">` :
-                        '<div style="font-size: 3rem; color: var(--text-muted);">📷</div><div style="color: var(--text-muted); margin-top: 8px; font-size: 0.75rem;">Nessuna foto</div>'}
-                </div>
-
-                <!-- Scale Control -->
-                <div class="scale-control">
-                    <div class="scale-header">
-                        <span class="scale-label">📐 Scala Foto</span>
-                        <span class="scale-value" id="scaleValue">${p.scala_foto || 100}%</span>
-                    </div>
-                    <input type="range" class="scale-slider" id="scaleSlider"
-                           min="50" max="150" value="${p.scala_foto || 100}"
-                           oninput="updateScale(this.value)">
-                    <div class="scale-presets">
-                        <button class="scale-preset ${p.scala_foto == 50 ? 'active' : ''}" onclick="setScale(50)">50%</button>
-                        <button class="scale-preset ${p.scala_foto == 75 ? 'active' : ''}" onclick="setScale(75)">75%</button>
-                        <button class="scale-preset ${!p.scala_foto || p.scala_foto == 100 ? 'active' : ''}" onclick="setScale(100)">100%</button>
-                        <button class="scale-preset ${p.scala_foto == 125 ? 'active' : ''}" onclick="setScale(125)">125%</button>
-                        <button class="scale-preset ${p.scala_foto == 150 ? 'active' : ''}" onclick="setScale(150)">150%</button>
-                    </div>
-                </div>
-
-                <!-- Form Fields -->
-                <div class="form-section">
-                    <div class="form-section-title">📝 Informazioni</div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Codice</label>
-                            <input type="text" class="form-input" id="editCode" value="${p.codice_principale}" disabled>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Posizione</label>
-                            <input type="number" class="form-input" id="editPosition" value="${p.posizione || ''}" placeholder="Es: 1">
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Titolo</label>
-                        <input type="text" class="form-input" id="editTitle" value="${p.titolo || ''}">
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Descrizione</label>
-                        <textarea class="form-input" id="editDesc" rows="3">${p.descrizione || ''}</textarea>
-                    </div>
-                </div>
-
-                <!-- Varianti -->
-                ${p.num_varianti > 0 ? `
-                <div class="form-section">
-                    <div class="form-section-title">📦 Varianti (${p.num_varianti})</div>
-                    <div class="varianti-list" id="variantiList">
-                        <div class="loading"><div class="spinner"></div></div>
-                    </div>
-                </div>
-                ` : ''}
+            container.innerHTML = `
+                <button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>◀ Prec</button>
+                <span>Pag. ${currentPage} di ${totalPages}</span>
+                <button onclick="changePage(${currentPage + 1})" ${currentPage >= totalPages ? 'disabled' : ''}>Succ ▶</button>
             `;
+        }
 
-            // Load varianti if any
-            if (p.num_varianti > 0) {
-                loadVarianti(p.codice_principale);
+        function changePage(page) {
+            currentPage = page;
+            loadProducts();
+        }
+
+        function debounceSearch() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                currentPage = 1;
+                loadProducts();
+            }, 300);
+        }
+
+        async function selectProduct(codice) {
+            try {
+                const res = await fetch(`/api/prodotto/${codice}`);
+                currentProduct = await res.json();
+                renderProductDetail();
+                loadVarianti(codice);
+
+                // Update selection in grid
+                document.querySelectorAll('.product-card').forEach(c => c.classList.remove('selected'));
+                event.currentTarget.classList.add('selected');
+            } catch (err) {
+                showToast('Errore caricamento prodotto', 'error');
             }
         }
 
-        // Update scale
-        function updateScale(value) {
-            document.getElementById('scaleValue').textContent = value + '%';
-            document.querySelectorAll('.scale-preset').forEach(btn => {
-                btn.classList.toggle('active', btn.textContent === value + '%');
-            });
+        function renderProductDetail() {
+            const p = currentProduct;
+            if (!p) return;
+
+            document.getElementById('editorEmpty').style.display = 'none';
+            document.getElementById('productDetail').classList.add('active');
+
+            // Immagine
+            const imgContainer = document.getElementById('detailImage');
+            imgContainer.innerHTML = p.foto
+                ? `<img src="/foto_prodotti/${p.foto}" onerror="this.src='/static/no-image.png'">`
+                : '<div style="color:#999; font-size:3rem">📷</div>';
+
+            // Info
+            document.getElementById('detailCodice').textContent = p.codice_principale;
+            document.getElementById('detailPosizione').value = p.posizione || '';
+            document.getElementById('detailTitolo').value = p.titolo || '';
+            document.getElementById('detailDescrizione').value = p.descrizione || '';
         }
 
-        function setScale(value) {
-            document.getElementById('scaleSlider').value = value;
-            updateScale(value);
-        }
-
-        function setPosition(pos) {
-            document.getElementById('editPosition').value = pos;
-            document.querySelectorAll('.position-slot').forEach((slot, idx) => {
-                slot.classList.toggle('current', idx + 1 === pos);
-                slot.textContent = (idx + 1) + (idx + 1 === pos ? ' ✓' : '');
-            });
-        }
-
-        // Load varianti - tabella inline editabile
         async function loadVarianti(codice) {
             try {
                 const res = await fetch(`/api/varianti/${codice}`);
-                const data = await res.json();
-                const list = document.getElementById('variantiList');
+                const varianti = await res.json();
 
-                if (data.varianti?.length > 0) {
-                    list.innerHTML = `
-                        <div class="varianti-header">
-                            <span>Codice</span>
-                            <span>Modello</span>
-                            <span>U.M.</span>
-                            <span>M.V.</span>
-                            <span>CF</span>
-                            <span>Listino €</span>
-                            <span></span>
-                        </div>
-                        ${data.varianti.map(v => `
-                        <div class="variante-row" data-codice="${v.codice}">
-                            <span class="codice">${v.codice || '-'}</span>
-                            <input type="text" class="variante-input" data-field="modello" value="${(v.modello || '').replace(/"/g, '&quot;')}" onchange="markVarianteModified(this)" onblur="saveVarianteField('${v.codice}', 'modello', this.value)">
-                            <input type="text" class="variante-input" data-field="um" value="${v.um || ''}" onchange="markVarianteModified(this)" onblur="saveVarianteField('${v.codice}', 'um', this.value)">
-                            <input type="text" class="variante-input" data-field="mv" value="${v.mv || ''}" onchange="markVarianteModified(this)" onblur="saveVarianteField('${v.codice}', 'mv', this.value)">
-                            <input type="text" class="variante-input" data-field="cf" value="${v.cf || ''}" onchange="markVarianteModified(this)" onblur="saveVarianteField('${v.codice}', 'cf', this.value)">
-                            <input type="text" class="variante-input prezzo" data-field="listino" value="${v.listino || ''}" onchange="markVarianteModified(this)" onblur="saveVarianteField('${v.codice}', 'listino', this.value)">
-                            <button class="variante-delete-btn" onclick="deleteVariante('${v.codice}')" title="Elimina">🗑️</button>
-                        </div>
-                    `).join('')}
-                    `;
-                } else {
-                    list.innerHTML = '<div style="text-align: center; padding: 10px; color: var(--text-muted);">Nessuna variante</div>';
-                }
+                document.getElementById('variantiCount').textContent = varianti.length;
+
+                const tbody = document.getElementById('variantiBody');
+                tbody.innerHTML = varianti.map(v => `
+                    <tr>
+                        <td>${v.codice}</td>
+                        <td><input class="var-input" value="${v.modello || ''}" onblur="saveVariante('${v.codice}', 'modello', this.value)"></td>
+                        <td><input class="var-input" value="${v.um || ''}" style="width:40px" onblur="saveVariante('${v.codice}', 'um', this.value)"></td>
+                        <td><input class="var-input" value="${v.mv || ''}" style="width:40px" onblur="saveVariante('${v.codice}', 'mv', this.value)"></td>
+                        <td><input class="var-input" value="${v.cf || ''}" style="width:40px" onblur="saveVariante('${v.codice}', 'cf', this.value)"></td>
+                        <td><input class="var-input var-listino" value="${v.listino || ''}" style="width:60px; text-align:right" onblur="saveVariante('${v.codice}', 'listino', this.value)"></td>
+                        <td>
+                            <button class="var-btn" onclick="toggleStampa('${v.codice}')" title="Escludi/Includi da stampa">
+                                ${v.escludi_stampa ? '🚫' : '✅'}
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
             } catch (err) {
                 console.error(err);
             }
         }
 
-        // Mark input as modified
-        function markVarianteModified(input) {
-            input.classList.add('modified');
-        }
-
-        // Save single field on blur
-        async function saveVarianteField(codice, field, value) {
-            const input = document.querySelector(`.variante-row[data-codice="${codice}"] input[data-field="${field}"]`);
+        async function saveVariante(codice, field, value) {
             try {
-                const res = await fetch(`/api/variante/${codice}`, {
+                await fetch(`/api/variante/${codice}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ [field]: value })
                 });
-                if (res.ok) {
-                    input.classList.remove('modified');
-                    input.style.borderColor = 'var(--green)';
-                    setTimeout(() => { input.style.borderColor = ''; }, 1000);
-                }
             } catch (err) {
-                console.error(err);
-                input.style.borderColor = 'var(--red)';
+                showToast('Errore salvataggio', 'error');
             }
         }
 
-        // Edit variante - apre modal
-        function editVariante(codice, modello, um, mv, cf, listino) {
-            const modal = document.createElement('div');
-            modal.className = 'variante-modal';
-            modal.id = 'varianteModal';
-            modal.innerHTML = `
-                <div class="variante-modal-content">
-                    <div class="variante-modal-header">
-                        <h3>✏️ Modifica Variante: ${codice}</h3>
-                        <button class="variante-modal-close" onclick="closeVarianteModal()">✕</button>
-                    </div>
-                    <div class="variante-form-group">
-                        <label>Modello</label>
-                        <input type="text" id="varModello" value="${modello}">
-                    </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                        <div class="variante-form-group">
-                            <label>U.M.</label>
-                            <input type="text" id="varUm" value="${um}">
-                        </div>
-                        <div class="variante-form-group">
-                            <label>M.V.</label>
-                            <input type="text" id="varMv" value="${mv}">
-                        </div>
-                    </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                        <div class="variante-form-group">
-                            <label>CF</label>
-                            <input type="text" id="varCf" value="${cf}">
-                        </div>
-                        <div class="variante-form-group">
-                            <label>Listino (€)</label>
-                            <input type="text" id="varListino" value="${listino}">
-                        </div>
-                    </div>
-                    <div class="variante-modal-actions">
-                        <button class="variante-btn-cancel" onclick="closeVarianteModal()">Annulla</button>
-                        <button class="variante-btn-save" onclick="saveVariante('${codice}')">💾 Salva</button>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(modal);
+        async function toggleStampa(codice) {
+            try {
+                await fetch(`/api/variante/${codice}/toggle_stampa`, { method: 'POST' });
+                if (currentProduct) loadVarianti(currentProduct.codice_principale);
+            } catch (err) {
+                showToast('Errore', 'error');
+            }
         }
 
-        function closeVarianteModal() {
-            const modal = document.getElementById('varianteModal');
-            if (modal) modal.remove();
-        }
+        async function saveProdotto() {
+            if (!currentProduct) return;
 
-        async function saveVariante(codice) {
             const data = {
-                modello: document.getElementById('varModello').value,
-                um: document.getElementById('varUm').value,
-                mv: document.getElementById('varMv').value,
-                cf: document.getElementById('varCf').value,
-                listino: document.getElementById('varListino').value
+                titolo: document.getElementById('detailTitolo').value,
+                descrizione: document.getElementById('detailDescrizione').value,
+                posizione: document.getElementById('detailPosizione').value
             };
 
             try {
-                const res = await fetch(`/api/variante/${codice}`, {
+                const res = await fetch(`/api/prodotto/${currentProduct.codice_principale}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
 
                 if (res.ok) {
-                    closeVarianteModal();
-                    showToast('✅ Variante aggiornata!', 'success');
-                    // Ricarica varianti
-                    if (currentProduct) {
-                        loadVarianti(currentProduct.codice_principale);
-                    }
-                } else {
-                    showToast('❌ Errore nel salvataggio', 'error');
-                }
-            } catch (err) {
-                showToast('❌ Errore: ' + err.message, 'error');
-            }
-        }
-
-        async function deleteVariante(codice) {
-            if (!confirm(`Sei sicuro di voler eliminare la variante ${codice}?`)) {
-                return;
-            }
-
-            try {
-                const res = await fetch(`/api/variante/${codice}`, {
-                    method: 'DELETE'
-                });
-
-                if (res.ok) {
-                    showToast('🗑️ Variante eliminata!', 'success');
-                    // Ricarica varianti e prodotti (per aggiornare il conteggio)
-                    if (currentProduct) {
-                        loadVarianti(currentProduct.codice_principale);
-                        loadProducts();
-                    }
-                } else {
-                    showToast('❌ Errore nell\'eliminazione', 'error');
-                }
-            } catch (err) {
-                showToast('❌ Errore: ' + err.message, 'error');
-            }
-        }
-
-        // Save product
-        async function saveProduct() {
-            if (!currentProduct) return;
-
-            const data = {
-                titolo: document.getElementById('editTitle').value,
-                descrizione: document.getElementById('editDesc').value,
-                posizione: document.getElementById('editPosition').value,
-                scala_foto: document.getElementById('scaleSlider').value
-            };
-
-            try {
-                const res = await fetch(`/api/prodotto/${currentProduct.id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-
-                if (res.ok) {
-                    showToast('✅ Prodotto salvato!', 'success');
+                    showToast('✅ Salvato!', 'success');
                     loadProducts();
                 } else {
-                    showToast('❌ Errore nel salvataggio', 'error');
+                    throw new Error();
                 }
             } catch (err) {
-                showToast('❌ Errore di connessione', 'error');
+                showToast('Errore salvataggio', 'error');
             }
         }
 
-        // Delete product
-        async function deleteProduct() {
-            if (!currentProduct) return;
-            if (!confirm('Eliminare questo prodotto?')) return;
-
-            try {
-                const res = await fetch(`/api/prodotto/${currentProduct.id}`, { method: 'DELETE' });
-                if (res.ok) {
-                    showToast('🗑️ Prodotto eliminato', 'success');
-                    currentProduct = null;
-                    loadProducts();
-                    document.getElementById('detailContent').innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-muted);"><div style="font-size: 3rem;">👆</div><p>Seleziona un prodotto</p></div>';
-                }
-            } catch (err) {
-                showToast('❌ Errore', 'error');
-            }
-        }
-
-        // Update stats
-        function updateStats() {
-            const total = categories.reduce((a, c) => a + (c.count || 0), 0);
-            document.getElementById('totalProducts').textContent = total;
-
-            // Placeholder for photo stats
-            const withPhoto = Math.round(total * 0.8);
-            const withoutPhoto = total - withPhoto;
-            document.getElementById('withPhoto').textContent = withPhoto;
-            document.getElementById('withoutPhoto').textContent = withoutPhoto;
-            document.getElementById('photoProgress').style.width = (withPhoto / total * 100) + '%';
-        }
-
-        function updateCategoryInfo() {
-            document.getElementById('currentCategoryName').textContent =
-                currentCategory === 'Tutto' ? 'Tutti i Prodotti' : currentCategory;
-            document.getElementById('currentCategoryCount').textContent =
-                `${products.length} prodotti`;
-        }
-
-        // Toast
-        function showToast(message, type = '') {
-            const toast = document.getElementById('toast');
-            toast.textContent = message;
-            toast.className = 'toast show ' + type;
-            setTimeout(() => toast.className = 'toast', 3000);
-        }
-
-        // Export functions
         function exportPDF() {
-            showToast('📄 Vai alla pagina Preview per generare il PDF');
+            showToast('📄 Vai alla Preview per generare il PDF');
             setTimeout(() => window.location = '/viewer', 1000);
         }
 
-        function exportInDesign() {
-            showToast('📝 Generazione script InDesign...');
-            // TODO: Implement
-        }
-
-        function showImportModal() {
-            showToast('📊 Import CSV - Funzione in sviluppo');
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
         }
     </script>
 </body>
