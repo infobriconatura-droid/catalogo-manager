@@ -699,6 +699,19 @@
                             <input type="number" class="detail-input" id="detailPosizione" style="width: 80px;">
                         </div>
                         <div class="detail-row">
+                            <span class="detail-label">Categoria</span>
+                            <select class="detail-input" id="detailCategoria" style="width: 200px;">
+                                <option value="">-- Nessuna --</option>
+                                <option value="AGRICOLTURA">AGRICOLTURA</option>
+                                <option value="VINO_OLIO_MACELLO">VINO_OLIO_MACELLO</option>
+                                <option value="PET_ZOOTECNIA">PET_ZOOTECNIA</option>
+                                <option value="IDRAULICA">IDRAULICA</option>
+                                <option value="FUMISTERIA">FUMISTERIA</option>
+                                <option value="ELETTRICITA">ELETTRICITA</option>
+                                <option value="BRICO">BRICO</option>
+                            </select>
+                        </div>
+                        <div class="detail-row">
                             <span class="detail-label">Titolo</span>
                             <input type="text" class="detail-input" id="detailTitolo" oninput="document.getElementById('boxTitle').textContent = this.value || 'TITOLO PRODOTTO'">
                         </div>
@@ -771,6 +784,7 @@
 
         const categories = [
             { id: 'Tutto', label: 'Tutto' },
+            { id: 'SENZA_CATEGORIA', label: '⚠️ Senza Cat.' },
             { id: 'AGRICOLTURA', label: 'Agricoltura' },
             { id: 'VINO_OLIO_MACELLO', label: 'Vino/Olio' },
             { id: 'PET_ZOOTECNIA', label: 'Pet/Zoo' },
@@ -922,6 +936,7 @@
             // Info
             document.getElementById('detailCodice').textContent = p.codice_principale;
             document.getElementById('detailPosizione').value = p.posizione || '';
+            document.getElementById('detailCategoria').value = p.categoria || '';
             document.getElementById('detailTitolo').value = p.titolo || '';
             document.getElementById('detailDescrizione').value = p.descrizione || '';
         }
@@ -1096,7 +1111,8 @@
             const data = {
                 titolo: document.getElementById('detailTitolo').value,
                 descrizione: document.getElementById('detailDescrizione').value,
-                posizione: document.getElementById('detailPosizione').value
+                posizione: document.getElementById('detailPosizione').value,
+                categoria: document.getElementById('detailCategoria').value
             };
 
             try {

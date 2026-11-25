@@ -1372,21 +1372,45 @@ def api_prodotti():
 
     # Se categoria specificata, filtra per categoria
     if categoria and categoria != 'Tutto':
-        c.execute('''
-            SELECT p.*, COUNT(v.codice) as num_varianti, pos.posizione,
-                   (SELECT COUNT(*) FROM task t WHERE t.prodotto_id = p.id AND t.completato = 0) as task_aperti
-            FROM prodotti p
-            LEFT JOIN varianti v ON p.id = v.prodotto_id
-            INNER JOIN posizioni pos ON p.codice_principale = pos.codice
-            WHERE pos.categoria = ?
-            GROUP BY p.id
-            ORDER BY pos.posizione ASC NULLS LAST, p.titolo
-            LIMIT ? OFFSET ?
-        ''', (categoria, per_page, offset))
-        prodotti = [dict(row) for row in c.fetchall()]
+        if categoria == 'SENZA_CATEGORIA':
+            # Prodotti senza categoria (non hanno posizione assegnata, o posizione senza categoria)
+            c.execute('''
+                SELECT p.*, COUNT(v.codice) as num_varianti, pos.posizione,
+                       (SELECT COUNT(*) FROM task t WHERE t.prodotto_id = p.id AND t.completato = 0) as task_aperti,
+                       pos.categoria
+                FROM prodotti p
+                LEFT JOIN varianti v ON p.id = v.prodotto_id
+                LEFT JOIN posizioni pos ON p.codice_principale = pos.codice
+                WHERE pos.categoria IS NULL OR pos.categoria = ''
+                GROUP BY p.id
+                ORDER BY p.codice_principale ASC
+                LIMIT ? OFFSET ?
+            ''', (per_page, offset))
+            prodotti = [dict(row) for row in c.fetchall()]
 
-        c.execute('SELECT COUNT(*) FROM posizioni WHERE categoria = ?', (categoria,))
-        total = c.fetchone()[0]
+            c.execute('''
+                SELECT COUNT(DISTINCT p.id) FROM prodotti p
+                LEFT JOIN posizioni pos ON p.codice_principale = pos.codice
+                WHERE pos.categoria IS NULL OR pos.categoria = ''
+            ''')
+            total = c.fetchone()[0]
+        else:
+            c.execute('''
+                SELECT p.*, COUNT(v.codice) as num_varianti, pos.posizione,
+                       (SELECT COUNT(*) FROM task t WHERE t.prodotto_id = p.id AND t.completato = 0) as task_aperti,
+                       pos.categoria
+                FROM prodotti p
+                LEFT JOIN varianti v ON p.id = v.prodotto_id
+                INNER JOIN posizioni pos ON p.codice_principale = pos.codice
+                WHERE pos.categoria = ?
+                GROUP BY p.id
+                ORDER BY pos.posizione ASC NULLS LAST, p.titolo
+                LIMIT ? OFFSET ?
+            ''', (categoria, per_page, offset))
+            prodotti = [dict(row) for row in c.fetchall()]
+
+            c.execute('SELECT COUNT(*) FROM posizioni WHERE categoria = ?', (categoria,))
+            total = c.fetchone()[0]
 
         conn.close()
         return jsonify({
@@ -1461,7 +1485,7 @@ def api_prodotto(codice):
 
     # Cerca per codice_principale o per id numerico
     c.execute('''
-        SELECT p.*, pos.posizione
+        SELECT p.*, pos.posizione, pos.categoria
         FROM prodotti p
         LEFT JOIN posizioni pos ON p.codice_principale = pos.codice
         WHERE p.codice_principale = ? OR p.id = ?
@@ -1541,21 +1565,34 @@ def api_update_prodotto(codice):
           data.get('template'), data.get('scala_foto'),
           data.get('stato'), data.get('verificato_catalogo'), data.get('catalogo'), id))
 
-    # Gestisci posizione
+    # Gestisci posizione e categoria
     posizione = data.get('posizione')
-    if posizione is not None:
-        # Log modifica posizione
-        c.execute('SELECT posizione FROM posizioni WHERE codice = ?', (codice_principale,))
-        pos_old = c.fetchone()
-        pos_old_val = pos_old[0] if pos_old else None
-        if str(posizione) != str(pos_old_val) if pos_old_val else posizione:
-            log_modifica(conn, id, codice_principale, 'posizione', pos_old_val, posizione, utente)
+    categoria = data.get('categoria')
 
-        if posizione:
-            # Inserisci o aggiorna posizione
-            c.execute('INSERT OR REPLACE INTO posizioni (codice, posizione) VALUES (?, ?)', (codice_principale, posizione))
-        else:
-            # Rimuovi posizione se vuota
+    # Ottieni valori vecchi
+    c.execute('SELECT posizione, categoria FROM posizioni WHERE codice = ?', (codice_principale,))
+    pos_old = c.fetchone()
+    pos_old_val = pos_old[0] if pos_old else None
+    cat_old_val = pos_old[1] if pos_old else None
+
+    # Log modifiche
+    if posizione is not None and (str(posizione) != str(pos_old_val) if pos_old_val else posizione):
+        log_modifica(conn, id, codice_principale, 'posizione', pos_old_val, posizione, utente)
+    if categoria is not None and categoria != cat_old_val:
+        log_modifica(conn, id, codice_principale, 'categoria', cat_old_val, categoria, utente)
+
+    # Aggiorna/inserisci nella tabella posizioni
+    if posizione is not None or categoria is not None:
+        # Usa valori esistenti se non passati
+        new_posizione = posizione if posizione is not None else pos_old_val
+        new_categoria = categoria if categoria is not None else cat_old_val
+
+        if new_posizione or new_categoria:
+            # Inserisci o aggiorna
+            c.execute('INSERT OR REPLACE INTO posizioni (codice, posizione, categoria) VALUES (?, ?, ?)',
+                     (codice_principale, new_posizione, new_categoria))
+        elif not new_posizione and not new_categoria:
+            # Rimuovi se entrambi vuoti
             c.execute('DELETE FROM posizioni WHERE codice = ?', (codice_principale,))
 
     conn.commit()
