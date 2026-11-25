@@ -501,6 +501,90 @@
             background: var(--bg);
         }
 
+        /* ===== BOX PREVIEW ===== */
+        .box-preview-container {
+            background: #fff;
+            border-radius: 8px;
+            padding: 16px;
+            color: #000;
+        }
+
+        .box-preview {
+            border: 2px solid #333;
+            padding: 12px;
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+        }
+
+        .box-header {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .box-image {
+            width: 120px;
+            height: 100px;
+            background: #f5f5f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #ddd;
+        }
+
+        .box-image img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .box-text {
+            flex: 1;
+        }
+
+        .box-title {
+            font-weight: bold;
+            font-size: 13px;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+
+        .box-desc {
+            font-size: 10px;
+            line-height: 1.3;
+            color: #333;
+        }
+
+        .box-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9px;
+            margin-top: 8px;
+        }
+
+        .box-table th {
+            background: #1a365d;
+            color: #fff;
+            padding: 4px 6px;
+            text-align: left;
+            font-weight: bold;
+        }
+
+        .box-table td {
+            padding: 3px 6px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .box-table tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+
+        .box-table .price {
+            text-align: right;
+            font-weight: bold;
+            color: #c41e3a;
+        }
+
         /* ===== TOAST ===== */
         .toast {
             position: fixed;
@@ -587,11 +671,11 @@
                         </div>
                         <div class="detail-row">
                             <span class="detail-label">Titolo</span>
-                            <input type="text" class="detail-input" id="detailTitolo">
+                            <input type="text" class="detail-input" id="detailTitolo" oninput="document.getElementById('boxTitle').textContent = this.value || 'TITOLO PRODOTTO'">
                         </div>
                         <div class="detail-row">
                             <span class="detail-label">Descrizione</span>
-                            <textarea class="detail-input" id="detailDescrizione"></textarea>
+                            <textarea class="detail-input" id="detailDescrizione" oninput="document.getElementById('boxDesc').textContent = this.value"></textarea>
                         </div>
                     </div>
 
@@ -612,6 +696,36 @@
                             <tbody id="variantiBody">
                             </tbody>
                         </table>
+                    </div>
+
+                    <!-- PREVIEW BOX CATALOGO -->
+                    <div class="detail-section">
+                        <div class="detail-section-title">🖨️ Preview Box Catalogo</div>
+                        <div class="box-preview-container">
+                            <div class="box-preview" id="boxPreview">
+                                <div class="box-header">
+                                    <div class="box-image" id="boxImage">📷</div>
+                                    <div class="box-text">
+                                        <div class="box-title" id="boxTitle">TITOLO PRODOTTO</div>
+                                        <div class="box-desc" id="boxDesc">Descrizione prodotto...</div>
+                                    </div>
+                                </div>
+                                <table class="box-table">
+                                    <thead>
+                                        <tr>
+                                            <th>CODICE</th>
+                                            <th>MODELLO</th>
+                                            <th>U.M.</th>
+                                            <th>M.V.</th>
+                                            <th>CF</th>
+                                            <th style="text-align:right">LISTINO €</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="boxVarianti">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -784,11 +898,11 @@
                 tbody.innerHTML = varianti.map(v => `
                     <tr>
                         <td>${v.codice}</td>
-                        <td><input class="var-input" value="${v.modello || ''}" onblur="saveVariante('${v.codice}', 'modello', this.value)"></td>
-                        <td><input class="var-input" value="${v.um || ''}" style="width:40px" onblur="saveVariante('${v.codice}', 'um', this.value)"></td>
-                        <td><input class="var-input" value="${v.mv || ''}" style="width:40px" onblur="saveVariante('${v.codice}', 'mv', this.value)"></td>
-                        <td><input class="var-input" value="${v.cf || ''}" style="width:40px" onblur="saveVariante('${v.codice}', 'cf', this.value)"></td>
-                        <td><input class="var-input var-listino" value="${v.listino || ''}" style="width:60px; text-align:right" onblur="saveVariante('${v.codice}', 'listino', this.value)"></td>
+                        <td><input class="var-input" value="${v.modello || ''}" onblur="saveVariante('${v.codice}', 'modello', this.value); updateBoxPreview()"></td>
+                        <td><input class="var-input" value="${v.um || ''}" style="width:40px" onblur="saveVariante('${v.codice}', 'um', this.value); updateBoxPreview()"></td>
+                        <td><input class="var-input" value="${v.mv || ''}" style="width:40px" onblur="saveVariante('${v.codice}', 'mv', this.value); updateBoxPreview()"></td>
+                        <td><input class="var-input" value="${v.cf || ''}" style="width:40px" onblur="saveVariante('${v.codice}', 'cf', this.value); updateBoxPreview()"></td>
+                        <td><input class="var-input var-listino" value="${v.listino || ''}" style="width:60px; text-align:right" onblur="saveVariante('${v.codice}', 'listino', this.value); updateBoxPreview()"></td>
                         <td>
                             <button class="var-btn" onclick="toggleStampa('${v.codice}')" title="Escludi/Includi da stampa">
                                 ${v.escludi_stampa ? '🚫' : '✅'}
@@ -796,8 +910,64 @@
                         </td>
                     </tr>
                 `).join('');
+
+                // Aggiorna il preview del box
+                updateBoxPreview(varianti);
             } catch (err) {
                 console.error(err);
+            }
+        }
+
+        function updateBoxPreview(varianti) {
+            const p = currentProduct;
+            if (!p) return;
+
+            // Immagine
+            const boxImg = document.getElementById('boxImage');
+            boxImg.innerHTML = p.foto
+                ? `<img src="/foto_prodotti/${p.foto}" onerror="this.outerHTML='📷'">`
+                : '📷';
+
+            // Titolo e descrizione
+            document.getElementById('boxTitle').textContent = p.titolo || 'TITOLO PRODOTTO';
+            document.getElementById('boxDesc').textContent = p.descrizione || '';
+
+            // Varianti (prendi dai campi input se disponibili, altrimenti usa varianti passate)
+            const boxVarianti = document.getElementById('boxVarianti');
+            const varRows = document.querySelectorAll('#variantiBody tr');
+
+            if (varRows.length > 0) {
+                // Leggi dai campi input
+                boxVarianti.innerHTML = Array.from(varRows).map(row => {
+                    const cells = row.querySelectorAll('td');
+                    const codice = cells[0].textContent;
+                    const modello = cells[1].querySelector('input')?.value || '';
+                    const um = cells[2].querySelector('input')?.value || '';
+                    const mv = cells[3].querySelector('input')?.value || '';
+                    const cf = cells[4].querySelector('input')?.value || '';
+                    const listino = cells[5].querySelector('input')?.value || '';
+
+                    return `<tr>
+                        <td>${codice}</td>
+                        <td>${modello}</td>
+                        <td>${um}</td>
+                        <td>${mv}</td>
+                        <td>${cf}</td>
+                        <td class="price">${listino ? '€ ' + listino : ''}</td>
+                    </tr>`;
+                }).join('');
+            } else if (varianti) {
+                // Usa varianti passate
+                boxVarianti.innerHTML = varianti.filter(v => !v.escludi_stampa).map(v => `
+                    <tr>
+                        <td>${v.codice}</td>
+                        <td>${v.modello || ''}</td>
+                        <td>${v.um || ''}</td>
+                        <td>${v.mv || ''}</td>
+                        <td>${v.cf || ''}</td>
+                        <td class="price">${v.listino ? '€ ' + v.listino : ''}</td>
+                    </tr>
+                `).join('');
             }
         }
 
