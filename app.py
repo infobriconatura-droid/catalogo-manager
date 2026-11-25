@@ -2645,14 +2645,14 @@ def calcola_altezza_box(num_varianti):
     """
     Calcola altezza box in pixel basata sul numero di varianti.
     Layout corporate: header + righe varianti + descrizione + strip
-    Valori COMPATTI per 4-6 prodotti/pagina.
+    Valori calibrati per 4-6 prodotti/pagina.
     """
-    TOP_SECTION = 70       # Titolo + logo (compatto)
-    IMG_SECTION = 220      # Immagine + descrizione (compatto)
-    HEADER_ROW = 30        # Header tabella
-    VAR_ROW = 20           # Riga per variante (compatto)
-    STRIP = 8              # Striscia verde in basso
-    PADDING = 15           # Margini interni
+    TOP_SECTION = 150      # Titolo + logo
+    IMG_SECTION = 450      # Immagine + descrizione
+    HEADER_ROW = 50        # Header tabella
+    VAR_ROW = 35           # Riga per variante
+    STRIP = 15             # Striscia verde in basso
+    PADDING = 40           # Margini interni
 
     return TOP_SECTION + IMG_SECTION + HEADER_ROW + (num_varianti * VAR_ROW) + STRIP + PADDING
 
