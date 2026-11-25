@@ -1400,23 +1400,31 @@ class BoxGenerator:
     
     def _get_cache_key(self, prodotto, varianti, template):
         """Genera hash unico per cache del box"""
+        # Funzione helper per accedere ai campi (dict o sqlite3.Row)
+        def get_val(obj, key, default=None):
+            try:
+                val = obj.get(key, default) if hasattr(obj, 'get') else obj[key] if key in obj.keys() else default
+                return val
+            except:
+                return default
+
         # Dati che influenzano il rendering del box
         cache_data = {
             'template': template,
-            'titolo': prodotto.get('titolo'),
-            'descrizione': prodotto.get('descrizione'),
-            'codice_principale': prodotto.get('codice_principale'),
-            'foto': prodotto.get('foto'),
-            'logo': prodotto.get('logo'),
-            'scala_foto': prodotto.get('scala_foto', 100),
-            'offset_x': prodotto.get('offset_x', 0),
-            'offset_y': prodotto.get('offset_y', 0),
-            'icona1': prodotto.get('icona1'),
-            'icona2': prodotto.get('icona2'),
-            'icona3': prodotto.get('icona3'),
-            'icona4': prodotto.get('icona4'),
-            'varianti': [(v.get('codice'), v.get('descrizione'), v.get('confezione'),
-                         v.get('listino'), v.get('ordine')) for v in varianti]
+            'titolo': get_val(prodotto, 'titolo'),
+            'descrizione': get_val(prodotto, 'descrizione'),
+            'codice_principale': get_val(prodotto, 'codice_principale'),
+            'foto': get_val(prodotto, 'foto'),
+            'logo': get_val(prodotto, 'logo'),
+            'scala_foto': get_val(prodotto, 'scala_foto', 100),
+            'offset_x': get_val(prodotto, 'offset_x', 0),
+            'offset_y': get_val(prodotto, 'offset_y', 0),
+            'icona1': get_val(prodotto, 'icona1'),
+            'icona2': get_val(prodotto, 'icona2'),
+            'icona3': get_val(prodotto, 'icona3'),
+            'icona4': get_val(prodotto, 'icona4'),
+            'varianti': [(get_val(v, 'codice'), get_val(v, 'descrizione'), get_val(v, 'confezione'),
+                         get_val(v, 'listino'), get_val(v, 'ordine')) for v in varianti]
         }
         cache_str = json.dumps(cache_data, sort_keys=True)
         return hashlib.md5(cache_str.encode()).hexdigest()
@@ -1446,8 +1454,9 @@ class BoxGenerator:
                 cache_key = self._get_cache_key(prodotto, varianti, template)
                 cache_path = BOX_CACHE_FOLDER / f"{cache_key}.png"
                 box_img.save(cache_path, 'PNG')
-            except:
-                pass  # Se fallisce il salvataggio, continua comunque
+                print(f"[CACHE] Salvato: {cache_path}")
+            except Exception as e:
+                print(f"[CACHE] Errore salvataggio: {e}")
 
         return box_img
     
