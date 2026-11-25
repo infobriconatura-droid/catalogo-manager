@@ -1646,6 +1646,49 @@ def api_delete_variante(codice):
     return jsonify({'success': True})
 
 
+@app.route('/api/posizioni/bulk_update', methods=['POST'])
+def api_posizioni_bulk_update():
+    """Aggiorna posizioni in bulk per una categoria"""
+    data = request.json
+    token = data.get('token')
+    if token != DEPLOY_TOKEN:
+        return jsonify({'error': 'Token non valido'}), 403
+
+    categoria = data.get('categoria')
+    posizioni = data.get('posizioni', [])  # Lista di {codice, posizione}
+
+    if not categoria or not posizioni:
+        return jsonify({'error': 'Categoria e posizioni richieste'}), 400
+
+    conn = get_db()
+    c = conn.cursor()
+
+    # Prima elimina le posizioni esistenti per questa categoria (tranne Tutto)
+    if categoria != 'Tutto':
+        c.execute('DELETE FROM posizioni WHERE categoria = ?', (categoria,))
+
+    # Inserisce le nuove posizioni
+    imported = 0
+    for pos in posizioni:
+        try:
+            c.execute('''
+                INSERT OR REPLACE INTO posizioni (codice, posizione, categoria)
+                VALUES (?, ?, ?)
+            ''', (pos['codice'], pos['posizione'], categoria))
+            imported += 1
+        except Exception as e:
+            print(f"Errore inserimento {pos}: {e}")
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        'success': True,
+        'categoria': categoria,
+        'imported': imported
+    })
+
+
 @app.route('/api/variante/<codice>/toggle_stampa', methods=['POST'])
 def api_toggle_stampa(codice):
     """Toggle flag escludi_stampa per una variante"""
