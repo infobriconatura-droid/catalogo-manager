@@ -130,7 +130,7 @@
         /* ===== MAIN LAYOUT ===== */
         .main {
             display: grid;
-            grid-template-columns: 240px 1fr 380px;
+            grid-template-columns: 200px 1fr 480px;
             height: calc(100vh - 52px);
         }
 
@@ -320,17 +320,18 @@
         }
 
         .product-image {
-            height: 120px;
+            height: 140px;
             background: var(--bg-surface);
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
+            padding: 8px;
         }
 
         .product-image img {
-            max-width: 90%;
-            max-height: 90%;
+            max-width: 100%;
+            max-height: 100%;
             object-fit: contain;
         }
 
@@ -738,12 +739,40 @@
         };
 
         // Init
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             loadCategories();
-            loadProducts();
+            await loadProducts();
 
             // Search
             document.getElementById('searchInput').addEventListener('input', debounce(filterProducts, 300));
+
+            // Check URL param for direct edit
+            const urlParams = new URLSearchParams(window.location.search);
+            const editId = urlParams.get('edit');
+            if (editId) {
+                // Cerca il prodotto e selezionalo
+                const prodToEdit = products.find(p => p.id == editId);
+                if (prodToEdit) {
+                    selectProduct(prodToEdit.id);
+                    // Scroll to it
+                    setTimeout(() => {
+                        const card = document.querySelector(`.product-card.selected`);
+                        if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 100);
+                } else {
+                    // Prodotto non nella lista corrente, caricalo direttamente
+                    try {
+                        const res = await fetch(`/api/prodotto/${editId}`);
+                        if (res.ok) {
+                            const data = await res.json();
+                            currentProduct = data.prodotto;
+                            renderDetail();
+                        }
+                    } catch (err) {
+                        console.error('Prodotto non trovato:', editId);
+                    }
+                }
+            }
         });
 
         // Debounce
@@ -843,8 +872,9 @@
                         ${p.immagine ?
                             `<img src="/api/foto/${p.immagine}" onerror="this.parentElement.innerHTML='<div class=product-no-image>📷</div>'">` :
                             '<div class="product-no-image">📷</div>'}
-                        ${p.posizione ? `<span class="product-badge">Pos. ${p.posizione}</span>` :
-                            '<span class="product-badge warning">No Pos</span>'}
+                        ${currentCategory && currentCategory !== 'Tutto' ?
+                            (p.posizione ? `<span class="product-badge">Pos. ${p.posizione}</span>` : '<span class="product-badge warning">No Pos</span>')
+                            : ''}
                     </div>
                     <div class="product-info">
                         <div class="product-code">ART. ${p.codice_principale}</div>
